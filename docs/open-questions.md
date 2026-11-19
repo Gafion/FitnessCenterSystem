@@ -60,7 +60,7 @@ Unanswered questions about the center's operations are collected in [stakeholder
 ### Members & memberships
 | # | Question | Raised by |
 |---|---|---|
-| M1 | Which membership types: monthly, punch cards/class packs, PAYG/drop-in, family, student/senior, corporate, prepaid? (Partly answered: 6 subscription types, D-019. Which ones is still open.) | fitness-domain-operations, compliance |
+| M1 | Which membership types: monthly, punch cards/class packs, PAYG/drop-in, family, student/senior, corporate, prepaid? (Partly answered: 6 subscription types, D-019. Which ones is still open. The signup slice uses one placeholder type, D-032.) | fitness-domain-operations, compliance |
 | M2 | Binding periods, freezes/pauses, and price-change practices you intend to use? (Note: Danish law effectively caps binding at ~6 months.) | compliance-legal-security |
 | M3 | Sales channels: online, in-app, in person, phone, corporate deals? (Drives 14-day withdrawal handling.) | compliance-legal-security |
 | M4 | Minors: accept members under 18? Under 15? Will staff run classes for under-15s? | compliance-legal-security |

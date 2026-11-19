@@ -932,3 +932,117 @@ Owner accepted the orchestrator's recommendation. It means fewer projects for ag
 ### Sources
 - [research/tech-stack.md](research/tech-stack.md) §2.3
 - [architecture.md](architecture.md) §4.3, §9
+
+## D-032: Scope of the signup golden slice
+- **Date:** 2026-11-19
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-011, D-013, D-021, D-022, D-023, D-026, M1, M3, M4, U5, FIT-47
+
+### Problem statement
+The first, "golden" slice is signup for the general gym membership (D-023). Several details have no decision yet: which data to collect, which login methods, which membership type, and how to handle the 14-day withdrawal right.
+
+### Options considered
+For each question, the orchestrator offered options with a recommendation:
+- **Data:**
+  1. Name, email and password (recommended).
+  2. Add date of birth.
+  3. Add date of birth and phone.
+- **Login methods:**
+  1. Email/password only (recommended).
+  2. Email/password + Google.
+  3. Email/password + email verification.
+- **Membership:**
+  1. One placeholder type (recommended).
+  2. Placeholder + simulated first payment.
+  3. All 6 types as placeholders.
+- **Withdrawal:**
+  1. Record consent now (recommended).
+  2. Only accept terms.
+  3. Leave it out.
+
+### Decision
+| Question | Decision |
+|---|---|
+| Data collected | **Name, email, password.** Date of birth and phone wait for M4. |
+| Login | **Email/password and Google** in this slice. No email verification yet: no email provider is chosen (D-020 open items). |
+| Membership | **One placeholder type**, "General membership", monthly, with a synthetic price in øre. After signup the membership is **awaiting first payment**; the simulated payment page (FIT-43) confirms it later. The real types follow M1. |
+| Withdrawal and consent | **Record consent now.** A required "accept the terms" checkbox and an optional "start my membership now" (express request). Store the text version accepted, the time and the channel (online). Real legal wording waits for U5. |
+
+```mermaid
+sequenceDiagram
+  actor M as Member
+  participant FE as Signup page
+  participant API as API (Identity + Members)
+  participant DB as PostgreSQL
+  M->>FE: name, email, password, consents
+  FE->>API: POST signup (generated client, rule 6)
+  API->>DB: identity.users + members.member + members.membership (awaiting payment) + members.consent
+  API-->>FE: signed in (cookie)
+  Note over M,API: Or: "Continue with Google" creates the account, then the same member, membership and consent rows
+```
+
+### Reasoning
+Owner decision. This collects the minimum data (CLAUDE.md, personal data). The consent record follows the Consumer Rights Directive's 14-day withdrawal right and its "express request" for an early start ([compliance-legal-security.md](research/compliance-legal-security.md) §6.1, Art. 9 and Art. 7(3)/8(8)). Because every later signup copies this pattern, it is built now.
+
+### Sources
+- [research/compliance-legal-security.md](research/compliance-legal-security.md) §6.1
+- [decisions.md](decisions.md) — D-011, D-013, D-020, D-021, D-023, D-026
+
+## D-033: openapi-typescript + openapi-fetch for the generated API client
+- **Date:** 2026-11-19
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-018, D-028 (rule 6 diff check), FIT-47
+
+### Problem statement
+Rule 6 says the frontend calls the API only through a client generated from the API's OpenAPI description. Which generator?
+
+### Options considered
+From [tech-stack.md](research/tech-stack.md) §2.10:
+1. **openapi-typescript + openapi-fetch.** Types only, in one file, plus a small typed fetch wrapper. Fastest in one benchmark [T24].
+2. **Hey API (`@hey-api/openapi-ts`).** An SDK of functions; the successor to openapi-typescript-codegen.
+3. **Orval.** TanStack Query hooks, Zod and mocks; much larger output.
+
+### Decision
+**Option 1.** The generated types live in `frontend/src/api/` (never hand-edited, rule 6). CI regenerates them and fails on a diff (D-028).
+
+### Reasoning
+Owner accepted the orchestrator's recommendation. It produces the smallest output, which is easy to review and to diff in CI, and it needs no extra data-fetching library.
+
+### Sources
+- [research/tech-stack.md](research/tech-stack.md) §2.10, [T24]
+
+## D-034: The Members module owns signup
+- **Date:** 2026-11-19
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-015, D-031, D-032, architecture.md §4.2
+
+### Problem statement
+Signup creates a login account (Identity) and a member with a membership and consents (Members). Which module owns the signup endpoint?
+
+### Options considered
+1. **Members**, calling `Identity.Contracts` to create the account, all in one database transaction.
+2. **Identity**, calling `Members.Contracts` to create the member.
+3. **Two steps:** create the account first, then a separate "join" call.
+
+### Decision
+**Option 1.**
+
+```mermaid
+flowchart LR
+  FE[Signup page] -->|POST /api/members/signup| ME[Members endpoint]
+  ME -->|IAccountService| IC[[Identity.Contracts]]
+  IC -.implemented by.-> ID[Identity module]
+  ME --> MD[(members schema)]
+  ID --> IDB[(identity schema)]
+  ME -. "one transaction (D-015)" .- ID
+```
+
+### Reasoning
+Owner accepted the orchestrator's recommendation. Signing up for a membership is Members' business, and Identity stays a generic login module. One transaction means a failed signup leaves no account without a member (D-015 allows a transaction to span modules).
+
+### Sources
+- [decisions.md](decisions.md) — D-015, D-032
+- [architecture.md](architecture.md) §4.2

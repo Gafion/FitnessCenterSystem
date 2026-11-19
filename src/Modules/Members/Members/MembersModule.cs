@@ -1,25 +1,22 @@
 using FitnessCenter.Modules.Members.Infrastructure;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 
 namespace FitnessCenter.Modules.Members;
 
 /// <summary>
-/// Entry point of the Members module. The API host calls these two methods and
+/// Entry point of the Members module. The API host calls these methods and
 /// nothing else in this project; everything else stays <c>internal</c>.
 /// </summary>
 public static class MembersModule
 {
-    public static IServiceCollection AddMembersModule(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddMembersModule(this IServiceCollection services)
     {
-        var connectionString = configuration.GetConnectionString(DatabaseNames.FitnessCenter)
-            ?? throw new InvalidOperationException(
-                $"Missing connection string '{DatabaseNames.FitnessCenter}'. Aspire sets it locally (D-009).");
-
-        services.AddDbContext<MembersDbContext>(options =>
-            options.UseNpgsql(connectionString, npgsql =>
+        // The shared, request-scoped connection lets one transaction span modules (D-015).
+        services.AddDbContext<MembersDbContext>((provider, options) =>
+            options.UseNpgsql(provider.GetRequiredService<NpgsqlConnection>(), npgsql =>
                 npgsql.MigrationsHistoryTable("__EFMigrationsHistory", MembersDbContext.Schema)));
 
         services.AddHealthChecks().AddDbContextCheck<MembersDbContext>("members-db");
@@ -30,5 +27,13 @@ public static class MembersModule
     public static IEndpointRouteBuilder MapMembersEndpoints(this IEndpointRouteBuilder endpoints)
     {
         return endpoints;
+    }
+
+    /// <summary>Applies this module's migrations. The host calls it at startup in Development.</summary>
+    public static async Task MigrateMembersDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<MembersDbContext>();
+        await db.Database.MigrateAsync(cancellationToken);
     }
 }
