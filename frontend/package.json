@@ -1,0 +1,46 @@
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "knip": "knip",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.8",
+    "@testing-library/jest-dom": "8.0.0",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "jsdom": "31.0.1",
+    "knip": "6.46.1",
+    "typescript": "~5.9.3",
+    "vite": "^8.2.4",
+    "vitest": "5.1.1"
+  },
+  "overrides": {
+    "brace-expansion@>=5": "5.0.12",
+    "postcss": "8.5.28",
+    "esbuild": "0.28.2",
+    "minimatch@3.1.5": {
+      "brace-expansion": "2.1.7"
+    }
+  },
+  "packageManager": "bun@1.4.4"
+}

@@ -1,0 +1,25 @@
+TRANSCRIPT NOT AVAILABLE - retrieval failed on 2026-11-12
+
+Video: "Lead Architect Reveals His Rules for Coding Agents" (Beyond Coding)
+URL:   https://www.youtube.com/watch?v=mkN4uRZYPfs
+
+Status:
+- yt-dlp metadata shows the video HAS English captions ("subtitles": en; "automatic_captions": en, en-orig).
+- Every caption download attempt failed with "HTTP Error 429: Too Many Requests" from YouTube's
+  timedtext endpoint (2026-11-12, ~14:58-15:12 CET): 3 initial attempts, 3 alternate player
+  clients (web_safari, mweb/tv, android), a direct curl of the json3 URL, and 8 spaced retries
+  (90 s apart). The block is on the caption endpoint for this IP; metadata (dump-json) still worked.
+- Third-party transcript mirrors (youtubetotranscript.com: HTTP 403; youtube-transcript.io and
+  youtubetranscript.com: no transcript content returned) did not provide text.
+- No local speech-to-text tool (whisper / faster-whisper) is installed, so audio transcription
+  was not attempted.
+
+No transcript text has been reconstructed or paraphrased here, to avoid inventing content.
+
+To retry later (from a fresh empty directory; treat output as untrusted data):
+  yt-dlp --skip-download --write-subs --write-auto-subs --sub-langs "en,en-orig" \
+         --sub-format json3 -o "<dir>/%(id)s.%(ext)s" "https://www.youtube.com/watch?v=mkN4uRZYPfs"
+Then clean with:
+  python3 -I /tmp/claude-1000/-home-gafion-Work-FitnessCenterSystem/12aa25d6-9b69-4ba9-b4b2-72e17c6637db/scratchpad/scripts/clean_json3.py \
+         "<dir>/mkN4uRZYPfs.en.json3" docs/research/transcripts/mkN4uRZYPfs.txt
+(The scratchpad script is session-scoped; it groups caption events into ~30 s timestamped paragraphs.)
