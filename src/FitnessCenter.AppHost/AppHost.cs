@@ -5,6 +5,7 @@ var server = builder.AddDotnetProject("server", "../FitnessCenter.Server/Fitness
     .WithExternalHttpEndpoints();
 
 var webfrontend = builder.AddViteApp("webfrontend", "../../frontend")
+    .WithBun()
     .WithReference(server)
     .WaitFor(server);
 

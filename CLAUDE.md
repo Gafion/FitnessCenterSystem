@@ -2,7 +2,7 @@
 
 Member and employee administration for **one real, single-site fitness center in Denmark** (~10 staff). It is also the owner's learning project, but a **working end product is the priority**.
 
-**Phase:** planning. No application code exists yet. The PRD waits on the owner's meeting with the center ([D-004](docs/decisions.md)).
+**Phase:** scaffolding (FIT-31). The starter template and frontend tooling exist; no features yet. The PRD waits on the owner's meeting with the center ([D-004](docs/decisions.md)).
 
 ## Where things are
 
@@ -35,7 +35,7 @@ Read the relevant decision before changing anything it covers. Load docs on dema
 - **Database:** PostgreSQL, **one schema per module**. Foreign keys between modules are allowed, and one transaction may span modules (D-014, D-015).
 - **Payments:** out of scope for now. They come later as a separate deployable (D-006).
 - **Login:** Google + local email/password. No Facebook. MFA is mandatory for staff and optional for members. Built with ASP.NET Core Identity, data in our PostgreSQL (D-011, D-013, D-026).
-- **Testing:** unit, integration, E2E, **performance** and anything else automatable, all run in CI. MSTest for C# (D-029), Vitest + Playwright for the frontend (D-018). Architecture-test library and performance tool are open (D-010, D-016, S11).
+- **Testing:** unit, integration, E2E, **performance** and anything else automatable, all run in CI. MSTest for C# (D-029), Vitest + Playwright for the frontend (D-018). ArchUnitNET for architecture tests (D-030). The performance tool is open (D-010, D-016).
 
 ## Module boundary rules (architecture.md §4.2)
 
@@ -67,7 +67,9 @@ Rules 1–3 are enforced by architecture tests and rule 6 by a CI diff check of 
 
 ## Commands
 
-_To be added when the solution is scaffolded._ Expected shape (UNVERIFIED until it exists):
-- `dotnet run --project src/FitnessCenter.AppHost`: start everything locally
-- `dotnet build -warnaserror && dotnet test`: backend gate
-- `bun --cwd frontend run typecheck && bun --cwd frontend run test`: frontend gate
+Run from the repo root.
+- `aspire run`: start everything locally (UNVERIFIED: not yet run on this machine)
+- `dotnet build FitnessCenter.sln -warnaserror`: backend build (verified). `dotnet test` once test projects exist
+- `bun run --cwd frontend lint && bun run --cwd frontend typecheck && bun run --cwd frontend test && bun run --cwd frontend knip`: frontend gate (verified)
+- `bun run --cwd frontend format`: auto-fix formatting and imports (Biome)
+- Note: `bun --cwd frontend run …` (flag before `run`) prints help and exits 0. Always put `--cwd` after `run`.

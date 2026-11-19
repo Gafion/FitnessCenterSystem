@@ -2,7 +2,7 @@
 
 Member and employee administration for one single-site fitness center in Denmark (~10 staff). Also the owner's learning project.
 
-**Phase:** planning. The scaffold (FIT-31) is next.
+**Phase:** scaffolding (FIT-31).
 
 ## Stack
 
