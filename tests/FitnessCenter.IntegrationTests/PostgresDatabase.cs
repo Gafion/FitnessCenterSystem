@@ -23,6 +23,11 @@ public static class PostgresDatabase
             .WithDatabase("fitnesscenter")
             .Build();
         await _container.StartAsync();
+
+        // Tests run in parallel and each one starts the API, which migrates at startup in
+        // Development. Migrating once here, first, stops those startups racing each other.
+        await using var factory = new ApiFactory();
+        factory.CreateClient().Dispose();
     }
 
     [AssemblyCleanup]

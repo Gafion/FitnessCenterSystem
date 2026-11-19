@@ -35,6 +35,8 @@ erDiagram
   ACCESS_CARD ||--o{ ATTENDANCE : "swipes create"
   CLASS_SESSION ||--o{ ATTENDANCE : "may link to"
   MEMBER ||--o{ PAYMENT_RECORD : "has (D-020)"
+  MEMBERSHIP_TYPE ||--o{ MEMBER : "chosen by (D-032)"
+  MEMBER ||--o{ CONSENT : "gave (D-032)"
 
   IDENTITY {
     uuid id PK
@@ -50,6 +52,19 @@ erDiagram
     date member_since
     string status
     date paid_until "from payment confirmations (D-020)"
+  }
+  MEMBERSHIP_TYPE {
+    uuid id PK
+    string name "one placeholder until M1 (D-032)"
+    long monthly_price_ore
+  }
+  CONSENT {
+    uuid id PK
+    uuid member_id FK
+    string kind "Terms or EarlyStart"
+    string text_version "which text was shown"
+    timestamptz given_at
+    string channel "Online"
   }
   PAYMENT_RECORD {
     uuid id PK
@@ -212,3 +227,5 @@ Source: [database-schemas.md](research/database-schemas.md) §5, §9.
 | DB1 | ✅ Decided: Option 2 ([D-014](decisions.md)) |
 | DB2 | ✅ Decided: shared transactions allowed ([D-015](decisions.md)) |
 | — | Everything listed under "deliberately left out", to be filled in after the meeting |
+
+> **Built so far (FIT-47 signup slice, 2026-11-19):** the `identity` schema has ASP.NET Core Identity's tables. Its account (`AspNetUsers`) holds first name, last name and email. The `members` schema has `members`, `membership_types` (one seeded placeholder) and `consents`. `members.AccountId` has a foreign key to `identity.AspNetUsers` for integrity only (D-014). Column names follow EF Core's defaults (PascalCase).

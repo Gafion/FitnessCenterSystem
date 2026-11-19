@@ -20,7 +20,7 @@ internal static class DatabaseExtensions
             ?? throw new InvalidOperationException(
                 $"Missing connection string '{ConnectionName}'. Aspire sets it locally (D-009).");
 
-        services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
+        services.AddSingleton(_ => new NpgsqlDataSourceBuilder(connectionString).UseNodaTime().Build());
         services.AddScoped(provider => provider.GetRequiredService<NpgsqlDataSource>().CreateConnection());
 
         return services;

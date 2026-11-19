@@ -17,5 +17,11 @@ internal sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> opti
     {
         base.OnModelCreating(builder);
         builder.HasDefaultSchema(Schema);
+
+        builder.Entity<Account>(account =>
+        {
+            account.Property(a => a.FirstName).HasMaxLength(Account.NameMaxLength);
+            account.Property(a => a.LastName).HasMaxLength(Account.NameMaxLength);
+        });
     }
 }
