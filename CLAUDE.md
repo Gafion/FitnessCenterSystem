@@ -72,5 +72,6 @@ Run from the repo root.
 - `aspire run`: start everything locally (UNVERIFIED: not yet run on this machine)
 - `dotnet build FitnessCenter.sln -warnaserror`: backend build (verified). `dotnet test` once test projects exist
 - `bun run --cwd frontend lint && bun run --cwd frontend typecheck && bun run --cwd frontend test && bun run --cwd frontend knip`: frontend gate (verified)
+- `bun run --cwd frontend e2e`: Playwright E2E tests in Chromium; builds and serves the app itself (verified). First time: `bunx playwright install chromium` in `frontend/`
 - `bun run --cwd frontend format`: auto-fix formatting and imports (Biome)
 - Note: `bun --cwd frontend run …` (flag before `run`) prints help and exits 0. Always put `--cwd` after `run`.

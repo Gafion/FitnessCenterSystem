@@ -1,0 +1,10 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/components/ui/**/*.tsx",
+    "src/lib/utils.ts"
+  ],
+  "ignoreDependencies": [
+    "lucide-react"
+  ]
+}

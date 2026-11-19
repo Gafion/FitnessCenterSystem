@@ -6,7 +6,13 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!!**/dist", "!!**/obj", "!!src/api"]
+    "includes": [
+      "**",
+      "!!**/dist",
+      "!!**/obj",
+      "!!src/api",
+      "!!src/routeTree.gen.ts"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -30,6 +36,11 @@
       "source": {
         "organizeImports": "on"
       }
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
     }
   }
 }
