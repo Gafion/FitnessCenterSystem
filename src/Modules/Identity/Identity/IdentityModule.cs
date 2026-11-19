@@ -30,7 +30,7 @@ public static class IdentityModule
         services.AddIdentityCore<Account>(options =>
             {
                 // ASVS L1 6.2.1 and 6.2.5: at least 8 characters, no composition rules
-                // (research/authentication.md). Whether to require 15 without MFA is open (AU7).
+                // (research/authentication.md, D-035).
                 options.Password.RequiredLength = 8;
                 options.Password.RequireDigit = false;
                 options.Password.RequireLowercase = false;

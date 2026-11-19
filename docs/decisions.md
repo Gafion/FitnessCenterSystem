@@ -1046,3 +1046,26 @@ Owner accepted the orchestrator's recommendation. Signing up for a membership is
 ### Sources
 - [decisions.md](decisions.md) — D-015, D-032
 - [architecture.md](architecture.md) §4.2
+
+## D-035: Passwords need at least 8 characters
+- **Date:** 2026-11-19
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-013, D-026, AU7, FIT-47
+
+### Problem statement
+What is the minimum password length for email/password accounts, given that MFA is optional for members (D-013)?
+
+### Options considered
+From [authentication.md](research/authentication.md), finding 8 and the ASVS table:
+1. **8 characters, no composition rules.** OWASP ASVS L1 6.2.1 and 6.2.5.
+2. **15 characters when there is no MFA.** NIST SP 800-63B-4 §3.1.1.2 for password-only authentication [A3].
+
+### Decision
+**Option 1.** At least 8 characters, no composition rules, no rotation. Implemented in `IdentityModule` (FIT-47 slice A).
+
+### Reasoning
+Owner decision: keep the minimum at 8. The rest of the ASVS L1 password list (blocklist, allowing paste) is not covered by this decision. The ASVS level itself is still open (AU7).
+
+### Sources
+- [research/authentication.md](research/authentication.md) — finding 8, ASVS L1 table, [A3]
