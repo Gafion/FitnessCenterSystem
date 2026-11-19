@@ -868,3 +868,28 @@ Owner decision. ArchUnitNET, an architecture-test library, supports MSTest ([ser
 ### Sources
 - [research/tech-stack.md](research/tech-stack.md) — T13, T14
 - [research/service-architecture.md](research/service-architecture.md) — A15, A16
+
+## D-030: ArchUnitNET for architecture tests
+- **Date:** 2026-11-19
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-028, D-029, S11, FIT-32
+
+### Problem statement
+Which library do the architecture tests use to enforce module boundary rules 1–3 (D-028)?
+
+### Options considered
+1. **ArchUnitNET.** Supports MSTest [A16]. `ardalis/modulith` uses it for its per-module isolation test (SCAF-061).
+2. **NetArchTest.** Smaller API for rules like `ShouldNot().HaveDependencyOn(...)` [A15].
+
+The maintenance status of both is UNVERIFIED [A15][A16].
+
+### Decision
+**ArchUnitNET**, run from MSTest test projects (D-029).
+
+### Reasoning
+Owner accepted the orchestrator's recommendation: MSTest support and a modular-monolith example that uses it.
+
+### Sources
+- [research/service-architecture.md](research/service-architecture.md) — A15, A16
+- [research/scaffolding-for-agents.md](research/scaffolding-for-agents.md) — SCAF-061

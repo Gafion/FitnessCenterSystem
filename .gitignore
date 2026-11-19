@@ -32,3 +32,6 @@ appsettings.*.local.json
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Build artefact with a Windows-style path, written by the JavaScript project SDK
+obj\\*

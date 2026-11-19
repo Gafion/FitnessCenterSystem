@@ -28,6 +28,7 @@ Answers will be recorded here and, where they settle a medium/large decision, in
 | S6 | Social login (Google, Facebook, GitHub, other common providers) plus local email/password. Implementation pending research. | D-011 |
 | DB2 | Allowed: one transaction may span modules. | D-015 |
 | DB3 | Effectively not in v1 (shared transactions need one connection). | D-015 |
+| S11 | Tests: MSTest for C# (D-029), ArchUnitNET for architecture tests (D-030), Vitest + Playwright for the frontend (D-018). | D-029, D-030 |
 | AU5 | Own login: ASP.NET Core Identity, data in our PostgreSQL, Google as external provider. EU residency of an external store no longer applies. | D-026 |
 | B3 | No amounts owed in the core. Payments are 6 subscription types plus one-time payments for PT appointments; the payment service sends payment confirmations to the core. | D-019 |
 | SA6 / DB1 | Schema per module, foreign keys allowed between modules (data-model.md Option 2). | D-014 |
@@ -124,7 +125,6 @@ Unanswered questions about the center's operations are collected in [stakeholder
 | S8 | Hosting budget; own backups and patching (Hetzner ~€12/mo) or managed Postgres (Render/Fly/Azure)? (Relates to T2.) | tech-stack |
 | S9 | Do you or the center already use Microsoft 365/Azure? | tech-stack |
 | S10 | Member app: PWA acceptable (iOS push caveats), or native required? (Relates to M6.) | tech-stack |
-| S11 | Architecture-test library: NetArchTest or ArchUnitNET? (Frontend: Vitest, D-018. C# test framework: MSTest, D-029.) | service-architecture |
 | S12 | Will RFID/door integration need software running on-site at the gym? If so, .NET worker on Linux/Windows hardware? (Depends on meeting; D-003.) | tech-stack |
 
 ## Tier 3c — Service architecture (from wave 3: service-architecture; feeds D-008)

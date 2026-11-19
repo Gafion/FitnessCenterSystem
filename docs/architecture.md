@@ -54,6 +54,7 @@ flowchart LR
 | [D-027](decisions.md) | Scaffold starts from the official `aspire-ts-cs-starter` template |
 | [D-028](decisions.md) | Rules 1–3 and 6, CI gate and protected acceptance tests are enforced checks; rules 4–5 by review |
 | [D-029](decisions.md) | MSTest for C# tests |
+| [D-030](decisions.md) | ArchUnitNET for architecture tests |
 | [D-008](decisions.md) | **One deployed core application** (modular monolith), modules by business area, boundaries enforced by architecture tests; payment as a separate deployable later |
 | [D-009](decisions.md) | Aspire for local development |
 | [D-006](decisions.md) | No payment integration for now |
