@@ -14,7 +14,7 @@ builder.Services.AddOpenApi();
 
 // Modules (D-008, D-031).
 builder.Services.AddIdentityModule();
-builder.Services.AddMembersModule();
+builder.Services.AddMembersModule(builder.Configuration);
 
 var app = builder.Build();
 
@@ -57,3 +57,6 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
+// Lets the integration tests start the API with WebApplicationFactory<Program>.
+public partial class Program;

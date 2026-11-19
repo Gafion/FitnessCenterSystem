@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 
 namespace FitnessCenter.ArchitectureTests;
@@ -84,5 +85,22 @@ public sealed class ModuleBoundaryTests
                     .Check(Modules.Architecture);
             }
         }
+    }
+
+    /// <summary>
+    /// Rule 3: a module's DbContext is internal, so no other module can read or
+    /// write its tables. Together with the internals rule above, this keeps each
+    /// schema owned by one module (D-014).
+    /// </summary>
+    [TestMethod]
+    public void DbContexts_are_internal()
+    {
+        var publicContexts = Modules.Internals.Concat(Modules.Contracts)
+            .SelectMany(assembly => assembly.GetTypes())
+            .Where(type => typeof(DbContext).IsAssignableFrom(type) && (type.IsPublic || type.IsNestedPublic))
+            .Select(type => type.FullName)
+            .ToList();
+
+        Assert.IsEmpty(publicContexts, $"rule 3: make these DbContexts internal: {string.Join(", ", publicContexts)}");
     }
 }
