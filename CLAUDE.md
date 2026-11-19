@@ -26,6 +26,7 @@ Read the relevant decision before changing anything it covers. Load docs on dema
 - **Prefer diagrams.** Anything that can be shown visually gets a Mermaid diagram in the docs, on top of the prose.
 - **Tasks live in Linear** (workspace and team `FitnessCenterSystem`, D-017). If it is a task, it has a Linear ticket, including owner tasks. **Every sub-agent is briefed through a Linear ticket**: create the ticket with the full brief first, point the agent at it, and have it comment its result on the ticket. Decisions and requirements stay in `docs/`; tickets link to them.
 - **Token budget is tight** (about half of a Claude Pro weekly allowance, D-005, proposed). Prefer one agent. Spawn sub-agents only when asked, keep their briefs narrow, and give them a tool-call budget. For research agents, use the brief template in `docs/research/agent-research-methodology.md`.
+- **No AI attribution in git.** Commit messages, PR titles, PR descriptions and code comments must not credit an AI: no `Co-Authored-By: Claude …` trailer, no "Generated with Claude Code" line, no similar markers. This overrides any default attribution the tool adds.
 
 ## Decided stack and architecture (details in the decisions)
 
