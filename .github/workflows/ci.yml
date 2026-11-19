@@ -1,4 +1,6 @@
 # CI gate (D-010, D-028): every PR and every push to main must pass both jobs.
+# Branch protection on main requires the two job names below. Renaming a job
+# means updating the protection rule too, or merges will wait forever.
 name: CI
 
 on:
@@ -28,7 +30,8 @@ jobs:
       - name: Build (warnings as errors)
         run: dotnet build FitnessCenter.sln -warnaserror
 
-      - name: Test
+      # Integration tests start PostgreSQL with Testcontainers; ubuntu runners have Docker.
+      - name: Test (architecture, integration)
         run: dotnet test FitnessCenter.sln --no-build
 
   frontend:

@@ -432,7 +432,7 @@ FitnessCenterSystem/
 ├── tests/
 │   ├── Unit/                          per module, domain + application
 │   ├── FitnessCenter.ArchitectureTests/  boundary rules R1–R3 (ArchUnitNET, D-030)
-│   ├── IntegrationTests/              WebApplicationFactory + Testcontainers
+│   ├── FitnessCenter.IntegrationTests/  WebApplicationFactory + Testcontainers (PostgreSQL 18.6, same image as Aspire)
 │   └── E2E/                           Playwright
 ├── CLAUDE.md                          agent instructions (to be written)
 └── .github/workflows/                 CI
