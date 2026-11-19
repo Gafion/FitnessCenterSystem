@@ -55,6 +55,7 @@ flowchart LR
 | [D-028](decisions.md) | Rules 1–3 and 6, CI gate and protected acceptance tests are enforced checks; rules 4–5 by review |
 | [D-029](decisions.md) | MSTest for C# tests |
 | [D-030](decisions.md) | ArchUnitNET for architecture tests |
+| [D-031](decisions.md) | Two projects per module: Contracts + one project with layer folders |
 | [D-008](decisions.md) | **One deployed core application** (modular monolith), modules by business area, boundaries enforced by architecture tests; payment as a separate deployable later |
 | [D-009](decisions.md) | Aspire for local development |
 | [D-006](decisions.md) | No payment integration for now |
@@ -246,7 +247,7 @@ The "pure, clock-injected domain" follows the testing research: the riskiest log
 ```mermaid
 flowchart LR
   DEV["Agent or developer<br/>writes code"] --> BUILD["dotnet build<br/>-warnaserror<br/>nullable · analyzers"]
-  BUILD --> ARCH["Architecture tests<br/>NetArchTest / ArchUnitNET 🟡"]
+  BUILD --> ARCH["Architecture tests<br/>ArchUnitNET (D-030)"]
   ARCH --> TESTS["Unit · integration · E2E"]
   TESTS --> CI{"CI green?"}
   CI -->|no| FIX["Blocked:<br/>fix before merge"]
@@ -418,10 +419,9 @@ FitnessCenterSystem/
 │   └── src/api/                       ← generated OpenAPI client (never hand-edited)
 ├── src/
 │   ├── FitnessCenter.AppHost/         Aspire orchestration (dev only)        D-009
-│   ├── FitnessCenter.ServiceDefaults/ OpenTelemetry, health checks           D-009
-│   ├── FitnessCenter.Api/             host: startup, endpoint registration
+│   ├── FitnessCenter.Api/             host: startup, endpoint registration; service defaults (OpenTelemetry, health) in Extensions.cs  D-027
 │   ├── BuildingBlocks/                shared kernel (Money, Clock, Ids, Result)
-│   └── Modules/
+│   └── Modules/                       2 projects per module (D-031); BannedSymbols.txt bans the system clock
 │       ├── Identity/   {Identity.Contracts, Identity}
 │       ├── Members/    {Members.Contracts, Members}
 │       ├── Booking/    {Booking.Contracts, Booking}
@@ -431,7 +431,7 @@ FitnessCenterSystem/
 │   └── (later) Payments/ {Payments.Api, Payments.Contracts}               D-006
 ├── tests/
 │   ├── Unit/                          per module, domain + application
-│   ├── ArchitectureTests/             boundary rules R1–R3
+│   ├── FitnessCenter.ArchitectureTests/  boundary rules R1–R3 (ArchUnitNET, D-030)
 │   ├── IntegrationTests/              WebApplicationFactory + Testcontainers
 │   └── E2E/                           Playwright
 ├── CLAUDE.md                          agent instructions (to be written)
@@ -455,7 +455,7 @@ flowchart TB
   BI -. "❌ forbidden" .-> MI
 ```
 
-🟡 Whether each module is one project with folders for its layers, or several projects per layer, is open. More projects give stronger compile-time boundaries but more ceremony.
+Decided (D-031): two projects per module, `<Module>.Contracts` and `<Module>` with layer folders `Domain/`, `Application/`, `Infrastructure/`, `Endpoints/`.
 
 ---
 

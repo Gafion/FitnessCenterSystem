@@ -893,3 +893,42 @@ Owner accepted the orchestrator's recommendation: MSTest support and a modular-m
 ### Sources
 - [research/service-architecture.md](research/service-architecture.md) — A15, A16
 - [research/scaffolding-for-agents.md](research/scaffolding-for-agents.md) — SCAF-061
+
+## D-031: Two projects per module
+- **Date:** 2026-11-19
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-008, D-028, D-030, architecture.md §4.3 and §9
+
+### Problem statement
+Is each module one project with folders for its layers, or several projects per layer (architecture.md §9, open item)?
+
+### Options considered
+1. **Two projects per module:** `Members.Contracts` (public) and `Members` (Domain, Application, Infrastructure and Endpoints as folders).
+   - The compiler hides `internal` types across modules.
+   - Architecture tests enforce the layer rules inside a module.
+   - This is the common .NET layout ([tech-stack.md](research/tech-stack.md) §2.3).
+2. **Five projects per module,** one per layer.
+   - The compiler enforces the layer rules too.
+   - About 30 projects for 6 modules.
+3. **Three projects per module:** Contracts, Domain, and the rest.
+   - The compiler keeps Domain pure.
+
+### Decision
+**Option 1.** The layout is `src/Modules/<Module>/<Module>.Contracts` plus `src/Modules/<Module>/<Module>`, with layer folders `Domain/`, `Application/`, `Infrastructure/` and `Endpoints/`.
+
+```mermaid
+flowchart LR
+  API[FitnessCenter.Api] --> M[Members] & I[Identity]
+  M --> MC[[Members.Contracts]]
+  I --> IC[[Identity.Contracts]]
+  I -->|allowed| MC
+  I -. "forbidden (arch test)" .-> M
+```
+
+### Reasoning
+Owner accepted the orchestrator's recommendation. It means fewer projects for agents to copy, while the ArchUnitNET tests (D-030) still enforce the rules inside a module (D-028).
+
+### Sources
+- [research/tech-stack.md](research/tech-stack.md) §2.3
+- [architecture.md](architecture.md) §4.3, §9

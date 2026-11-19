@@ -1,14 +1,14 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var server = builder.AddDotnetProject("server", "../FitnessCenter.Server/FitnessCenter.Server.csproj")
+var api = builder.AddDotnetProject("api", "../FitnessCenter.Api/FitnessCenter.Api.csproj")
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints();
 
 var webfrontend = builder.AddViteApp("webfrontend", "../../frontend")
     .WithBun()
-    .WithReference(server)
-    .WaitFor(server);
+    .WithReference(api)
+    .WaitFor(api);
 
-server.PublishWithContainerFiles(webfrontend, "wwwroot");
+api.PublishWithContainerFiles(webfrontend, "wwwroot");
 
 builder.Build().Run();

@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MSTest" Version="4.5.3" />
+    <PackageReference Include="TngTech.ArchUnitNET" Version="0.13.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Identity\Identity\Identity.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\Identity.Contracts\Identity.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Members\Members\Members.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Members\Members.Contracts\Members.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\FitnessCenter.Api\FitnessCenter.Api.csproj" />
+  </ItemGroup>
+
+</Project>

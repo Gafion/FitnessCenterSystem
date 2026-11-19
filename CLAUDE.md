@@ -2,7 +2,7 @@
 
 Member and employee administration for **one real, single-site fitness center in Denmark** (~10 staff). It is also the owner's learning project, but a **working end product is the priority**.
 
-**Phase:** scaffolding (FIT-31). The starter template and frontend tooling exist; no features yet. The PRD waits on the owner's meeting with the center ([D-004](docs/decisions.md)).
+**Phase:** scaffolding (FIT-31). Template, frontend tooling, Identity + Members module shells and architecture tests exist; no features yet. The PRD waits on the owner's meeting with the center ([D-004](docs/decisions.md)).
 
 ## Where things are
 
@@ -47,7 +47,7 @@ Read the relevant decision before changing anything it covers. Load docs on dema
 5. The shared kernel stays tiny: value types and abstractions, no business rules.
 6. The frontend calls the API only through the generated OpenAPI client. Never hand-edit `frontend/src/api/`.
 
-Rules 1–3 are enforced by architecture tests and rule 6 by a CI diff check of the generated client (D-028). Rules 4–5 are checked in review. Don't weaken or skip these checks to make a build pass.
+Rules 1–3 are enforced by architecture tests (`tests/FitnessCenter.ArchitectureTests`), the system-clock ban by BannedApiAnalyzers (`src/Modules/BannedSymbols.txt`) and rule 6 by a CI diff check of the generated client (D-028). Rules 4–5 are checked in review. Don't weaken or skip these checks to make a build pass.
 
 ## Conventions
 
@@ -69,8 +69,8 @@ Rules 1–3 are enforced by architecture tests and rule 6 by a CI diff check of 
 ## Commands
 
 Run from the repo root.
-- `aspire run`: start everything locally (UNVERIFIED: not yet run on this machine)
-- `dotnet build FitnessCenter.sln -warnaserror`: backend build (verified). `dotnet test` once test projects exist
+- `aspire run`: start everything locally (verified). If it says "No frameworks were found", it picked up the wrong .NET install: set `DOTNET_ROOT` to the SDK's folder (on the owner's machine `~/.local/share/mise/dotnet-root`)
+- `dotnet build FitnessCenter.sln -warnaserror && dotnet test FitnessCenter.sln`: backend gate, including architecture tests (verified)
 - `bun run --cwd frontend lint && bun run --cwd frontend typecheck && bun run --cwd frontend test && bun run --cwd frontend knip`: frontend gate (verified)
 - `bun run --cwd frontend e2e`: Playwright E2E tests in Chromium; builds and serves the app itself (verified). First time: `bunx playwright install chromium` in `frontend/`
 - `bun run --cwd frontend format`: auto-fix formatting and imports (Biome)
