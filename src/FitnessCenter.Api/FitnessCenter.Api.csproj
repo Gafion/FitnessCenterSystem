@@ -16,4 +16,9 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.18.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.18.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Modules\Identity\Identity\Identity.csproj" />
+    <ProjectReference Include="..\Modules\Members\Members\Members.csproj" />
+  </ItemGroup>
 </Project>
