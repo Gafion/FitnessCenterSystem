@@ -1,48 +1,33 @@
+using FitnessCenter.Api.Database;
 using FitnessCenter.Modules.Identity;
 using FitnessCenter.Modules.Members;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add service defaults & Aspire client integrations.
+// Service discovery, resilience, health checks and OpenTelemetry (Extensions.cs).
 builder.AddServiceDefaults();
 
-// Add services to the container.
 builder.Services.AddProblemDetails();
-
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddFitnessCenterDatabase(builder.Configuration);
 
 // Modules (D-008, D-031).
 builder.Services.AddIdentityModule();
-builder.Services.AddMembersModule(builder.Configuration);
+builder.Services.AddMembersModule();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-app.UseExceptionHandler();
-
 if (app.Environment.IsDevelopment())
 {
+    // Production migrations wait for the deployment decision (SA4).
+    await app.Services.MigrateDatabaseAsync();
     app.MapOpenApi();
 }
 
-
-string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
-
-var api = app.MapGroup("/api");
-api.MapGet("weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.UseExceptionHandler();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapIdentityEndpoints();
 app.MapMembersEndpoints();
@@ -52,11 +37,6 @@ app.MapDefaultEndpoints();
 app.UseFileServer();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
 
 // Lets the integration tests start the API with WebApplicationFactory<Program>.
 public partial class Program;

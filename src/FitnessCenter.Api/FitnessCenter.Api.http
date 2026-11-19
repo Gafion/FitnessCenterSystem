@@ -1,6 +1,10 @@
 @Api_HostAddress = http://localhost:5398
 
-GET {{Api_HostAddress}}/api/weatherforecast/
-Accept: application/json
+### Log in (synthetic test account only)
+POST {{Api_HostAddress}}/api/identity/login
+Content-Type: application/json
 
-###
+{ "email": "test.member@example.com", "password": "correct horse battery" }
+
+### Who am I?
+GET {{Api_HostAddress}}/api/identity/me

@@ -56,6 +56,10 @@ flowchart LR
 | [D-029](decisions.md) | MSTest for C# tests |
 | [D-030](decisions.md) | ArchUnitNET for architecture tests |
 | [D-031](decisions.md) | Two projects per module: Contracts + one project with layer folders |
+| [D-032](decisions.md) | Signup slice: name/email/password, email + Google login, one placeholder membership awaiting payment, consent records |
+| [D-033](decisions.md) | Generated API client: openapi-typescript + openapi-fetch |
+| [D-034](decisions.md) | Members owns signup and calls Identity.Contracts; one transaction |
+| [D-035](decisions.md) | Passwords: at least 8 characters, no composition rules |
 | [D-008](decisions.md) | **One deployed core application** (modular monolith), modules by business area, boundaries enforced by architecture tests; payment as a separate deployable later |
 | [D-009](decisions.md) | Aspire for local development |
 | [D-006](decisions.md) | No payment integration for now |
