@@ -1,3 +1,5 @@
+using FitnessCenter.Modules.Members.Application;
+using FitnessCenter.Modules.Members.Endpoints;
 using FitnessCenter.Modules.Members.Infrastructure;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +19,9 @@ public static class MembersModule
         // The shared, request-scoped connection lets one transaction span modules (D-015).
         services.AddDbContext<MembersDbContext>((provider, options) =>
             options.UseNpgsql(provider.GetRequiredService<NpgsqlConnection>(), npgsql =>
-                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", MembersDbContext.Schema)));
+                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", MembersDbContext.Schema).UseNodaTime()));
+
+        services.AddScoped<SignupHandler>();
 
         services.AddHealthChecks().AddDbContextCheck<MembersDbContext>("members-db");
 
@@ -26,7 +30,7 @@ public static class MembersModule
 
     public static IEndpointRouteBuilder MapMembersEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        return endpoints;
+        return endpoints.MapSignupEndpoints();
     }
 
     /// <summary>Applies this module's migrations. The host calls it at startup in Development.</summary>

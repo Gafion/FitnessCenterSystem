@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\src\Modules\Members\Members\Members.csproj" />
     <ProjectReference Include="..\..\src\Modules\Members\Members.Contracts\Members.Contracts.csproj" />
     <ProjectReference Include="..\..\src\FitnessCenter.Api\FitnessCenter.Api.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks\FitnessCenter.SharedKernel\FitnessCenter.SharedKernel.csproj" />
   </ItemGroup>
 
 </Project>

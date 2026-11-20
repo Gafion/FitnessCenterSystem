@@ -10,13 +10,16 @@ public interface IAccountService
     /// Creates an email/password account. Runs inside the caller's transaction
     /// when there is one, so a failed signup leaves no account behind (D-015).
     /// </summary>
-    Task<CreateAccountResult> CreateLocalAccountAsync(string email, string password, CancellationToken cancellationToken);
+    Task<CreateAccountResult> CreateLocalAccountAsync(NewLocalAccount account, CancellationToken cancellationToken);
 
     /// <summary>Signs the account in with the auth cookie for the current HTTP request.</summary>
     Task SignInAsync(AccountId accountId, CancellationToken cancellationToken);
 }
 
 public readonly record struct AccountId(Guid Value);
+
+/// <summary>The person's name lives on the account, so staff and members share one identity (data-model.md).</summary>
+public sealed record NewLocalAccount(string Email, string Password, string FirstName, string LastName);
 
 public sealed record CreateAccountResult(AccountId? AccountId, IReadOnlyList<AccountError> Errors)
 {

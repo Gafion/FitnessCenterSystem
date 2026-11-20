@@ -103,4 +103,17 @@ public sealed class ModuleBoundaryTests
 
         Assert.IsEmpty(publicContexts, $"rule 3: make these DbContexts internal: {string.Join(", ", publicContexts)}");
     }
+
+    /// <summary>Rule 5: the shared kernel is shared by everyone, so it can't know about any module.</summary>
+    [TestMethod]
+    public void Shared_kernel_does_not_depend_on_any_module()
+    {
+        foreach (var module in Modules.Internals.Concat(Modules.Contracts))
+        {
+            Types().That().ResideInAssembly(Modules.SharedKernel)
+                .Should().NotDependOnAny(Types().That().ResideInAssembly(module))
+                .Because("rule 5: the shared kernel holds only value types and abstractions")
+                .Check(Modules.Architecture);
+        }
+    }
 }

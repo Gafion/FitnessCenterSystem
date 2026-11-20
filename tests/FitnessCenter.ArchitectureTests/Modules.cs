@@ -20,8 +20,10 @@ internal static class Modules
     public static IReadOnlyList<Assembly> Contracts { get; } =
         Names.Select(name => Assembly.Load($"{name}.Contracts")).ToList();
 
+    public static Assembly SharedKernel { get; } = typeof(FitnessCenter.SharedKernel.Money).Assembly;
+
     public static Architecture Architecture { get; } =
-        new ArchLoader().LoadAssemblies([.. Internals, .. Contracts]).Build();
+        new ArchLoader().LoadAssemblies([.. Internals, .. Contracts, SharedKernel]).Build();
 
     public static string RootNamespace(string module) => $"FitnessCenter.Modules.{module}";
 

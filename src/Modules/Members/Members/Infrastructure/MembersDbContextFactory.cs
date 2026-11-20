@@ -10,7 +10,7 @@ internal sealed class MembersDbContextFactory : IDesignTimeDbContextFactory<Memb
     {
         var options = new DbContextOptionsBuilder<MembersDbContext>()
             .UseNpgsql("Host=design-time-only", npgsql =>
-                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", MembersDbContext.Schema))
+                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", MembersDbContext.Schema).UseNodaTime())
             .Options;
         return new MembersDbContext(options);
     }

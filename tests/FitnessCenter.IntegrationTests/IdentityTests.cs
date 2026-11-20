@@ -54,7 +54,8 @@ public sealed class IdentityTests
         await using var scope = factory.Services.CreateAsyncScope();
         var accounts = scope.ServiceProvider.GetRequiredService<IAccountService>();
 
-        var result = await accounts.CreateLocalAccountAsync(SyntheticEmail(), "short", CancellationToken.None);
+        var result = await accounts.CreateLocalAccountAsync(
+            new NewLocalAccount(SyntheticEmail(), "short", "Test", "Member"), CancellationToken.None);
 
         Assert.IsFalse(result.Succeeded);
         Assert.IsTrue(result.Errors.Any(e => e.Code == "PasswordTooShort"), string.Join(", ", result.Errors.Select(e => e.Code)));
@@ -66,7 +67,8 @@ public sealed class IdentityTests
         var accounts = scope.ServiceProvider.GetRequiredService<IAccountService>();
         var email = SyntheticEmail();
 
-        var result = await accounts.CreateLocalAccountAsync(email, password, CancellationToken.None);
+        var result = await accounts.CreateLocalAccountAsync(
+            new NewLocalAccount(email, password, "Test", "Member"), CancellationToken.None);
         Assert.IsTrue(result.Succeeded, string.Join(", ", result.Errors.Select(e => e.Code)));
         return email;
     }

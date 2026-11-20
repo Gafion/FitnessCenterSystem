@@ -16,14 +16,14 @@ internal static class AccountEndpoints
 
         group.MapPost("/login", LoginAsync).WithName("Login");
         group.MapPost("/logout", LogoutAsync).WithName("Logout").RequireAuthorization();
-        group.MapGet("/me", GetMe).WithName("GetCurrentAccount").RequireAuthorization();
+        group.MapGet("/me", GetMeAsync).WithName("GetCurrentAccount").RequireAuthorization();
 
         return endpoints;
     }
 
     internal sealed record LoginRequest(string Email, string Password);
 
-    internal sealed record CurrentAccount(Guid AccountId, string Email);
+    internal sealed record CurrentAccount(Guid AccountId, string Email, string FirstName, string LastName);
 
     private static async Task<Results<NoContent, UnauthorizedHttpResult>> LoginAsync(
         LoginRequest request, SignInManager<Account> signIn)
@@ -42,10 +42,12 @@ internal static class AccountEndpoints
         return TypedResults.NoContent();
     }
 
-    private static Ok<CurrentAccount> GetMe(ClaimsPrincipal user)
+    private static async Task<Results<Ok<CurrentAccount>, UnauthorizedHttpResult>> GetMeAsync(
+        ClaimsPrincipal user, UserManager<Account> users)
     {
-        var id = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var email = user.FindFirstValue(ClaimTypes.Email) ?? user.FindFirstValue(ClaimTypes.Name)!;
-        return TypedResults.Ok(new CurrentAccount(id, email));
+        var account = await users.GetUserAsync(user);
+        return account is null
+            ? TypedResults.Unauthorized()
+            : TypedResults.Ok(new CurrentAccount(account.Id, account.Email!, account.FirstName, account.LastName));
     }
 }
