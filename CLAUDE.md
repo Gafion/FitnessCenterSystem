@@ -36,7 +36,7 @@ Read the relevant decision before changing anything it covers. Load docs on dema
 - **Database:** PostgreSQL, **one schema per module**. Foreign keys between modules are allowed, and one transaction may span modules (D-014, D-015).
 - **Payments:** out of scope for now. They come later as a separate deployable (D-006).
 - **Login:** Google + local email/password. No Facebook. MFA is mandatory for staff and optional for members. Built with ASP.NET Core Identity, data in our PostgreSQL (D-011, D-013, D-026).
-- **Testing:** unit, integration, E2E, **performance** and anything else automatable, all run in CI. MSTest for C# (D-029), Vitest + Playwright for the frontend (D-018). ArchUnitNET for architecture tests (D-030). The performance tool is open (D-010, D-016).
+- **Testing:** unit, integration, E2E, **performance** and anything else automatable, all run in CI. MSTest for C# (D-029) with CsCheck for property tests (D-036), Vitest + Playwright for the frontend (D-018). ArchUnitNET for architecture tests (D-030). The performance tool is open (D-010, D-016).
 
 ## Module boundary rules (architecture.md §4.2)
 
