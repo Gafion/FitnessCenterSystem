@@ -39,7 +39,7 @@ Dashed boxes are planned and not built yet ([§7](#7-planned-not-built)).
 | Build-time analyzer | [`src/Modules/BannedSymbols.txt`](../src/Modules/BannedSymbols.txt), wired in [`src/Modules/Directory.Build.props`](../src/Modules/Directory.Build.props) | No reading the system clock in module code | Build fails under `-warnaserror` |
 | Frontend unit/component | `frontend/src/**/*.test.{ts,tsx}` ([`vitest.config.ts`](../frontend/vitest.config.ts)) | Components and helpers, e.g. `money.test.ts`, `signup-form.test.tsx`, `schedule.test.tsx` | jsdom; Testing Library ([`src/test/setup.ts`](../frontend/src/test/setup.ts)) |
 | Frontend E2E | [`frontend/e2e/`](../frontend/e2e) ([`playwright.config.ts`](../frontend/playwright.config.ts)) | Landing, signup, Google login, classes pages in Chromium | Built SPA served by `vite preview`; **the API is mocked** with `page.route` (e.g. `signup.spec.ts`, `classes.spec.ts`) |
-| Full-stack E2E | [`frontend/e2e-full/`](../frontend/e2e-full) ([`playwright.full.config.ts`](../frontend/playwright.full.config.ts)) | Signup → confirmation link from Mailpit → login → account page; book a class → spots go down → cancel → spots go back up (D-043) | All real: the API in Development, PostgreSQL, Mailpit. Uses the seeded development schedule (`Booking:SeedDevelopmentSchedule`). Nothing mocked, except that Google login is off |
+| Full-stack E2E | [`frontend/e2e-full/`](../frontend/e2e-full) ([`playwright.full.config.ts`](../frontend/playwright.full.config.ts)) | Signup → confirmation link from Mailpit → login → account page; book a class → spots go down → cancel → spots go back up; swipe your own card at the simulated reader → welcome (D-043) | All real: the API in Development, PostgreSQL, Mailpit. Uses the seeded development schedule (`Booking:SeedDevelopmentSchedule`) and the simulated card reader (`Simulation:Enabled`, on in Development). Nothing mocked, except that Google login is off |
 
 Notes on how the integration tests run:
 - One PostgreSQL container and one Mailpit container serve the whole run. They start together in `[AssemblyInitialize]`, and the API migrates the database once there, so parallel tests don't race on migrations ([`PostgresDatabase.cs`](../tests/FitnessCenter.IntegrationTests/PostgresDatabase.cs)).
@@ -49,7 +49,7 @@ Notes on how the integration tests run:
 
 Notes on how the full-stack E2E tests run:
 - The config starts nothing. It reads `E2E_BASE_URL` (the frontend, with `/api` reaching the API; default `http://localhost:5173`, Aspire's port) and `MAILPIT_URL` (Mailpit's web address, required). So the same suite runs in CI and against `aspire run`.
-- Each test signs up its own synthetic member (`e2e-…@example.com`). Shared steps are in [`member.ts`](../frontend/e2e-full/member.ts); a new flow (e.g. check-in) starts from `signUpAndLogIn`.
+- Each test signs up its own synthetic member (`e2e-…@example.com`). Shared steps are in [`member.ts`](../frontend/e2e-full/member.ts); a new flow starts from `signUpAndLogIn`.
 - The database is not reset between runs. The booking test picks the latest class that still has a spot, reads its count and checks that it moves by one, so earlier bookings don't matter. Tests run one at a time (`workers: 1`) so they don't change each other's counts.
 - The test opens the confirmation link's path and query on its own base URL, whatever host the API put in the link.
 
@@ -159,7 +159,6 @@ This follows what the repo does today (§1). The research advice is the same: pu
 
 | What | Status | Source |
 |---|---|---|
-| **Full-stack E2E: check-in flow.** Signup, login and booking are built (§1); check-in follows once the Access module is merged (FIT-56) | Decided, partly built | D-043 |
 | **Performance tests:** load and response-time tests, on demand and in CI | Required by D-016. Tool, schedule and environment undecided (FIT-39, Q14). Tests for booking and check-in: FIT-60 | D-016 |
 | **Definition of Done:** what evidence a task must produce | Open | W15 in [open-questions.md](open-questions.md) |
 | Test protection (who writes acceptance tests, how edits are blocked) | Open | Q2, Q3; D-028 |

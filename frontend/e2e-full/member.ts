@@ -1,6 +1,6 @@
 import { type APIRequestContext, expect, type Page } from '@playwright/test';
 
-// Steps that several full-stack flows share. A new flow (e.g. check-in) starts from
+// Steps that several full-stack flows share. A new flow starts from
 // `signUpAndLogIn` and gets a fresh, confirmed, logged-in member.
 
 export type Member = { firstName: string; email: string; password: string };
