@@ -146,6 +146,19 @@ public sealed class AccessTests
         Assert.AreEqual(HttpStatusCode.NotFound, swipeMine.StatusCode);
     }
 
+    /// <summary>D-041: the setting is checked before the login, so nobody can tell the reader exists.</summary>
+    [TestMethod]
+    public async Task With_the_simulation_off_the_reader_is_not_found_without_a_login_either()
+    {
+        await using var factory = new ApiFactory();
+        await using var off = factory.WithWebHostBuilder(builder => builder.UseSetting("Simulation:Enabled", "false"));
+        using var client = off.CreateClient();
+
+        using var swipe = await client.PostAsJsonAsync(SwipeUri, new { cardUid = "SIM-00000000000000" });
+
+        Assert.AreEqual(HttpStatusCode.NotFound, swipe.StatusCode);
+    }
+
     private static async Task<int> AttendancesAsync(ApiFactory factory, string uid, Instant at)
     {
         await using var scope = factory.Services.CreateAsyncScope();

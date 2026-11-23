@@ -23,11 +23,11 @@ internal static class AccessEndpoints
             .Produces(StatusCodes.Status401Unauthorized);
 
         // Any logged-in account may use the simulated reader, but only while the setting is on (D-041).
+        // The setting is checked before the login, so with it off the reader doesn't exist for anyone.
         // There is no endpoint for a real reader yet: how a reader proves who it is waits for the
         // hardware (FIT-33). It will call the same CheckInHandler.
         var reader = group.MapGroup("/simulation/reader")
-            .RequireAuthorization()
-            .AddEndpointFilter(OnlyWhenSimulationIsOn);
+            .AddEndpointFilter(SimulationOnAndLoggedIn);
         SimulationResponses(reader.MapGet("", () => TypedResults.NoContent()).WithName("GetSimulatedReader"));
         SimulationResponses(reader.MapPost("/swipes", SwipeAsync).WithName("SwipeCard"));
         SimulationResponses(reader.MapPost("/swipes/my-card", SwipeMyCardAsync).WithName("SwipeMyCard"));
@@ -92,16 +92,20 @@ internal static class AccessEndpoints
         result.FirstName,
         result.At.ToDateTimeOffset());
 
-    private static async ValueTask<object?> OnlyWhenSimulationIsOn(
+    /// <summary>D-041: 404 while the simulation is off, then 401 without a login.</summary>
+    private static async ValueTask<object?> SimulationOnAndLoggedIn(
         EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
-        var configuration = context.HttpContext.RequestServices.GetRequiredService<IConfiguration>();
-        return configuration.GetValue(SimulationSetting, defaultValue: false)
-            ? await next(context)
-            : TypedResults.NotFound();
+        var http = context.HttpContext;
+        if (!http.RequestServices.GetRequiredService<IConfiguration>().GetValue(SimulationSetting, defaultValue: false))
+        {
+            return TypedResults.NotFound();
+        }
+
+        return http.User.Identity?.IsAuthenticated == true ? await next(context) : TypedResults.Unauthorized();
     }
 
-    /// <summary>The logged-in account (the Identity cookie's user id). Only called behind RequireAuthorization.</summary>
+    /// <summary>The logged-in account (the Identity cookie's user id). Only called once a login is required.</summary>
     private static Guid AccountIdOf(ClaimsPrincipal user) =>
         Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 }
