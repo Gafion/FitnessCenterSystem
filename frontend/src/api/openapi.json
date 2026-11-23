@@ -318,6 +318,32 @@
         }
       }
     },
+    "/api/members/me": {
+      "get": {
+        "tags": [
+          "Members"
+        ],
+        "operationId": "GetMyMembership",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyMembership"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/api/members/me/payments": {
       "get": {
         "tags": [
@@ -399,6 +425,32 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/booking/my-bookings": {
+      "get": {
+        "tags": [
+          "Booking"
+        ],
+        "operationId": "GetMyBookings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyBooking"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
           }
         }
       }
@@ -743,6 +795,41 @@
           }
         }
       },
+      "MyBooking": {
+        "required": [
+          "classId",
+          "className",
+          "instructorName",
+          "startsAt",
+          "endsAt",
+          "cancelUntil"
+        ],
+        "type": "object",
+        "properties": {
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "className": {
+            "type": "string"
+          },
+          "instructorName": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancelUntil": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "MyCard": {
         "required": [
           "uid"
@@ -751,6 +838,39 @@
         "properties": {
           "uid": {
             "type": "string"
+          }
+        }
+      },
+      "MyMembership": {
+        "required": [
+          "membershipType",
+          "monthlyPriceOre",
+          "status",
+          "memberSince",
+          "paidUntil"
+        ],
+        "type": "object",
+        "properties": {
+          "membershipType": {
+            "type": "string"
+          },
+          "monthlyPriceOre": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "memberSince": {
+            "type": "string",
+            "format": "date"
+          },
+          "paidUntil": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         }
       },

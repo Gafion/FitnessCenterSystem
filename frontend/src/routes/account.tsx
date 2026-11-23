@@ -4,15 +4,21 @@ import {
   redirect,
   useNavigate,
 } from '@tanstack/react-router';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ErrorMessage } from '@/features/account/error-message';
 import { GoogleButton } from '@/features/account/google-button';
+import { MyBookings } from '@/features/classes/my-bookings';
+import { MembershipSummary } from '@/features/membership/membership-summary';
 import { PaymentHistory } from '@/features/payments/payment-history';
 import {
   api,
   errorSearch,
   getLoginOptions,
+  getMyBookings,
+  getMyMembership,
   getMyPayments,
   googleLinkUrl,
   isSimulationEnabled,
@@ -28,18 +34,23 @@ export const Route = createFileRoute('/account')({
     if (!data) {
       throw new Error('Could not load the account.');
     }
-    const [options, card, payments, simulation] = await Promise.all([
-      getLoginOptions(),
-      api.GET('/api/access/cards/mine'),
-      // A failed payments call must not take the rest of the account page with it.
-      getMyPayments().catch(() => 'failed' as const),
-      // One flag for every simulated page (D-041).
-      isSimulationEnabled().catch(() => false),
-    ]);
+    // A failed call for one section must not take the rest of the account page with it.
+    const [options, card, membership, bookings, payments, simulation] =
+      await Promise.all([
+        getLoginOptions(),
+        api.GET('/api/access/cards/mine'),
+        getMyMembership().catch(() => 'failed' as const),
+        getMyBookings().catch(() => 'failed' as const),
+        getMyPayments().catch(() => 'failed' as const),
+        // One flag for every simulated page (D-041).
+        isSimulationEnabled().catch(() => false),
+      ]);
     return {
       account: data,
       options,
       cardUid: card.data?.uid ?? null,
+      membership,
+      bookings,
       payments: payments === 'logged-out' ? null : payments,
       simulation,
     };
@@ -47,10 +58,43 @@ export const Route = createFileRoute('/account')({
   component: AccountPage,
 });
 
+/** One titled section of the account page. */
+function AccountSection({
+  id,
+  title,
+  children,
+}: {
+  id: string;
+  title?: string;
+  children: ReactNode;
+}) {
+  const card = (
+    <Card className="h-full text-base">
+      {title && (
+        <CardHeader>
+          <h2 id={id} className="text-xl font-semibold">
+            {title}
+          </h2>
+        </CardHeader>
+      )}
+      <CardContent className="flex flex-col gap-3">{children}</CardContent>
+    </Card>
+  );
+  // Without a title the content brings its own section and heading.
+  return title ? <section aria-labelledby={id}>{card}</section> : card;
+}
+
 function AccountPage() {
   const { t } = useTranslation();
-  const { account, options, cardUid, payments, simulation } =
-    Route.useLoaderData();
+  const {
+    account,
+    options,
+    cardUid,
+    membership,
+    bookings,
+    payments,
+    simulation,
+  } = Route.useLoaderData();
   const { error } = Route.useSearch();
   const navigate = useNavigate();
 
@@ -60,47 +104,91 @@ function AccountPage() {
   }
 
   return (
-    <section className="mx-auto flex max-w-md flex-col gap-6 p-8">
+    <div className="mx-auto flex max-w-4xl flex-col gap-6 p-4 sm:p-8">
       <h1 className="text-3xl font-semibold">
         {t('account.welcome', { name: account.firstName })}
       </h1>
-      <p className="text-muted-foreground">{account.email}</p>
-      {cardUid ? (
-        <p>
-          {t('account.card')} <code className="font-mono">{cardUid}</code>
-        </p>
-      ) : (
-        <p>{t('account.noCard')}</p>
-      )}
       <ErrorMessage code={error} />
-      {account.hasGoogleLogin ? (
-        <p className="text-sm">{t('account.googleConnected')}</p>
-      ) : (
-        options.google && (
-          <GoogleButton href={googleLinkUrl} label="account.connectGoogle" />
-        )
-      )}
-      <Button asChild className="self-start">
-        <Link to="/classes">{t('account.classes')}</Link>
-      </Button>
-      {payments === 'failed' ? (
-        <p className="text-sm text-destructive">{t('payments.failed')}</p>
-      ) : (
-        payments && <PaymentHistory payments={payments} />
-      )}
-      {simulation && (
-        <Button asChild variant="outline" className="self-start">
-          <Link to="/simulation/check-in">{t('account.checkIn')}</Link>
-        </Button>
-      )}
-      {payments && payments !== 'failed' && simulation && (
-        <Link to="/simulation/payments" className="self-start underline">
-          {t('account.simulatedPayments')}
-        </Link>
-      )}
-      <Button variant="outline" onClick={logOut} className="self-start">
-        {t('account.logout')}
-      </Button>
-    </section>
+      <div className="grid gap-6 md:grid-cols-2">
+        <AccountSection id="profile" title={t('account.sections.profile')}>
+          <p>
+            {account.firstName} {account.lastName}
+          </p>
+          <p className="text-muted-foreground">{account.email}</p>
+          {account.hasGoogleLogin ? (
+            <p className="text-sm">{t('account.googleConnected')}</p>
+          ) : (
+            options.google && (
+              <GoogleButton
+                href={googleLinkUrl}
+                label="account.connectGoogle"
+              />
+            )
+          )}
+          <Button variant="outline" onClick={logOut} className="self-start">
+            {t('account.logout')}
+          </Button>
+        </AccountSection>
+
+        <AccountSection
+          id="membership"
+          title={t('account.sections.membership')}
+        >
+          {membership === 'failed' ? (
+            <p className="text-sm text-destructive">
+              {t('account.membershipFailed')}
+            </p>
+          ) : membership ? (
+            <MembershipSummary membership={membership} />
+          ) : (
+            <p className="text-muted-foreground">{t('account.noMembership')}</p>
+          )}
+        </AccountSection>
+
+        <AccountSection id="bookings" title={t('account.sections.bookings')}>
+          {bookings === 'failed' ? (
+            <p className="text-sm text-destructive">
+              {t('account.bookingsFailed')}
+            </p>
+          ) : (
+            <MyBookings bookings={bookings} />
+          )}
+          <Button asChild variant="outline" className="self-start">
+            <Link to="/classes">{t('account.classes')}</Link>
+          </Button>
+        </AccountSection>
+
+        <AccountSection id="card" title={t('account.sections.card')}>
+          {cardUid ? (
+            <p>
+              {t('account.card')} <code className="font-mono">{cardUid}</code>
+            </p>
+          ) : (
+            <p>{t('account.noCard')}</p>
+          )}
+          {simulation && (
+            <Button asChild variant="outline" className="self-start">
+              <Link to="/simulation/check-in">{t('account.checkIn')}</Link>
+            </Button>
+          )}
+        </AccountSection>
+
+        {/* PaymentHistory brings its own "Payments" heading. */}
+        <AccountSection id="payments">
+          {payments === 'failed' ? (
+            <p className="text-sm text-destructive">{t('payments.failed')}</p>
+          ) : payments ? (
+            <PaymentHistory payments={payments} />
+          ) : (
+            <p className="text-muted-foreground">{t('account.noMembership')}</p>
+          )}
+          {payments && payments !== 'failed' && simulation && (
+            <Link to="/simulation/payments" className="self-start underline">
+              {t('account.simulatedPayments')}
+            </Link>
+          )}
+        </AccountSection>
+      </div>
+    </div>
   );
 }

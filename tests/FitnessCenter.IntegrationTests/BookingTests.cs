@@ -107,6 +107,70 @@ public sealed class BookingTests
         Assert.AreEqual(HttpStatusCode.NotFound, book.StatusCode);
     }
 
+    [TestMethod]
+    public async Task My_bookings_lists_booked_classes_soonest_first_and_drops_cancelled_ones()
+    {
+        await using var factory = new ApiFactory();
+        var later = await ScheduleClassAsync(factory, startsIn: Duration.FromDays(3), capacity: 4);
+        var sooner = await ScheduleClassAsync(factory, startsIn: Duration.FromDays(1), capacity: 4);
+        var cancelled = await ScheduleClassAsync(factory, startsIn: Duration.FromDays(2), capacity: 4);
+        var notBooked = await ScheduleClassAsync(factory, startsIn: Duration.FromDays(2), capacity: 4);
+        using var client = factory.CreateClient();
+        using var other = factory.CreateClient();
+        await SignUpConfirmedAndLoggedInAsync(client, SyntheticEmail());
+        await SignUpConfirmedAndLoggedInAsync(other, SyntheticEmail());
+        foreach (var classId in new[] { later, sooner, cancelled })
+        {
+            using var book = await client.PostAsync(BookingUri(classId), null);
+            Assert.AreEqual(HttpStatusCode.NoContent, book.StatusCode, await book.Content.ReadAsStringAsync());
+        }
+
+        using (await other.PostAsync(BookingUri(notBooked), null))
+        {
+        }
+
+        using (await client.DeleteAsync(BookingUri(cancelled)))
+        {
+        }
+
+        var mine = (await client.GetFromJsonAsync<MyBooking[]>("/api/booking/my-bookings"))!;
+
+        CollectionAssert.AreEqual(new[] { sooner, later }, mine.Select(b => b.ClassId).ToArray());
+        Assert.AreEqual("Spinning", mine[0].ClassName);
+        Assert.AreEqual("Test Instructor", mine[0].InstructorName);
+        Assert.AreEqual(mine[0].StartsAt.AddHours(-12), mine[0].CancelUntil);
+    }
+
+    [TestMethod]
+    public async Task My_bookings_leaves_out_classes_that_have_started()
+    {
+        var clock = new MovableClock(Instant.FromUtc(2026, 11, 23, 12, 0));
+        await using var factory = new ApiFactory(services => services.AddSingleton<IClock>(clock));
+        var classId = await ScheduleClassAsync(factory, startsIn: Duration.FromHours(2), capacity: 4);
+        using var client = factory.CreateClient();
+        await SignUpConfirmedAndLoggedInAsync(client, SyntheticEmail());
+        using (var book = await client.PostAsync(BookingUri(classId), null))
+        {
+            Assert.AreEqual(HttpStatusCode.NoContent, book.StatusCode);
+        }
+
+        Assert.HasCount(1, (await client.GetFromJsonAsync<MyBooking[]>("/api/booking/my-bookings"))!);
+        clock.Now += Duration.FromHours(2);
+
+        Assert.IsEmpty((await client.GetFromJsonAsync<MyBooking[]>("/api/booking/my-bookings"))!);
+    }
+
+    [TestMethod]
+    public async Task My_bookings_needs_a_login()
+    {
+        await using var factory = new ApiFactory();
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync("/api/booking/my-bookings");
+
+        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     /// <summary>
     /// Many members try for the last spots at the same moment: exactly as many bookings
     /// succeed as there are spots (the row lock in BookingHandler, D-039).
@@ -162,4 +226,14 @@ public sealed class BookingTests
     }
 
     private sealed record ScheduleEntry(Guid ClassId, string ClassName, int SpotsLeft, bool BookedByMe);
+
+    private sealed record MyBooking(
+        Guid ClassId, string ClassName, string InstructorName, DateTimeOffset StartsAt, DateTimeOffset EndsAt, DateTimeOffset CancelUntil);
+
+    private sealed class MovableClock(Instant now) : IClock
+    {
+        public Instant Now { get; set; } = now;
+
+        public Instant GetCurrentInstant() => Now;
+    }
 }
