@@ -21,6 +21,10 @@ public sealed class ApiFactory(Action<IServiceCollection>? configureServices = n
         // client. Tests never talk to Google; they register FakeGoogle when they need it.
         builder.UseSetting("Authentication:Google:ClientId", "");
 
+        // Tests schedule the classes they need (BookingTests); the development schedule
+        // would only add noise and read the clock at startup, which some tests make fail.
+        builder.UseSetting("Booking:SeedDevelopmentSchedule", "false");
+
         builder.UseSetting("Email:Smtp:Host", TestMailbox.SmtpHost);
         builder.UseSetting("Email:Smtp:Port", TestMailbox.SmtpMappedPort.ToString(CultureInfo.InvariantCulture));
 

@@ -23,8 +23,10 @@ public static class PostgresDatabase
         _container = new PostgreSqlBuilder("docker.io/library/postgres:18.6")
             .WithDatabase("fitnesscenter")
             .Build();
-        await _container.StartAsync();
-        await TestMailbox.StartAsync();
+
+        // Both containers start at the same time; PostgreSQL alone takes most of the
+        // fixture's time (about 12 s of 20 s locally), so the mailbox waits for nothing.
+        await Task.WhenAll(_container.StartAsync(), TestMailbox.StartAsync());
 
         // Tests run in parallel and each one starts the API, which migrates at startup in
         // Development. Migrating once here, first, stops those startups racing each other.

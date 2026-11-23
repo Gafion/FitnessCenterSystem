@@ -22,6 +22,8 @@
     <ProjectReference Include="..\..\src\Modules\Identity\Identity.Contracts\Identity.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Modules\Members\Members\Members.csproj" />
     <ProjectReference Include="..\..\src\Modules\Members\Members.Contracts\Members.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Booking\Booking\Booking.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Booking\Booking.Contracts\Booking.Contracts.csproj" />
     <ProjectReference Include="..\..\src\FitnessCenter.Api\FitnessCenter.Api.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\FitnessCenter.SharedKernel\FitnessCenter.SharedKernel.csproj" />
   </ItemGroup>

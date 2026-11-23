@@ -2,7 +2,7 @@
 
 Member and employee administration for **one real, single-site fitness center in Denmark** (~10 staff). It is also the owner's learning project, but a **working end product is the priority**.
 
-**Phase:** scaffolding (FIT-31). Template, frontend tooling, Identity + Members modules, PostgreSQL, architecture and integration tests, and CI exist. The first feature, signup and login with email/password or Google (FIT-47), is being built. `main` is protected: a PR merges only when CI passes. The PRD waits on the owner's meeting with the center ([D-004](docs/decisions.md)).
+**Phase:** scaffolding (FIT-31). Template, frontend tooling, Identity, Members and Booking modules, PostgreSQL, architecture and integration tests, and CI exist. Signup and login with email/password or Google (FIT-47) is built; class booking (FIT-48, D-039) is being built. `main` is protected: a PR merges only when CI passes. The PRD waits on the owner's meeting with the center ([D-004](docs/decisions.md)).
 
 ## Where things are
 
