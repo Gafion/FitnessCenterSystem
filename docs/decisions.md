@@ -1235,3 +1235,188 @@ Owner decision (FIT-48). The owner's reasoning for option 2: class booking needs
 - [research/fitness-domain-operations.md](research/fitness-domain-operations.md) questions 35–36 (open)
 - D-022 (MVP scope: no waitlist, no penalties), D-014 (cross-module foreign keys), D-038 (email confirmation)
 - PostgreSQL row locks: https://www.postgresql.org/docs/current/explicit-locking.html#LOCKING-ROWS
+
+## D-040: The orchestrator only orchestrates; sub-agents do every task
+- **Date:** 2026-11-23
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-005, D-017, FIT-27, FIT-61. Partly answers W17.
+
+### Problem statement
+Who does the work, the orchestrator or sub-agents? The CLAUDE.md working rule said "Prefer one agent. Spawn sub-agents only when asked." And who checks a sub-agent's PR before it is merged?
+
+### Options considered
+1. **The orchestrator does small tasks itself** and spawns agents only when asked (the old rule). Fewer tokens, because no agent starts cold. But the orchestrator's context fills with implementation detail.
+2. **The orchestrator only orchestrates.** Every task goes to a sub-agent briefed through a Linear ticket (D-017). The orchestrator reviews and summarises. Costs more tokens, because each agent starts cold and re-reads context.
+
+### Decision
+**Option 2.** Every assignment or task the owner gives is done by a sub-agent, briefed through a Linear ticket. The agent comments its result on the ticket, and the orchestrator summarises the result for the owner. Briefs stay narrow and carry a tool-call budget.
+
+Every PR a sub-agent opens goes through these steps:
+1. The orchestrator waits for CI to pass.
+2. The orchestrator reviews the PR against its brief and the CLAUDE.md rules, including that no test was weakened and that there is no AI attribution.
+3. If the review finds problems, a new agent fixes them, and the review starts again.
+4. The orchestrator tells the owner, with its review findings.
+5. The owner does a manual review and merges.
+
+```mermaid
+flowchart LR
+  O([Owner]) -->|task| OR[Orchestrator]
+  OR -->|brief| T[Linear ticket]
+  T --> A[Sub-agent]
+  A --> PR[PR + ticket comment]
+  PR --> CI{CI passes?}
+  CI -- no --> A
+  CI -- yes --> R{Orchestrator review OK?}
+  R -- no --> F[New agent fixes] --> CI
+  R -- yes --> S[Orchestrator summary + findings]
+  S --> O
+  O -->|manual review| M[Merge]
+```
+
+**Override for 2026-11-23 only** (owner): the token budget (D-005) is set aside for the day, up to 3 agents run in parallel on the MVP project, and the orchestrator merges PRs itself once CI and its own review pass, without the owner's manual review. From 2026-11-24 the normal rule applies again: the owner reviews manually and merges.
+
+### Reasoning
+The owner's instruction. The trade-off is tokens: agents start cold and re-read context, so they use more than inline work would, against a tight budget (D-005, proposed). Narrow briefs and tool-call budgets limit that. The review steps keep the owner's rules (protected tests, no AI attribution) checked twice before a merge.
+
+### Sources
+- The owner's instruction, 2026-11-23 (FIT-61 and its comments)
+- D-005 (token budget), D-017 (Linear, sub-agents briefed via tickets)
+
+## D-041: Simulated payment and card-reader pages: any logged-in account, behind a setting
+- **Date:** 2026-11-23
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-021, D-022, FIT-55, FIT-42, FIT-43. Answers the open point in D-021 and D-022.
+
+### Problem statement
+The simulated payment page can mark a membership paid or unpaid, and the simulated card reader can check anyone in (D-021, D-022). Who may open them, and in which builds?
+
+### Options considered
+1. **Development and tests only**, not in a demo build. Safest, but the center can't try the flows in a demo.
+2. **Staff accounts only.** Needs a first staff role in Identity (AU6, AU8) before the pages can ship.
+3. **Any logged-in account, behind a setting**, with a clear "Simulation" banner. Works in a demo without a staff role; the setting turns it off for a real launch.
+
+### Decision
+**Option 3.**
+- The simulated payment page and the simulated card reader exist only when the setting **`Simulation:Enabled`** is `true`: on locally and in the demo, off for a real launch.
+- When it is off, their endpoints answer **404** and the frontend hides them.
+- Any **logged-in account** may use them.
+- Each simulated page shows a clear **"Simulation"** banner.
+- A simulated page acts on the **logged-in member's own** membership and card. The card reader may also take **any card UID**.
+
+```mermaid
+flowchart TD
+  Q[Request to a simulated endpoint] --> E{Simulation:Enabled?}
+  E -- no --> N[404; frontend hides the page]
+  E -- yes --> L{Logged in?}
+  L -- no --> U[401]
+  L -- yes --> P[Acts on own membership/card; reader takes any card UID]
+```
+
+### Reasoning
+Owner decision. A demo for the center needs the pages, and a staff role does not exist yet, so option 2 would block FIT-42 and FIT-43. Limiting the payment page to the member's own membership keeps one account from changing another's payment state. The setting gives one switch that removes the pages for a real launch.
+
+### Sources
+- D-021 (simulation, "Still open"), D-022 (MVP pages 5 and 6)
+- FIT-55 (options as listed by the owner)
+
+## D-042: Missing payment: no grace period, one reminder email (placeholder for D11)
+- **Date:** 2026-11-23
+- **Status:** Accepted (placeholder until the center answers D11)
+- **Decided by:** Owner
+- **Relates to:** D-020, FIT-45. Partly answers D11.
+
+### Problem statement
+D-020 refuses check-in and emails the member when a payment is missing, but left open the grace period and whether reminders repeat (D11). The MVP needs a value now.
+
+### Options considered
+1. **No grace period, one email.** Simplest rule to build and test.
+2. **3 days' grace, one email.**
+3. **7 days' grace, two emails.**
+
+### Decision
+**Option 1**, as a placeholder:
+- Check-in is refused from the **first Europe/Copenhagen calendar day after the paid-until date**.
+- **One reminder email** is sent on that day.
+
+```mermaid
+flowchart LR
+  P[Paid-until date] --> D["Next Copenhagen day"]
+  D --> R[Check-in refused]
+  D --> E[One reminder email]
+```
+
+D11 stays open for the center's real policy (grace period, repeat reminders, late fees).
+
+### Reasoning
+Owner decision. With no answer from the center, the simplest rule keeps FIT-45 buildable. The rule lives in one place, so the center's answer changes one value. Using the Copenhagen calendar day follows the time convention in CLAUDE.md (business rules in Europe/Copenhagen).
+
+### Sources
+- D-020 ("Still open"), D11 in [open-questions.md](open-questions.md)
+- FIT-45
+
+## D-043: A few full-stack E2E flows run in CI
+- **Date:** 2026-11-23
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-010, D-018, D-038, FIT-59. Partly answers Q6.
+
+### Problem statement
+The Playwright tests run against the built frontend with the API mocked. Each endpoint has real integration tests, but nothing in CI clicks through the frontend against the real API and database; that has only been done by hand (FIT-59).
+
+### Options considered
+1. **Keep the mocked E2E tests and the manual real-stack checks.** CI stays fast and simple, but a frontend/backend mismatch is found only by hand.
+2. **Add a few full-stack Playwright runs in CI**, with the API, PostgreSQL and Mailpit started in the job. Catches mismatches, but CI gets slower and more complex.
+
+### Decision
+**Option 2**, for a few key flows:
+- signup → confirm email (via Mailpit) → login → book a class;
+- check-in.
+
+They run against the real API, PostgreSQL and Mailpit in CI. The mocked Playwright tests stay.
+
+```mermaid
+flowchart LR
+  PW[Playwright] --> SPA[Built frontend] --> API[Real API]
+  API --> DB[(PostgreSQL)]
+  API --> MP[Mailpit]
+  PW -->|reads confirm link| MP
+```
+
+### Reasoning
+Owner decision. D-010 asks for E2E tests in CI; the mocked runs can't catch a mismatch between the frontend and the real API. The trade-off is a slower CI; keeping the set to a few key flows limits it.
+
+### Sources
+- FIT-59 (options as listed by the owner)
+- D-010 (all automatable tests in CI), D-018 (Playwright), D-038 (Mailpit)
+
+## D-044: Landing page now, with placeholder content
+- **Date:** 2026-11-23
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-022, FIT-46, FIT-26, U10
+
+### Problem statement
+The landing page is one of the six MVP pages (D-022), but the center's texts, brand and logo are unknown until the meeting (U10, FIT-26). Build it now or wait?
+
+### Options considered
+1. **Build the structure now with placeholder content.** The MVP is complete as a demo; texts are replaced later.
+2. **Wait for the center's content.** No throwaway text, but the MVP lacks its front page until after the meeting.
+
+### Decision
+**Option 1.** Build the page structure now: hero, classes teaser, membership price, signup/login. Use clearly marked placeholder texts and **no logo**. Replace them after the center meeting (U10, FIT-26).
+
+```mermaid
+flowchart TD
+  H[Hero: placeholder text] --> C[Classes teaser]
+  C --> P[Membership price]
+  P --> S[Signup / login]
+```
+
+### Reasoning
+Owner decision. It keeps the MVP slice whole without guessing at the center's brand; marking the texts as placeholders keeps them from being mistaken for the center's own.
+
+### Sources
+- D-022 (MVP page 1: landing page)
+- U10 in [open-questions.md](open-questions.md), FIT-26 (center meeting), FIT-46
