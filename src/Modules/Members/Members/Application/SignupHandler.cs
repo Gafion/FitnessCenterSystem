@@ -56,25 +56,30 @@ internal sealed class SignupHandler(IAccountService accounts, MembersDbContext d
         SignupConsents consents, Func<Task<CreateAccountResult>> createAccount, CancellationToken cancellationToken)
     {
         var errors = Validate(consents);
-        if (errors.Count > 0)
-        {
-            return new SignupResult(null, errors);
-        }
-
         Member member;
 
         // Both modules' DbContexts use the request's shared connection, so the ambient
-        // transaction covers the account and the member. If anything below throws,
-        // neither is saved.
+        // transaction covers the account and the member. If anything below throws, or we
+        // return without completing it, neither is saved.
         using (var transaction = new TransactionScope(
             TransactionScopeOption.Required,
             new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted },
             TransactionScopeAsyncFlowOption.Enabled))
         {
+            // The account is attempted even when the consents are wrong, so the form gets
+            // every error in one answer. Returning without Complete() rolls it back.
             var account = await createAccount();
             if (!account.Succeeded)
             {
-                return new SignupResult(null, ToFieldErrors(account.Errors));
+                foreach (var (field, messages) in ToFieldErrors(account.Errors))
+                {
+                    errors[field] = messages;
+                }
+            }
+
+            if (errors.Count > 0)
+            {
+                return new SignupResult(null, errors);
             }
 
             member = Member.SignUp(
