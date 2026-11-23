@@ -16,6 +16,8 @@ internal sealed class MembersDbContext(DbContextOptions<MembersDbContext> option
 
     public DbSet<MembershipType> MembershipTypes => Set<MembershipType>();
 
+    public DbSet<PaymentRecord> PaymentRecords => Set<PaymentRecord>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -60,6 +62,24 @@ internal sealed class MembersDbContext(DbContextOptions<MembersDbContext> option
                 consent.Property(c => c.TextVersion).HasMaxLength(100);
             });
             member.Navigation(m => m.Consents).HasField("_consents");
+        });
+
+        modelBuilder.Entity<PaymentRecord>(payment =>
+        {
+            payment.ToTable("payment_records");
+            payment.HasKey(p => p.Id);
+            payment.Property(p => p.Id).HasConversion(id => id.Value, value => new PaymentRecordId(value));
+            payment.Property(p => p.MemberId).HasConversion(id => id.Value, value => new MemberId(value));
+            // Restrict: payment records are kept apart from the member; how long is still open (D-020).
+            payment.HasOne<Member>().WithMany().HasForeignKey(p => p.MemberId).OnDelete(DeleteBehavior.Restrict);
+            payment.HasIndex(p => p.MemberId);
+            payment.HasIndex(p => p.PaymentRef).IsUnique();
+            payment.Property(p => p.PaymentRef).HasMaxLength(100);
+            payment.Property(p => p.Amount)
+                .HasColumnName("AmountOre")
+                .HasConversion(money => money.Ore, ore => new Money(ore));
+            payment.Property(p => p.CardLast4).HasMaxLength(4).IsFixedLength();
+            payment.Ignore(p => p.Period);
         });
     }
 }

@@ -8,7 +8,15 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ErrorMessage } from '@/features/account/error-message';
 import { GoogleButton } from '@/features/account/google-button';
-import { api, errorSearch, getLoginOptions, googleLinkUrl } from '@/lib/api';
+import { PaymentHistory } from '@/features/payments/payment-history';
+import {
+  api,
+  errorSearch,
+  getLoginOptions,
+  getMyPayments,
+  googleLinkUrl,
+  isSimulationEnabled,
+} from '@/lib/api';
 
 export const Route = createFileRoute('/account')({
   validateSearch: errorSearch,
@@ -20,17 +28,20 @@ export const Route = createFileRoute('/account')({
     if (!data) {
       throw new Error('Could not load the account.');
     }
-    const [options, card, reader] = await Promise.all([
+    const [options, card, payments, simulation] = await Promise.all([
       getLoginOptions(),
       api.GET('/api/access/cards/mine'),
-      api.GET('/api/access/simulation/reader'),
+      // A failed payments call must not take the rest of the account page with it.
+      getMyPayments().catch(() => 'failed' as const),
+      // One flag for every simulated page (D-041).
+      isSimulationEnabled().catch(() => false),
     ]);
     return {
       account: data,
       options,
       cardUid: card.data?.uid ?? null,
-      // The reader answers 204 only while the simulation is on (D-041).
-      simulation: reader.response.ok,
+      payments: payments === 'logged-out' ? null : payments,
+      simulation,
     };
   },
   component: AccountPage,
@@ -38,7 +49,8 @@ export const Route = createFileRoute('/account')({
 
 function AccountPage() {
   const { t } = useTranslation();
-  const { account, options, cardUid, simulation } = Route.useLoaderData();
+  const { account, options, cardUid, payments, simulation } =
+    Route.useLoaderData();
   const { error } = Route.useSearch();
   const navigate = useNavigate();
 
@@ -71,10 +83,20 @@ function AccountPage() {
       <Button asChild className="self-start">
         <Link to="/classes">{t('account.classes')}</Link>
       </Button>
+      {payments === 'failed' ? (
+        <p className="text-sm text-destructive">{t('payments.failed')}</p>
+      ) : (
+        payments && <PaymentHistory payments={payments} />
+      )}
       {simulation && (
         <Button asChild variant="outline" className="self-start">
           <Link to="/simulation/check-in">{t('account.checkIn')}</Link>
         </Button>
+      )}
+      {payments && payments !== 'failed' && simulation && (
+        <Link to="/simulation/payments" className="self-start underline">
+          {t('account.simulatedPayments')}
+        </Link>
       )}
       <Button variant="outline" onClick={logOut} className="self-start">
         {t('account.logout')}

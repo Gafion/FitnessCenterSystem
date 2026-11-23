@@ -6,6 +6,20 @@ internal enum MemberStatus
 {
     /// <summary>Signed up; no payment confirmation yet (D-032). Check-in is refused (D-020).</summary>
     AwaitingFirstPayment,
+
+    /// <summary>
+    /// At least one payment confirmation arrived (D-020). Whether a payment is missing follows
+    /// from <see cref="Member.PaidUntil"/>, not from this status.
+    /// </summary>
+    Active,
+}
+
+internal enum PaymentOutcome
+{
+    Applied,
+
+    /// <summary>The period doesn't start the day after paid-until; gaps and overlaps are undecided.</summary>
+    NotContiguous,
 }
 
 /// <summary>
@@ -66,6 +80,30 @@ internal sealed class Member
         }
 
         return member;
+    }
+
+    /// <summary>
+    /// Where the next monthly payment period starts: the day after paid-until, or
+    /// <paramref name="today"/> (Copenhagen) before the first payment.
+    /// </summary>
+    public LocalDate NextPeriodStart(LocalDate today) => PaidUntil?.PlusDays(1) ?? today;
+
+    /// <summary>
+    /// Moves paid-until to the end of a confirmed payment's period. The first payment may
+    /// cover any period, also one in the past; later ones must follow on without a gap or
+    /// an overlap, because those cases are not decided yet. The first payment activates
+    /// the membership.
+    /// </summary>
+    public PaymentOutcome ApplyPayment(PaymentPeriod period)
+    {
+        if (PaidUntil is { } paidUntil && period.From != paidUntil.PlusDays(1))
+        {
+            return PaymentOutcome.NotContiguous;
+        }
+
+        PaidUntil = period.To;
+        Status = MemberStatus.Active;
+        return PaymentOutcome.Applied;
     }
 }
 

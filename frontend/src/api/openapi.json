@@ -318,6 +318,68 @@
         }
       }
     },
+    "/api/members/me/payments": {
+      "get": {
+        "tags": [
+          "Members"
+        ],
+        "operationId": "GetMyPayments",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyPayments"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/simulation/payments": {
+      "post": {
+        "tags": [
+          "Simulation"
+        ],
+        "operationId": "SimulatePayment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulatedPaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/api/booking/schedule": {
       "get": {
         "tags": [
@@ -505,6 +567,26 @@
           }
         }
       }
+    },
+    "/api/simulation": {
+      "get": {
+        "tags": [
+          "Simulation"
+        ],
+        "operationId": "GetSimulationSettings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationSettings"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -669,6 +751,68 @@
         "properties": {
           "uid": {
             "type": "string"
+          }
+        }
+      },
+      "MyPayments": {
+        "required": [
+          "status",
+          "paidUntil",
+          "monthlyPriceOre",
+          "payments"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "paidUntil": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "monthlyPriceOre": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Payment"
+            }
+          }
+        }
+      },
+      "Payment": {
+        "required": [
+          "amountOre",
+          "paidAt",
+          "cardLast4",
+          "periodFrom",
+          "periodTo"
+        ],
+        "type": "object",
+        "properties": {
+          "amountOre": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cardLast4": {
+            "type": "string"
+          },
+          "periodFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "periodTo": {
+            "type": "string",
+            "format": "date"
           }
         }
       },
@@ -880,6 +1024,32 @@
           }
         }
       },
+      "SimulatedPaymentRequest": {
+        "required": [
+          "periodFrom"
+        ],
+        "type": "object",
+        "properties": {
+          "periodFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "SimulationSettings": {
+        "required": [
+          "enabled"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
       "SwipeRequest": {
         "required": [
           "cardUid"
@@ -922,6 +1092,9 @@
     },
     {
       "name": "Members"
+    },
+    {
+      "name": "Simulation"
     },
     {
       "name": "Booking"

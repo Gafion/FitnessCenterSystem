@@ -8,9 +8,12 @@ namespace FitnessCenter.IntegrationTests;
 
 /// <summary>
 /// Starts the real API in memory, pointed at the test PostgreSQL container.
-/// <paramref name="configureServices"/> lets a test swap a service, e.g. the clock.
+/// <paramref name="configureServices"/> lets a test swap a service, e.g. the clock, and
+/// <paramref name="settings"/> lets it change configuration, e.g. turn the simulation off.
 /// </summary>
-public sealed class ApiFactory(Action<IServiceCollection>? configureServices = null) : WebApplicationFactory<Program>
+public sealed class ApiFactory(
+    Action<IServiceCollection>? configureServices = null, IReadOnlyDictionary<string, string?>? settings = null)
+    : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -27,6 +30,11 @@ public sealed class ApiFactory(Action<IServiceCollection>? configureServices = n
 
         builder.UseSetting("Email:Smtp:Host", TestMailbox.SmtpHost);
         builder.UseSetting("Email:Smtp:Port", TestMailbox.SmtpMappedPort.ToString(CultureInfo.InvariantCulture));
+
+        foreach (var (key, value) in settings ?? new Dictionary<string, string?>())
+        {
+            builder.UseSetting(key, value);
+        }
 
         if (configureServices is not null)
         {

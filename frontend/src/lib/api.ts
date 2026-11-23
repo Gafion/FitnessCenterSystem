@@ -43,3 +43,39 @@ export async function getSignupTerms(): Promise<Schemas['SignupTerms']> {
 export async function resendEmailConfirmation(email: string): Promise<void> {
   await api.POST('/api/identity/confirm-email/resend', { body: { email } });
 }
+
+/** The `type` of an API problem answer, e.g. "class-full", or "unexpected". */
+export function problemType(error: unknown): string {
+  return typeof error === 'object' &&
+    error !== null &&
+    'type' in error &&
+    typeof error.type === 'string'
+    ? error.type
+    : 'unexpected';
+}
+
+/** Whether the simulated pages are on (D-041). Off unless the API says otherwise. */
+export async function isSimulationEnabled(): Promise<boolean> {
+  const { data } = await api.GET('/api/simulation');
+  return data?.enabled ?? false;
+}
+
+/**
+ * The logged-in member's payments and paid-until date (D-020). Null for an account
+ * without a membership.
+ */
+export async function getMyPayments(): Promise<
+  Schemas['MyPayments'] | null | 'logged-out'
+> {
+  const { data, response } = await api.GET('/api/members/me/payments');
+  if (response.status === 401) {
+    return 'logged-out';
+  }
+  if (response.status === 404) {
+    return null;
+  }
+  if (!data) {
+    throw new Error('Could not load the payments.');
+  }
+  return data;
+}
