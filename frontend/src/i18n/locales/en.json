@@ -137,7 +137,7 @@
   },
   "simulatedPayments": {
     "title": "Simulated payments",
-    "price": "Each payment covers one month at {{price}}.",
+    "price": "Each payment covers one month: {{price}}",
     "payNext": "Pay next month",
     "periodFrom": "Or pay one month starting on",
     "periodHint": "Choose a past date to try a missing payment. Later payments must start the day after the paid-until date.",
