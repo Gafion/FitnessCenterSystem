@@ -272,7 +272,7 @@ flowchart LR
 |---|---|---|
 | Project references (`.csproj`) | Compile-time: a module can't even *see* another module's internals unless referenced | research/tech-stack.md §2.3 |
 | `internal` visibility | Types inside a module are not public | research/tech-stack.md §2.3 |
-| Architecture tests in CI | Rules R1–R3 as executable tests | D-008; research/service-architecture.md |
+| Architecture tests in CI | Rules R1–R3 as executable tests (per-rule table in [testing.md](testing.md) §2) | D-008; research/service-architecture.md |
 | Per-module DB schema (D-014) + optional role (🟡 DB3) | Makes ownership visible; roles would enforce R3 at the database level | research/database-schemas.md |
 | Compiler/analyzer settings | Nullable, warnings-as-errors | research/tech-stack.md §2.9 |
 | OpenAPI client regeneration check | Rule R6: frontend/backend contract drift becomes a TypeScript error | research/tech-stack.md §2.10 |
@@ -442,7 +442,7 @@ FitnessCenterSystem/
 │       ├── Staff/      {Staff.Contracts, Staff}
 │       └── Reporting/  {Reporting}
 │   └── (later) Payments/ {Payments.Api, Payments.Contracts}               D-006
-├── tests/
+├── tests/                             see testing.md
 │   ├── Unit/                          per module, domain + application
 │   ├── FitnessCenter.ArchitectureTests/  boundary rules R1–R3 (ArchUnitNET, D-030)
 │   ├── FitnessCenter.IntegrationTests/  WebApplicationFactory + Testcontainers (PostgreSQL 18.6, same image as Aspire)
@@ -521,7 +521,7 @@ flowchart TB
   PERF2 -.- E2E
 ```
 
-Stage order and tool candidates come from [research/tech-stack.md](research/tech-stack.md) §5.3 and §2.8. Framework (S11), coverage, mutation gate and test-protection policies are 🟡 open (Q2–Q7). The full plan will live in `testing.md`.
+Stage order and tool candidates come from [research/tech-stack.md](research/tech-stack.md) §5.3 and §2.8. Framework (S11), coverage, mutation gate and test-protection policies are 🟡 open (Q2–Q7). What the repo tests today, and which rule each check enforces, is in [testing.md](testing.md).
 
 ---
 

@@ -11,6 +11,7 @@ Member and employee administration for **one real, single-site fitness center in
 | Decisions (source of truth) | `docs/decisions.md` (D-001 …) |
 | Unanswered questions | `docs/open-questions.md` (IDs like F1, DB2, AU5) |
 | Architecture | `docs/architecture.md` |
+| Testing (levels, enforced checks, CI) | `docs/testing.md` |
 | Data model draft | `docs/data-model.md` |
 | Research (cited, verified) | `docs/research/` (index: `docs/research/README.md`) |
 | Interview guide for the center | `docs/stakeholder-interview-guide.md` |
