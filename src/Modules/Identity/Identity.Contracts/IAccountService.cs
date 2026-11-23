@@ -28,6 +28,13 @@ public interface IAccountService
     /// <summary>Signs the account in with the auth cookie for the current HTTP request.</summary>
     Task SignInAsync(AccountId accountId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Emails the account's address. The caller writes the text; Identity knows the address.
+    /// Members uses it for the payment reminder (D-042). Needs no HTTP request, so a background
+    /// job may call it. Throws when the email can't be sent.
+    /// </summary>
+    Task SendEmailAsync(AccountId accountId, string subject, string body, CancellationToken cancellationToken);
+
     /// <returns>The account's first name, or null when there is no such account. Members uses it at check-in.</returns>
     Task<string?> FindFirstNameAsync(AccountId accountId, CancellationToken cancellationToken);
 }

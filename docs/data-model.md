@@ -35,6 +35,7 @@ erDiagram
   ACCESS_CARD ||--o{ ATTENDANCE : "swipes create"
   CLASS_SESSION ||--o{ ATTENDANCE : "may link to"
   MEMBER ||--o{ PAYMENT_RECORD : "has (D-020)"
+  MEMBER ||--o{ PAYMENT_REMINDER : "was sent (D-042)"
   MEMBERSHIP_TYPE ||--o{ MEMBER : "chosen by (D-032)"
   MEMBER ||--o{ CONSENT : "gave (D-032)"
 
@@ -76,6 +77,13 @@ erDiagram
     date period_to
     string payment_ref "from the Payments service"
   }
+  PAYMENT_REMINDER {
+    uuid id PK
+    uuid member_id FK
+    date paid_until "the date that passed; unique with member_id"
+    timestamptz claimed_at
+    timestamptz sent_at "null if the job stopped while sending"
+  }
   STAFF {
     uuid id PK
     uuid identity_id FK
@@ -116,7 +124,8 @@ erDiagram
 
 Notes:
 - **One person, several roles.** `IDENTITY` holds the person; `MEMBER` and `STAFF` say what they are. A trainer who also trains as a member has one identity and both rows. This matches the owner's idea of a separate identities table. Login data (password hash, Google link, MFA) would sit next to identity in the Identity module (D-011, D-013).
-- **Attendance** comes from RFID swipes (D-003); in the MVP from a simulated reader (D-021). It optionally links to a class session; how a swipe gets that link is open (meeting).
+- **Payment reminders** (FIT-45, D-042): one row per missing payment, keyed by member and the paid-until date that passed. The reminder job saves the row before it sends the email, so the email never goes out twice, even after a restart. A later missing payment has a later paid-until date and gets its own row. Placeholder until the center answers D11.
+- **Attendance** comes from RFID swipes (D-003); in the MVP from a simulated reader (D-021). It optionally links to a class session; how a swipe gets that link is open (meeting). Only accepted swipes are stored: a swipe refused for a missing payment (D-020) or an unknown card leaves no row.
 - **Deliberately left out for now:** memberships over time, prices, PT appointments, shifts and time registration, certifications, health data. Payments themselves stay in the later Payments service (D-006); the core keeps only a copy of each payment record (`PAYMENT_RECORD`, D-020). These are all questions for the meeting. See [research/domain-modeling.md](research/domain-modeling.md) for what they could look like later.
 
 ---

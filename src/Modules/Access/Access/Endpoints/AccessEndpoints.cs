@@ -50,6 +50,10 @@ internal static class AccessEndpoints
 
         [JsonStringEnumMemberName("unknown-card")]
         UnknownCard,
+
+        /// <summary>The member's payment is missing; check-in is refused (D-020, D-042).</summary>
+        [JsonStringEnumMemberName("payment-missing")]
+        PaymentMissing,
     }
 
     /// <summary>What the door screen shows.</summary>
@@ -87,6 +91,7 @@ internal static class AccessEndpoints
         {
             CheckInOutcome.Welcome => DoorOutcome.Welcome,
             CheckInOutcome.UnknownCard => DoorOutcome.UnknownCard,
+            CheckInOutcome.PaymentMissing => DoorOutcome.PaymentMissing,
             _ => throw new InvalidOperationException($"Unknown outcome {result.Outcome}."),
         },
         result.FirstName,

@@ -74,6 +74,26 @@ test('a typed UID nobody has is an unknown card', async ({ page }) => {
   expect(sent).toEqual({ cardUid: 'SIM-00000000000000' });
 });
 
+test('a member whose payment is missing is refused with a warning', async ({
+  page,
+}) => {
+  await mockApi(page, { simulation: true });
+  await page.route('**/api/access/simulation/reader/swipes/my-card', (route) =>
+    route.fulfill({
+      json: { outcome: 'payment-missing', firstName: null, at },
+    }),
+  );
+
+  await page.goto('/simulation/check-in');
+  await page.getByRole('button', { name: 'Swipe my card' }).click();
+
+  await expect(page.getByRole('status')).toContainText('Payment missing');
+  await expect(page.getByRole('status')).toContainText(
+    "Your membership payment hasn't arrived",
+  );
+  await expect(page.getByText(/Welcome/)).toHaveCount(0);
+});
+
 test('with the simulation off, the page and the link are gone', async ({
   page,
 }) => {

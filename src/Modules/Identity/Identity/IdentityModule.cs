@@ -71,7 +71,8 @@ public static class IdentityModule
         });
 
         services.AddScoped<IAccountService, AccountService>();
-        services.AddSingleton<IEmailSender<Account>, SmtpEmailSender>();
+        services.AddSingleton<SmtpEmailSender>();
+        services.AddSingleton<IEmailSender<Account>>(provider => provider.GetRequiredService<SmtpEmailSender>());
         services.AddHealthChecks().AddDbContextCheck<IdentityDbContext>("identity-db");
 
         return services;
