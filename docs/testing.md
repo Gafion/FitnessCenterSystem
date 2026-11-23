@@ -10,6 +10,7 @@ Decisions this page rests on: D-010 (all automatable tests in CI), D-016 (perfor
 flowchart TB
   subgraph FE["Frontend (D-018)"]
     PW["Playwright E2E<br/>built SPA, API mocked<br/>frontend/e2e/"]
+    FS["Full-stack E2E (D-043)<br/>real API, PostgreSQL, Mailpit<br/>frontend/e2e-full/"]
     VT["Vitest unit/component<br/>jsdom<br/>frontend/src/**/*.test.ts(x)"]
   end
   subgraph BE["Backend (D-029)"]
@@ -18,12 +19,12 @@ flowchart TB
     ARCH["Architecture tests<br/>ArchUnitNET (D-030)"]
     BAN["BannedApiAnalyzers<br/>build-time clock ban"]
   end
+  FS --- PW
   PW --- VT
   INT --- UNIT
   UNIT --- ARCH
   ARCH --- BAN
-  PLAN1["Full-stack E2E (D-043)"]:::planned -.- PW
-  PLAN2["Performance tests (D-016)"]:::planned -.- INT
+  PLAN1["Performance tests (D-016)"]:::planned -.- INT
   classDef planned stroke-dasharray: 5 5
 ```
 
@@ -38,12 +39,19 @@ Dashed boxes are planned and not built yet ([§7](#7-planned-not-built)).
 | Build-time analyzer | [`src/Modules/BannedSymbols.txt`](../src/Modules/BannedSymbols.txt), wired in [`src/Modules/Directory.Build.props`](../src/Modules/Directory.Build.props) | No reading the system clock in module code | Build fails under `-warnaserror` |
 | Frontend unit/component | `frontend/src/**/*.test.{ts,tsx}` ([`vitest.config.ts`](../frontend/vitest.config.ts)) | Components and helpers, e.g. `money.test.ts`, `signup-form.test.tsx`, `schedule.test.tsx` | jsdom; Testing Library ([`src/test/setup.ts`](../frontend/src/test/setup.ts)) |
 | Frontend E2E | [`frontend/e2e/`](../frontend/e2e) ([`playwright.config.ts`](../frontend/playwright.config.ts)) | Landing, signup, Google login, classes pages in Chromium | Built SPA served by `vite preview`; **the API is mocked** with `page.route` (e.g. `signup.spec.ts`, `classes.spec.ts`) |
+| Full-stack E2E | [`frontend/e2e-full/`](../frontend/e2e-full) ([`playwright.full.config.ts`](../frontend/playwright.full.config.ts)) | Signup → confirmation link from Mailpit → login → account page; book a class → spots go down → cancel → spots go back up (D-043) | All real: the API in Development, PostgreSQL, Mailpit. Uses the seeded development schedule (`Booking:SeedDevelopmentSchedule`). Nothing mocked, except that Google login is off |
 
 Notes on how the integration tests run:
 - One PostgreSQL container and one Mailpit container serve the whole run. They start together in `[AssemblyInitialize]`, and the API migrates the database once there, so parallel tests don't race on migrations ([`PostgresDatabase.cs`](../tests/FitnessCenter.IntegrationTests/PostgresDatabase.cs)).
 - Each test starts its own in-memory API with `new ApiFactory()`. The factory empties the Google client ID, turns off the development class schedule and points SMTP at Mailpit ([`ApiFactory.cs`](../tests/FitnessCenter.IntegrationTests/ApiFactory.cs)).
 - The API sends real SMTP to Mailpit, and tests read the emails back through Mailpit's HTTP API, e.g. to follow a confirmation link (D-038, [`TestMailbox.cs`](../tests/FitnessCenter.IntegrationTests/TestMailbox.cs)).
 - All four C# test projects run tests in parallel at method level (`MSTestSettings.cs` in each project).
+
+Notes on how the full-stack E2E tests run:
+- The config starts nothing. It reads `E2E_BASE_URL` (the frontend, with `/api` reaching the API; default `http://localhost:5173`, Aspire's port) and `MAILPIT_URL` (Mailpit's web address, required). So the same suite runs in CI and against `aspire run`.
+- Each test signs up its own synthetic member (`e2e-…@example.com`). Shared steps are in [`member.ts`](../frontend/e2e-full/member.ts); a new flow (e.g. check-in) starts from `signUpAndLogIn`.
+- The database is not reset between runs. The booking test picks the latest class that still has a spot, reads its count and checks that it moves by one, so earlier bookings don't matter. Tests run one at a time (`workers: 1`) so they don't change each other's counts.
+- The test opens the confirmation link's path and query on its own base URL, whatever host the API put in the link.
 
 ## 2. Which rule each check enforces
 
@@ -76,28 +84,32 @@ From the repo root (CLAUDE.md, "Commands"). Docker must run for the backend test
 | One C# test project | `dotnet test tests/<Project>` |
 | Frontend gate: lint, typecheck, unit, unused code | `bun run --cwd frontend lint && bun run --cwd frontend typecheck && bun run --cwd frontend test && bun run --cwd frontend knip` |
 | Frontend E2E (builds and serves the app itself) | `bun run --cwd frontend e2e` (first time: `bunx playwright install chromium` in `frontend/`) |
+| Full-stack E2E against `aspire run` | `MAILPIT_URL=http://localhost:<port> bun run --cwd frontend e2e:full` (Mailpit's port: the 8025 mapping in `docker ps`) |
 | After an endpoint change | `bun run --cwd frontend api:generate`, then commit `frontend/src/api/` |
 | After a data model change | `dotnet ef migrations add <Name> --project src/Modules/<M>/<M> --context <M>DbContext --output-dir Infrastructure/Migrations` |
 
 ## 4. What CI runs
 
-[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs two jobs on every pull request and every push to `main`. Branch protection on `main` requires both (comment at the top of `ci.yml`; CLAUDE.md).
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs three jobs on every pull request and every push to `main`. Branch protection on `main` requires the backend and frontend jobs (comment at the top of `ci.yml`; CLAUDE.md). The full-stack E2E job is not a required check; making it one is a branch-protection change for the owner.
 
 ```mermaid
 flowchart LR
-  PR([PR or push to main]) --> BJ & FJ
+  PR([PR or push to main]) --> BJ & FJ & SJ
   subgraph BJ["Backend job"]
     B1["Build -warnaserror<br/>(writes openapi.json)"] --> B2["OpenAPI document<br/>up to date"] --> B3["Migrations<br/>up to date"] --> B4["dotnet test --no-build<br/>unit · property · architecture · integration"]
   end
   subgraph FJ["Frontend job"]
     F1["bun install --frozen-lockfile"] --> F2["Client matches<br/>openapi.json (rule 6)"] --> F3["Biome"] --> F4["tsc"] --> F5["Vitest"] --> F6["Knip"] --> F7["Playwright E2E<br/>(API mocked)"]
   end
+  subgraph SJ["Full-stack E2E job (not required)"]
+    S1["Service containers<br/>postgres:18.6 · mailpit:v1.33.1"] --> S2["API in Development<br/>migrates, seeds classes"] --> S3["vite preview<br/>proxies /api"] --> S4["Playwright e2e-full"]
+  end
   BJ --> OK([Mergeable])
   FJ --> OK
 ```
 
-- **Docs-only PRs skip the tests (D-045).** A first `changes` job checks the PR's diff. If every changed file is `.md`, both jobs are skipped; GitHub reports them as passing, so the PR stays mergeable. Any other file runs everything, and pushes to `main` always run everything.
-- Each job has a 15-minute timeout. A newer push to the same ref cancels the running workflow.
+- **Docs-only PRs skip the tests (D-045).** A first `changes` job checks the PR's diff. If every changed file is `.md`, the backend, frontend and full-stack E2E jobs are skipped; GitHub reports them as passing, so the PR stays mergeable. Any other file runs everything, and pushes to `main` always run everything.
+- Each job has a 15-minute timeout. The full-stack E2E job uploads the Playwright report, the API log and the preview log when it fails. A newer push to the same ref cancels the running workflow.
 - Playwright in CI: `forbidOnly` is on, failed tests are retried up to 2 times, and a trace is kept on the first retry ([`playwright.config.ts`](../frontend/playwright.config.ts)). The HTML report is uploaded as an artifact when the job fails.
 - Nothing runs on a schedule yet: there is no nightly job.
 
@@ -138,6 +150,7 @@ flowchart TD
   Q -->|A module boundary| A["Architecture test in tests/FitnessCenter.ArchitectureTests"]
   Q -->|A component or frontend helper| V["Vitest test next to the file in frontend/src"]
   Q -->|A page flow in the browser| P["Playwright spec in frontend/e2e<br/>with the API mocked"]
+  Q -->|A key flow end to end, D-043| F["Playwright spec in frontend/e2e-full<br/>against the real stack"]
 ```
 
 This follows what the repo does today (§1). The research advice is the same: pure calculation logic fits fast unit and property tests, and the database and access control fit integration tests (research/testing-strategy.md §1, finding 1).
@@ -146,7 +159,7 @@ This follows what the repo does today (§1). The research advice is the same: pu
 
 | What | Status | Source |
 |---|---|---|
-| **Full-stack E2E in CI:** Playwright against the real API, PostgreSQL and Mailpit, for signup → confirm email → login → book a class, and check-in. The mocked E2E tests stay. | Decided, not built | D-043 |
+| **Full-stack E2E: check-in flow.** Signup, login and booking are built (§1); check-in follows once the Access module is merged (FIT-56) | Decided, partly built | D-043 |
 | **Performance tests:** load and response-time tests, on demand and in CI | Required by D-016. Tool, schedule and environment undecided (FIT-39, Q14). Tests for booking and check-in: FIT-60 | D-016 |
 | **Definition of Done:** what evidence a task must produce | Open | W15 in [open-questions.md](open-questions.md) |
 | Test protection (who writes acceptance tests, how edits are blocked) | Open | Q2, Q3; D-028 |

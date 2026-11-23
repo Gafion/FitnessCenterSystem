@@ -1,7 +1,8 @@
-# CI gate (D-010, D-028): every PR and every push to main must pass both jobs.
-# Branch protection on main requires the two job names below. Renaming a job
+# CI gate (D-010, D-028): every PR and every push to main must pass the backend and
+# frontend jobs. Branch protection on main requires those two job names; the
+# full-stack E2E job (D-043) is not a required check. Renaming a job
 # means updating the protection rule too, or merges will wait forever.
-# A pull request that changes only .md files skips both jobs (D-045). GitHub
+# A pull request that changes only .md files skips the test jobs (D-045). GitHub
 # reports a job skipped by its `if:` as passing, so such a PR stays mergeable.
 name: CI
 
@@ -151,4 +152,110 @@ jobs:
         with:
           name: playwright-report
           path: frontend/playwright-report
+          retention-days: 7
+
+  # D-043: a few key flows against the real API, PostgreSQL and Mailpit. Not a required
+  # check (branch protection is the owner's call). It needs only the docs-only check,
+  # with the same condition as the backend and frontend jobs.
+  full-stack-e2e:
+    name: Full-stack E2E
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      # The same images as Aspire and the integration tests.
+      postgres:
+        image: postgres:18.6
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fitnesscenter
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      mailpit:
+        image: axllent/mailpit:v1.33.1
+        ports:
+          - 1025:1025
+          - 8025:8025
+    env:
+      API_URL: http://localhost:5398
+      E2E_BASE_URL: http://localhost:4173
+      MAILPIT_URL: http://localhost:8025
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+
+      - name: Install frontend
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Install Playwright browser
+        working-directory: frontend
+        run: bunx playwright install --with-deps chromium
+
+      - name: Build API
+        run: dotnet build src/FitnessCenter.Api
+
+      # Development: migrates the database and seeds the synthetic class schedule at
+      # startup. No Google client ID, so email/password only.
+      - name: Start API
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          ASPNETCORE_URLS: ${{ env.API_URL }}
+          ConnectionStrings__fitnesscenter: Host=localhost;Port=5432;Database=fitnesscenter;Username=postgres;Password=postgres
+          Email__Smtp__Host: localhost
+          Email__Smtp__Port: '1025'
+        run: |
+          nohup dotnet run --project src/FitnessCenter.Api --no-build --no-launch-profile > api.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf "$API_URL/health" > /dev/null && exit 0
+            sleep 2
+          done
+          cat api.log
+          echo "::error::The API did not become healthy."
+          exit 1
+
+      # vite preview serves the built SPA and proxies /api to the API (vite.config.ts).
+      - name: Build and serve frontend
+        working-directory: frontend
+        env:
+          API_HTTP: ${{ env.API_URL }}
+        run: |
+          bun run build
+          nohup bun run preview --port 4173 --strictPort > preview.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf "$E2E_BASE_URL" > /dev/null && exit 0
+            sleep 1
+          done
+          cat preview.log
+          echo "::error::The frontend did not start."
+          exit 1
+
+      - name: Full-stack E2E tests (Playwright)
+        working-directory: frontend
+        run: bun run e2e:full
+
+      - name: Upload Playwright report and logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-full-stack
+          path: |
+            frontend/playwright-report/full
+            frontend/test-results/full
+            api.log
+            frontend/preview.log
           retention-days: 7

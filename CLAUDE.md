@@ -78,6 +78,7 @@ Run from the repo root.
 - `dotnet tool restore` once, then `dotnet ef migrations add <Name> --project src/Modules/<M>/<M> --context <M>DbContext --output-dir Infrastructure/Migrations`: add a migration after changing a module's data model. CI fails if one is missing. Dev applies migrations at API startup
 - `bun run --cwd frontend lint && bun run --cwd frontend typecheck && bun run --cwd frontend test && bun run --cwd frontend knip`: frontend gate (verified)
 - `bun run --cwd frontend e2e`: Playwright E2E tests in Chromium; builds and serves the app itself (verified). First time: `bunx playwright install chromium` in `frontend/`
+- `MAILPIT_URL=http://localhost:<port> bun run --cwd frontend e2e:full`: full-stack Playwright flows (D-043) against a running `aspire run` (http://localhost:5173; override with `E2E_BASE_URL`). Mailpit's port is the 8025 mapping in `docker ps`. Starts nothing itself; CI runs it in the "Full-stack E2E" job
 - `bun run --cwd frontend api:generate`: regenerate the typed API client in `frontend/src/api/` after an endpoint changes. The backend build writes `frontend/src/api/openapi.json` first. CI fails if either file is out of date
 - `bun run --cwd frontend format`: auto-fix formatting and imports (Biome)
 - Note: `bun --cwd frontend run …` (flag before `run`) prints help and exits 0. Always put `--cwd` after `run`.
