@@ -1,4 +1,5 @@
 using FitnessCenter.Modules.Members.Application;
+using FitnessCenter.Modules.Members.Contracts;
 using FitnessCenter.Modules.Members.Endpoints;
 using FitnessCenter.Modules.Members.Infrastructure;
 using Microsoft.AspNetCore.Routing;
@@ -22,6 +23,7 @@ public static class MembersModule
                 npgsql.MigrationsHistoryTable("__EFMigrationsHistory", MembersDbContext.Schema).UseNodaTime()));
 
         services.AddScoped<SignupHandler>();
+        services.AddScoped<IMemberDirectory, MemberDirectory>();
 
         services.AddHealthChecks().AddDbContextCheck<MembersDbContext>("members-db");
 

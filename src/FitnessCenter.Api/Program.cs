@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using FitnessCenter.Api.Database;
 using Microsoft.AspNetCore.HttpOverrides;
+using FitnessCenter.Modules.Access;
 using FitnessCenter.Modules.Booking;
 using FitnessCenter.Modules.Identity;
 using FitnessCenter.Modules.Members;
@@ -28,6 +29,7 @@ builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddMembersModule();
 builder.Services.AddBookingModule();
+builder.Services.AddAccessModule();
 
 var app = builder.Build();
 
@@ -62,6 +64,7 @@ app.UseAuthorization();
 app.MapIdentityEndpoints();
 app.MapMembersEndpoints();
 app.MapBookingEndpoints();
+app.MapAccessEndpoints();
 
 app.MapDefaultEndpoints();
 

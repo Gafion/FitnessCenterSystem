@@ -27,6 +27,9 @@ public interface IAccountService
 
     /// <summary>Signs the account in with the auth cookie for the current HTTP request.</summary>
     Task SignInAsync(AccountId accountId, CancellationToken cancellationToken);
+
+    /// <returns>The account's first name, or null when there is no such account. Members uses it at check-in.</returns>
+    Task<string?> FindFirstNameAsync(AccountId accountId, CancellationToken cancellationToken);
 }
 
 public readonly record struct AccountId(Guid Value);
