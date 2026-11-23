@@ -58,6 +58,11 @@ flowchart LR
 | [D-037](decisions.md) | Google never links to an existing account by email |
 | [D-038](decisions.md) | Members confirm their email before they can log in; Mailpit locally |
 | [D-039](decisions.md) | Class booking: any logged-in account books; 14-day window; cancelling closes 12 hours before (placeholders) |
+| [D-040](decisions.md) | Orchestrator only orchestrates; sub-agents briefed via Linear do every task; PRs pass CI, orchestrator review, then owner review and merge |
+| [D-041](decisions.md) | Simulated payment and card-reader pages: any logged-in account, only when `Simulation:Enabled` (404 otherwise), "Simulation" banner |
+| [D-042](decisions.md) | Missing payment: check-in refused from the first Copenhagen day after paid-until; one reminder email (placeholder for D11) |
+| [D-043](decisions.md) | A few full-stack Playwright flows in CI against the real API, PostgreSQL and Mailpit; mocked E2E tests stay |
+| [D-044](decisions.md) | Landing page built now with marked placeholder content, no logo |
 | [D-030](decisions.md) | ArchUnitNET for architecture tests |
 | [D-031](decisions.md) | Two projects per module: Contracts + one project with layer folders |
 | [D-032](decisions.md) | Signup slice: name/email/password, email + Google login, one placeholder membership awaiting payment, consent records |

@@ -38,6 +38,9 @@ Answers will be recorded here and, where they settle a medium/large decision, in
 | AU8 | MFA mandatory for staff; optional for members. | D-013 |
 | W11 | Linear (workspace/team FitnessCenterSystem) for all tasks; sub-agents are briefed via Linear tickets; decisions/requirements stay in docs/. | D-017 |
 | R6 | Applied as errata sections at the top of the two fact-checked reports; original text kept. | — |
+| W17 (orchestrator part) | The orchestrator only orchestrates; every task goes to a briefed sub-agent. The scaffolding half of W17 stays open. | D-040 |
+| D-021 open point (FIT-55) | Simulated pages: any logged-in account, only when `Simulation:Enabled`, with a "Simulation" banner. | D-041 |
+| Q6 (partly) | A few full-stack E2E flows run in CI (signup → confirm → login → book; check-in); mocked tests stay. Per-feature E2E as Definition of Done stays open (W15). | D-043 |
 
 Unanswered questions about the center's operations are collected in [stakeholder-interview-guide.md](stakeholder-interview-guide.md).
 
@@ -225,7 +228,7 @@ New questions only; overlaps folded into F2, M6, A1, M5, E5, T5.
 | U7 | Front-desk hardware? Self check-in kiosk? Device management (MDM)? | ux-patterns |
 | U8 | Staff time-clock method (app, kiosk, PIN)? Biometrics excluded (Datatilsynet says fingerprint clocks unlawful)? | ux-patterns |
 | U9 | Which daily and monthly KPIs does management need? | ux-patterns |
-| U10 | Existing brand/visual identity? ~~Design-system preference (e.g. shadcn/ui)?~~ (answered: shadcn/ui, D-018) Is a generic "AI look" acceptable? | ux-patterns |
+| U10 | Existing brand/visual identity? ~~Design-system preference (e.g. shadcn/ui)?~~ (answered: shadcn/ui, D-018) Is a generic "AI look" acceptable? (Until answered, the landing page uses marked placeholder content and no logo, D-044.) | ux-patterns |
 
 ## Tier 4d — Domain modelling (from wave 2: domain-modeling §10)
 
@@ -243,7 +246,7 @@ Overlaps folded into F7, M1, M5, E2, E3, E4, E5, U4. New questions:
 | D8 | Cancellation: may a member revoke it? On mid-period cancel, does access end immediately or at effective date? | domain-modeling |
 | D9 | Family/household memberships: needed? Who can be on one? Is the payer always a member? | domain-modeling |
 | D10 | Punch cards: expiry? Do late cancels/no-shows consume a clip? Refundable? | domain-modeling |
-| D11 | Dunning: retries and period; when is door access blocked; late fees; collections agency or write-off; different for card vs direct debit? (Partly answered, D-020: a missing payment emails the member and blocks check-in. Grace period, repeat reminders and late fees still open.) | domain-modeling |
+| D11 | Dunning: retries and period; when is door access blocked; late fees; collections agency or write-off; different for card vs direct debit? (Partly answered, D-020: a missing payment emails the member and blocks check-in. Partly answered, D-042: placeholder of no grace period and one reminder email on the first Copenhagen day after paid-until. The center's real grace period, repeat reminders and late fees still open.) | domain-modeling |
 | D12 | Ledger depth: export to e-conomic/Dinero/Billy enough, or internal double-entry balances? (Relates to P3.) | domain-modeling |
 | D13 | Staff roles/permissions: which roles? Trainers see member health info only for own sessions? Multi-site scoping? | domain-modeling |
 | D14 | Per-attendee pay counts booked, checked-in, or no-shows too? Collective agreements, holiday pay, overtime rules to model? | domain-modeling |
