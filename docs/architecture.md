@@ -430,26 +430,30 @@ From [research/service-architecture.md](research/service-architecture.md) §4 (S
 FitnessCenterSystem/
 ├── docs/                              planning docs, research, decisions
 ├── frontend/                          React + TS (Vite)
-│   └── src/api/                       ← generated OpenAPI client (never hand-edited)
+│   ├── src/                           app code: features/, routes/, components/ui/, i18n/, lib/
+│   │   └── api/                       ← generated OpenAPI client (never hand-edited)
+│   └── e2e/                           Playwright E2E tests                    D-018, D-043
 ├── src/
 │   ├── FitnessCenter.AppHost/         Aspire orchestration (dev only)        D-009
 │   ├── FitnessCenter.Api/             host: startup, endpoint registration; service defaults (OpenTelemetry, health) in Extensions.cs  D-027
-│   ├── BuildingBlocks/                shared kernel (Money, Clock, Ids, Result)
+│   ├── BuildingBlocks/
+│   │   └── FitnessCenter.SharedKernel/  shared kernel (Money, CenterTime)
 │   └── Modules/                       2 projects per module (D-031); BannedSymbols.txt bans the system clock
 │       ├── Identity/   {Identity.Contracts, Identity}
 │       ├── Members/    {Members.Contracts, Members}
 │       ├── Booking/    {Booking.Contracts, Booking}
 │       ├── Access/     {Access.Contracts, Access}
-│       ├── Staff/      {Staff.Contracts, Staff}
-│       └── Reporting/  {Reporting}
+│       ├── (planned) Staff/      {Staff.Contracts, Staff}                 D-008, D-019
+│       └── (planned) Reporting/  {Reporting}                              D-008, D-019
 │   └── (later) Payments/ {Payments.Api, Payments.Contracts}               D-006
 ├── tests/                             see testing.md
-│   ├── Unit/                          per module, domain + application
+│   ├── FitnessCenter.Modules.Members.Tests/  unit tests per module (MSTest D-029; CsCheck property tests D-036)
+│   ├── FitnessCenter.Modules.Booking.Tests/
+│   ├── FitnessCenter.Modules.Access.Tests/
 │   ├── FitnessCenter.ArchitectureTests/  boundary rules R1–R3 (ArchUnitNET, D-030)
-│   ├── FitnessCenter.IntegrationTests/  WebApplicationFactory + Testcontainers (PostgreSQL 18.6, same image as Aspire)
-│   └── E2E/                           Playwright
-├── CLAUDE.md                          agent instructions (to be written)
-└── .github/workflows/                 CI
+│   └── FitnessCenter.IntegrationTests/  WebApplicationFactory + Testcontainers (PostgreSQL 18.6, same image as Aspire)
+├── CLAUDE.md                          agent instructions
+└── .github/workflows/ci.yml           CI                                     D-045
 ```
 
 ```mermaid
