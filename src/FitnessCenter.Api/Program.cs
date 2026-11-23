@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using FitnessCenter.Api.Database;
 using FitnessCenter.Modules.Identity;
 using FitnessCenter.Modules.Members;
@@ -10,6 +11,11 @@ builder.AddServiceDefaults();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
+
+// Numbers are JSON numbers only. The default also accepts strings, which makes the
+// OpenAPI document type every number as "integer | string".
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
 
 builder.Services.AddFitnessCenterDatabase(builder.Configuration);
 

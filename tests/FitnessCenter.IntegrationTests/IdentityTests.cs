@@ -61,6 +61,21 @@ public sealed class IdentityTests
         Assert.IsTrue(result.Errors.Any(e => e.Code == "PasswordTooShort"), string.Join(", ", result.Errors.Select(e => e.Code)));
     }
 
+    [TestMethod]
+    public async Task Taken_email_is_reported_once_as_an_email_error()
+    {
+        await using var factory = new ApiFactory();
+        var email = await CreateAccountAsync(factory, "correct-horse");
+        await using var scope = factory.Services.CreateAsyncScope();
+        var accounts = scope.ServiceProvider.GetRequiredService<IAccountService>();
+
+        var result = await accounts.CreateLocalAccountAsync(
+            new NewLocalAccount(email, "correct-horse", "Test", "Member"), CancellationToken.None);
+
+        Assert.IsFalse(result.Succeeded);
+        CollectionAssert.AreEqual(new[] { "DuplicateEmail" }, result.Errors.Select(e => e.Code).ToArray());
+    }
+
     private static async Task<string> CreateAccountAsync(ApiFactory factory, string password)
     {
         await using var scope = factory.Services.CreateAsyncScope();

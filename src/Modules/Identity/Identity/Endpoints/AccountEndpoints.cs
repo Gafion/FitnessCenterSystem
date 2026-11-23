@@ -14,9 +14,11 @@ internal static class AccountEndpoints
     {
         var group = endpoints.MapGroup("/api/identity").WithTags("Identity");
 
-        group.MapPost("/login", LoginAsync).WithName("Login");
+        // UnauthorizedHttpResult doesn't describe itself in OpenAPI, so the 401s are declared here.
+        group.MapPost("/login", LoginAsync).WithName("Login").Produces(StatusCodes.Status401Unauthorized);
         group.MapPost("/logout", LogoutAsync).WithName("Logout").RequireAuthorization();
-        group.MapGet("/me", GetMeAsync).WithName("GetCurrentAccount").RequireAuthorization();
+        group.MapGet("/me", GetMeAsync).WithName("GetCurrentAccount").RequireAuthorization()
+            .Produces(StatusCodes.Status401Unauthorized);
 
         return endpoints;
     }

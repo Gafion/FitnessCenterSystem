@@ -4,10 +4,17 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- The OpenAPI document is written at build time; the frontend client is generated from it (D-033, rule 6). -->
+    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../../frontend/src/api</OpenApiDocumentsDirectory>
+    <OpenApiGenerateDocumentsOptions>--file-name openapi</OpenApiGenerateDocumentsOptions>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.15" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.15">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.10.0" />
     <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" Version="10.10.0" />
     <PackageReference Include="Npgsql.NodaTime" Version="10.0.3" />
@@ -22,4 +29,11 @@
     <ProjectReference Include="..\Modules\Identity\Identity\Identity.csproj" />
     <ProjectReference Include="..\Modules\Members\Members\Members.csproj" />
   </ItemGroup>
+
+  <!-- The generator only reruns when this project's own assembly changes, so an endpoint
+       change inside a module would leave the document stale. Clearing its cache makes
+       every build regenerate it. -->
+  <Target Name="RegenerateOpenApiDocuments" BeforeTargets="GenerateOpenApiDocuments">
+    <Delete Files="$(BaseIntermediateOutputPath)$(MSBuildProjectName).OpenApiFiles.cache" />
+  </Target>
 </Project>
