@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SignupGoogleRouteImport } from './routes/signup_.google'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,18 +35,25 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupGoogleRoute = SignupGoogleRouteImport.update({
+  id: '/signup_/google',
+  path: '/signup/google',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/signup/google': typeof SignupGoogleRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/signup/google': typeof SignupGoogleRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,14 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/signup_/google': typeof SignupGoogleRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/account' | '/login' | '/signup'
+  fullPaths: '/' | '/account' | '/login' | '/signup' | '/signup/google'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/account' | '/login' | '/signup'
-  id: '__root__' | '/' | '/account' | '/login' | '/signup'
+  to: '/' | '/account' | '/login' | '/signup' | '/signup/google'
+  id: '__root__' | '/' | '/account' | '/login' | '/signup' | '/signup_/google'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +76,7 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  SignupGoogleRoute: typeof SignupGoogleRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -99,6 +109,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signup_/google': {
+      id: '/signup_/google'
+      path: '/signup/google'
+      fullPath: '/signup/google'
+      preLoaderRoute: typeof SignupGoogleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -107,6 +124,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRoute: AccountRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  SignupGoogleRoute: SignupGoogleRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

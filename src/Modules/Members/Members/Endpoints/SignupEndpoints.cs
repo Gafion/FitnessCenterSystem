@@ -15,6 +15,7 @@ internal static class SignupEndpoints
 
         group.MapGet("/signup/terms", GetTerms).WithName("GetSignupTerms");
         group.MapPost("/signup", SignUpAsync).WithName("SignUp");
+        group.MapPost("/signup/google", SignUpWithGoogleAsync).WithName("SignUpWithGoogle");
 
         return endpoints;
     }
@@ -27,6 +28,15 @@ internal static class SignupEndpoints
         string LastName,
         string Email,
         string Password,
+        bool AcceptTerms,
+        string TermsVersion,
+        bool StartNow,
+        string EarlyStartVersion);
+
+    /// <summary>Finishes a signup that started with Google; the email comes from Google.</summary>
+    internal sealed record GoogleSignupRequest(
+        string FirstName,
+        string LastName,
         bool AcceptTerms,
         string TermsVersion,
         bool StartNow,
@@ -58,8 +68,27 @@ internal static class SignupEndpoints
                 request.EarlyStartVersion),
             cancellationToken);
 
-        return result.Succeeded
+        return ToResponse(result);
+    }
+
+    private static async Task<Results<Created<SignupResponse>, ValidationProblem>> SignUpWithGoogleAsync(
+        GoogleSignupRequest request, SignupHandler handler, CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(
+            new GoogleSignupCommand(
+                request.FirstName,
+                request.LastName,
+                request.AcceptTerms,
+                request.TermsVersion,
+                request.StartNow,
+                request.EarlyStartVersion),
+            cancellationToken);
+
+        return ToResponse(result);
+    }
+
+    private static Results<Created<SignupResponse>, ValidationProblem> ToResponse(SignupResult result) =>
+        result.Succeeded
             ? TypedResults.Created((string?)null, new SignupResponse(result.MemberId!.Value.Value))
             : TypedResults.ValidationProblem(result.Errors);
-    }
 }

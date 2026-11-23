@@ -2,7 +2,7 @@
 
 Member and employee administration for **one real, single-site fitness center in Denmark** (~10 staff). It is also the owner's learning project, but a **working end product is the priority**.
 
-**Phase:** scaffolding (FIT-31). Template, frontend tooling, Identity + Members modules, PostgreSQL, architecture and integration tests, and CI exist. The first feature, signup and login with email/password (FIT-47), is being built. `main` is protected: a PR merges only when CI passes. The PRD waits on the owner's meeting with the center ([D-004](docs/decisions.md)).
+**Phase:** scaffolding (FIT-31). Template, frontend tooling, Identity + Members modules, PostgreSQL, architecture and integration tests, and CI exist. The first feature, signup and login with email/password or Google (FIT-47), is being built. `main` is protected: a PR merges only when CI passes. The PRD waits on the owner's meeting with the center ([D-004](docs/decisions.md)).
 
 ## Where things are
 
@@ -70,6 +70,7 @@ Rules 1–3 are enforced by architecture tests (`tests/FitnessCenter.Architectur
 
 Run from the repo root.
 - `aspire run`: start everything locally (verified). If it says "No frameworks were found", it picked up the wrong .NET install: set `DOTNET_ROOT` to the SDK's folder (on the owner's machine `~/.local/share/mise/dotnet-root`)
+- Google login locally: the API reads `Authentication:Google:ClientId` and `ClientSecret` from user-secrets (`dotnet user-secrets set … --project src/FitnessCenter.Api`). Without them the API runs with email/password only, as in CI. The frontend must run on `http://localhost:5173` (fixed in the AppHost), because Google's redirect URI is `http://localhost:5173/api/identity/signin-google`
 - `dotnet build FitnessCenter.sln -warnaserror && dotnet test FitnessCenter.sln`: backend gate, including architecture and integration tests (verified). Needs Docker running: Aspire and the integration tests (Testcontainers) start PostgreSQL in containers
 - `dotnet tool restore` once, then `dotnet ef migrations add <Name> --project src/Modules/<M>/<M> --context <M>DbContext --output-dir Infrastructure/Migrations`: add a migration after changing a module's data model. CI fails if one is missing. Dev applies migrations at API startup
 - `bun run --cwd frontend lint && bun run --cwd frontend typecheck && bun run --cwd frontend test && bun run --cwd frontend knip`: frontend gate (verified)

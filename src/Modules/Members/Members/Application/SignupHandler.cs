@@ -17,6 +17,15 @@ internal sealed record SignupCommand(
     bool StartNow,
     string EarlyStartVersion);
 
+/// <summary>Signup that started with Google: the email and login come from Google (D-037).</summary>
+internal sealed record GoogleSignupCommand(
+    string FirstName,
+    string LastName,
+    bool AcceptTerms,
+    string TermsVersion,
+    bool StartNow,
+    string EarlyStartVersion);
+
 internal sealed record SignupResult(MemberId? MemberId, IReadOnlyDictionary<string, string[]> Errors)
 {
     public bool Succeeded => MemberId is not null;
@@ -28,9 +37,25 @@ internal sealed record SignupResult(MemberId? MemberId, IReadOnlyDictionary<stri
 /// </summary>
 internal sealed class SignupHandler(IAccountService accounts, MembersDbContext db, IClock clock)
 {
-    public async Task<SignupResult> HandleAsync(SignupCommand command, CancellationToken cancellationToken)
+    public Task<SignupResult> HandleAsync(SignupCommand command, CancellationToken cancellationToken) =>
+        SignUpAsync(
+            new SignupConsents(command.AcceptTerms, command.TermsVersion, command.StartNow, command.EarlyStartVersion),
+            () => accounts.CreateLocalAccountAsync(
+                new NewLocalAccount(command.Email, command.Password, command.FirstName, command.LastName),
+                cancellationToken),
+            cancellationToken);
+
+    public Task<SignupResult> HandleAsync(GoogleSignupCommand command, CancellationToken cancellationToken) =>
+        SignUpAsync(
+            new SignupConsents(command.AcceptTerms, command.TermsVersion, command.StartNow, command.EarlyStartVersion),
+            () => accounts.CreateExternalAccountAsync(
+                new NewExternalAccount(command.FirstName, command.LastName), cancellationToken),
+            cancellationToken);
+
+    private async Task<SignupResult> SignUpAsync(
+        SignupConsents consents, Func<Task<CreateAccountResult>> createAccount, CancellationToken cancellationToken)
     {
-        var errors = Validate(command);
+        var errors = Validate(consents);
         if (errors.Count > 0)
         {
             return new SignupResult(null, errors);
@@ -46,9 +71,7 @@ internal sealed class SignupHandler(IAccountService accounts, MembersDbContext d
             new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted },
             TransactionScopeAsyncFlowOption.Enabled))
         {
-            var account = await accounts.CreateLocalAccountAsync(
-                new NewLocalAccount(command.Email, command.Password, command.FirstName, command.LastName),
-                cancellationToken);
+            var account = await createAccount();
             if (!account.Succeeded)
             {
                 return new SignupResult(null, ToFieldErrors(account.Errors));
@@ -57,7 +80,7 @@ internal sealed class SignupHandler(IAccountService accounts, MembersDbContext d
             member = Member.SignUp(
                 account.AccountId!.Value.Value,
                 MembershipType.General,
-                new SignupConsents(command.AcceptTerms, command.TermsVersion, command.StartNow, command.EarlyStartVersion),
+                consents,
                 clock.GetCurrentInstant(),
                 CenterTime.Zone);
 
@@ -71,20 +94,20 @@ internal sealed class SignupHandler(IAccountService accounts, MembersDbContext d
         return new SignupResult(member.Id, new Dictionary<string, string[]>());
     }
 
-    private static Dictionary<string, string[]> Validate(SignupCommand command)
+    private static Dictionary<string, string[]> Validate(SignupConsents consents)
     {
         var errors = new Dictionary<string, string[]>();
 
-        if (!command.AcceptTerms)
+        if (!consents.TermsAccepted)
         {
             errors["acceptTerms"] = ["You must accept the terms to sign up."];
         }
-        else if (command.TermsVersion != ConsentTexts.TermsVersion)
+        else if (consents.TermsVersion != ConsentTexts.TermsVersion)
         {
             errors["termsVersion"] = ["The terms have changed. Reload the page and read them again."];
         }
 
-        if (command.StartNow && command.EarlyStartVersion != ConsentTexts.EarlyStartVersion)
+        if (consents.EarlyStartRequested && consents.EarlyStartVersion != ConsentTexts.EarlyStartVersion)
         {
             errors["earlyStartVersion"] = ["The early-start text has changed. Reload the page and read it again."];
         }

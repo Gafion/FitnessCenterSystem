@@ -16,6 +16,10 @@ public sealed class ApiFactory(Action<IServiceCollection>? configureServices = n
         builder.UseEnvironment("Development");
         builder.UseSetting("ConnectionStrings:fitnesscenter", PostgresDatabase.ConnectionString);
 
+        // Development loads the developer's user-secrets, which may hold a real Google
+        // client. Tests never talk to Google; they register FakeGoogle when they need it.
+        builder.UseSetting("Authentication:Google:ClientId", "");
+
         if (configureServices is not null)
         {
             builder.ConfigureTestServices(configureServices);

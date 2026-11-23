@@ -1,25 +1,29 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { api } from '@/lib/api';
+import { ErrorMessage } from '@/features/account/error-message';
+import { GoogleButton } from '@/features/account/google-button';
+import { api, errorSearch, getLoginOptions, googleLinkUrl } from '@/lib/api';
 
 export const Route = createFileRoute('/account')({
+  validateSearch: errorSearch,
   loader: async () => {
     const { data, response } = await api.GET('/api/identity/me');
     if (response.status === 401) {
-      throw redirect({ to: '/login' });
+      throw redirect({ to: '/login', search: {} });
     }
     if (!data) {
       throw new Error('Could not load the account.');
     }
-    return data;
+    return { account: data, options: await getLoginOptions() };
   },
   component: AccountPage,
 });
 
 function AccountPage() {
   const { t } = useTranslation();
-  const account = Route.useLoaderData();
+  const { account, options } = Route.useLoaderData();
+  const { error } = Route.useSearch();
   const navigate = useNavigate();
 
   async function logOut() {
@@ -33,6 +37,14 @@ function AccountPage() {
         {t('account.welcome', { name: account.firstName })}
       </h1>
       <p className="text-muted-foreground">{account.email}</p>
+      <ErrorMessage code={error} />
+      {account.hasGoogleLogin ? (
+        <p className="text-sm">{t('account.googleConnected')}</p>
+      ) : (
+        options.google && (
+          <GoogleButton href={googleLinkUrl} label="account.connectGoogle" />
+        )
+      )}
       <Button variant="outline" onClick={logOut} className="self-start">
         {t('account.logout')}
       </Button>

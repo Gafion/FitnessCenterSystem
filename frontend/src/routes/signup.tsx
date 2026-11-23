@@ -1,22 +1,30 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { GoogleButton } from '@/features/account/google-button';
 import { SignupForm } from '@/features/account/signup-form';
-import { api, type FieldErrors, type Schemas } from '@/lib/api';
+import {
+  api,
+  type FieldErrors,
+  getLoginOptions,
+  getSignupTerms,
+  googleLoginUrl,
+  type Schemas,
+} from '@/lib/api';
 
 export const Route = createFileRoute('/signup')({
   loader: async () => {
-    const { data, error } = await api.GET('/api/members/signup/terms');
-    if (error || !data) {
-      throw new Error('Could not load the signup terms.');
-    }
-    return data;
+    const [terms, options] = await Promise.all([
+      getSignupTerms(),
+      getLoginOptions(),
+    ]);
+    return { terms, options };
   },
   component: SignupPage,
 });
 
 function SignupPage() {
   const { t } = useTranslation();
-  const terms = Route.useLoaderData();
+  const { terms, options } = Route.useLoaderData();
   const navigate = useNavigate();
 
   async function signUp(
@@ -36,6 +44,9 @@ function SignupPage() {
   return (
     <section className="mx-auto flex max-w-md flex-col gap-6 p-8">
       <h1 className="text-3xl font-semibold">{t('signup.title')}</h1>
+      {options.google && (
+        <GoogleButton href={googleLoginUrl} label="signup.google" />
+      )}
       <SignupForm terms={terms} onSubmit={signUp} />
       <p className="text-sm">
         {t('signup.haveAccount')}{' '}

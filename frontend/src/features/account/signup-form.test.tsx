@@ -72,3 +72,38 @@ test('shows the errors the API returns next to their fields', async () => {
   ).toBeInTheDocument();
   expect(screen.getByText('Something else went wrong.')).toBeInTheDocument();
 });
+
+test('with Google, shows the Google email, prefills the names and asks for no password', async () => {
+  const onSubmit = vi.fn().mockResolvedValue(null);
+  render(
+    <SignupForm
+      terms={terms}
+      google={{
+        email: 'test.googler@example.com',
+        firstName: 'Test',
+        lastName: null,
+      }}
+      onSubmit={onSubmit}
+    />,
+  );
+
+  expect(
+    screen.getByText('Your email from Google: test.googler@example.com'),
+  ).toBeInTheDocument();
+  expect(screen.queryByLabelText(/^password/i)).not.toBeInTheDocument();
+  expect(screen.queryByLabelText(/^email/i)).not.toBeInTheDocument();
+  expect(screen.getByLabelText(/first name/i)).toHaveValue('Test');
+
+  fill(/last name/i, 'Googler');
+  fireEvent.click(screen.getByLabelText('I accept the terms'));
+  fireEvent.click(screen.getByRole('button', { name: 'Sign up' }));
+
+  await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+  expect(onSubmit).toHaveBeenCalledWith(
+    expect.objectContaining({
+      firstName: 'Test',
+      lastName: 'Googler',
+      acceptTerms: true,
+    }),
+  );
+});
