@@ -172,33 +172,17 @@ public sealed class GoogleLoginTests
         throw new AssertFailedException("Too many redirects.");
     }
 
+    /// <summary>A password member; with <paramref name="client"/>, also confirmed and logged in there (D-038).</summary>
     private static async Task SignUpWithPasswordAsync(ApiFactory factory, string email, HttpClient? client = null)
     {
-        var owned = client is null;
-        client ??= factory.CreateClient();
-        try
+        if (client is null)
         {
-            var terms = await client.GetFromJsonAsync<SignupTerms>("/api/members/signup/terms");
-            using var signup = await client.PostAsJsonAsync("/api/members/signup", new
-            {
-                firstName = "Test",
-                lastName = "Member",
-                email,
-                password = "correct horse battery",
-                acceptTerms = true,
-                termsVersion = terms!.TermsVersion,
-                startNow = false,
-                earlyStartVersion = terms.EarlyStartVersion,
-            });
-            Assert.AreEqual(HttpStatusCode.Created, signup.StatusCode, await signup.Content.ReadAsStringAsync());
+            using var anonymous = factory.CreateClient();
+            await TestAccounts.SignUpAsync(anonymous, email);
+            return;
         }
-        finally
-        {
-            if (owned)
-            {
-                client.Dispose();
-            }
-        }
+
+        await TestAccounts.SignUpConfirmedAndLoggedInAsync(client, email);
     }
 
     private static async Task<LoginOptions> GetLoginOptionsAsync(HttpClient client)

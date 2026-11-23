@@ -34,8 +34,11 @@ function SignupPage() {
       body: request,
     });
     if (response.ok) {
-      // The API signs the new member in, so the account page works straight away.
-      await navigate({ to: '/account' });
+      // D-038: a password signup confirms the email before logging in.
+      await navigate({
+        to: '/signup/check-email',
+        search: { email: request.email },
+      });
       return null;
     }
     return error?.errors ?? { '': [t('errors.unexpected')] };

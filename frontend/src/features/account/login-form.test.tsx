@@ -4,7 +4,7 @@ import '@/i18n';
 import { LoginForm } from './login-form';
 
 test('sends the email and password', async () => {
-  const onSubmit = vi.fn().mockResolvedValue(true);
+  const onSubmit = vi.fn().mockResolvedValue('ok');
   render(<LoginForm onSubmit={onSubmit} />);
 
   fireEvent.change(screen.getByLabelText('Email'), {
@@ -27,11 +27,26 @@ test('sends the email and password', async () => {
 });
 
 test('says the login failed without saying which part was wrong', async () => {
-  render(<LoginForm onSubmit={vi.fn().mockResolvedValue(false)} />);
+  render(<LoginForm onSubmit={vi.fn().mockResolvedValue('wrong')} />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
 
   expect(
     await screen.findByText('The email or password is wrong.'),
+  ).toBeInTheDocument();
+});
+
+test('an unconfirmed email is told to confirm and can ask for a new link', async () => {
+  render(<LoginForm onSubmit={vi.fn().mockResolvedValue('unconfirmed')} />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+
+  expect(
+    await screen.findByText(
+      'Confirm your email first. We sent you a link when you signed up.',
+    ),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Send a new link' }),
   ).toBeInTheDocument();
 });

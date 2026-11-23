@@ -29,7 +29,8 @@
     "submit": "Log in",
     "failed": "The email or password is wrong.",
     "noAccount": "Not a member yet?",
-    "google": "Log in with Google"
+    "google": "Log in with Google",
+    "unconfirmed": "Confirm your email first. We sent you a link when you signed up."
   },
   "account": {
     "welcome": "Welcome, {{name}}",
@@ -43,5 +44,18 @@
     "google-unverified": "Google hasn't verified your email address, so it can't be used to sign up.",
     "google-email-taken": "This email already has an account. Log in with your password, then connect Google from your account page.",
     "google-in-use": "That Google account is already connected to another member."
+  },
+  "checkEmail": {
+    "title": "Check your email",
+    "body": "We sent a link to {{email}}. Open it to confirm your email, then log in.",
+    "noEmail": "No email? Check your spam folder, or ask for a new link."
+  },
+  "confirmEmail": {
+    "resend": "Send a new link",
+    "resent": "We sent a new link to {{email}}.",
+    "done": "Your email is confirmed",
+    "doneBody": "You can log in now.",
+    "failed": "This link doesn't work",
+    "failedBody": "It may be old. Log in with your email and password to ask for a new link."
   }
 }

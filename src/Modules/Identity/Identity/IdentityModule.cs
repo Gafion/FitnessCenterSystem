@@ -41,9 +41,14 @@ public static class IdentityModule
                 options.Password.RequireUppercase = false;
                 options.Password.RequireNonAlphanumeric = false;
                 options.User.RequireUniqueEmail = true;
+
+                // D-038: no login until the email is confirmed. Google accounts are created
+                // confirmed, because Google verified the address.
+                options.SignIn.RequireConfirmedEmail = true;
             })
             .AddEntityFrameworkStores<IdentityDbContext>()
-            .AddSignInManager();
+            .AddSignInManager()
+            .AddDefaultTokenProviders();
 
         services.ConfigureApplicationCookie(options =>
         {
@@ -66,6 +71,7 @@ public static class IdentityModule
         });
 
         services.AddScoped<IAccountService, AccountService>();
+        services.AddSingleton<IEmailSender<Account>, SmtpEmailSender>();
         services.AddHealthChecks().AddDbContextCheck<IdentityDbContext>("identity-db");
 
         return services;

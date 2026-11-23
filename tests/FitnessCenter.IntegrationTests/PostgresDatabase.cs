@@ -3,7 +3,8 @@ using Testcontainers.PostgreSql;
 namespace FitnessCenter.IntegrationTests;
 
 /// <summary>
-/// One throwaway PostgreSQL container for the whole test run (Testcontainers).
+/// One throwaway PostgreSQL container for the whole test run (Testcontainers), plus the
+/// test mailbox (<see cref="TestMailbox"/>).
 /// The image matches the one Aspire runs locally, so tests and dev use the same version.
 /// Needs Docker; CI's ubuntu runners have it.
 /// </summary>
@@ -23,6 +24,7 @@ public static class PostgresDatabase
             .WithDatabase("fitnesscenter")
             .Build();
         await _container.StartAsync();
+        await TestMailbox.StartAsync();
 
         // Tests run in parallel and each one starts the API, which migrates at startup in
         // Development. Migrating once here, first, stops those startups racing each other.
@@ -37,5 +39,7 @@ public static class PostgresDatabase
         {
             await _container.DisposeAsync();
         }
+
+        await TestMailbox.StopAsync();
     }
 }

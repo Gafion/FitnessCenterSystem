@@ -38,3 +38,8 @@ export async function getSignupTerms(): Promise<Schemas['SignupTerms']> {
   }
   return data;
 }
+
+/** Asks for a new confirmation email (D-038). The API answers the same whether or not the email has an account. */
+export async function resendEmailConfirmation(email: string): Promise<void> {
+  await api.POST('/api/identity/confirm-email/resend', { body: { email } });
+}

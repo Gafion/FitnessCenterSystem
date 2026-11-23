@@ -163,6 +163,7 @@ Unanswered questions about the center's operations are collected in [stakeholder
 | AU6 | One identity store with roles for staff and members, or separate stores? | authentication |
 | AU7 | ASVS target: L1 for members, L2 for staff/admin? (Relates to T4.) | authentication |
 | AU8 | MFA mandatory for staff (passkey or TOTP)? Optional for members? | authentication |
+| AU9 | Which service sends the real emails (confirmation links now; booking confirmations and receipts later)? Amazon SES, Postmark, Resend, or the center's own mail system? Needs: what the center uses today, EU hosting, price, and access to the center's DNS for sender verification. Locally, Mailpit catches all email (D-038). (Relates to B2, T2.) | D-038 |
 
 ## Tier 4 — How we work (agentic process)
 

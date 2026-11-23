@@ -98,6 +98,8 @@ The first run takes a few minutes while it builds and pulls the PostgreSQL image
 - **The app:** http://localhost:5173
 - **The Aspire dashboard:** the `Dashboard:` link the command prints (it includes a login token). It shows the logs and health of the API, the frontend and the database.
 
+- **The test mailbox (Mailpit):** the `mailpit` resource's link in the dashboard. Every email the app sends lands here, such as the "Confirm your email" link after a signup. Nothing reaches a real inbox.
+
 Stop it with `Ctrl+C`. The database survives restarts in a Docker volume.
 
 ### 5. Run the checks

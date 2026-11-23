@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -19,6 +20,9 @@ public sealed class ApiFactory(Action<IServiceCollection>? configureServices = n
         // Development loads the developer's user-secrets, which may hold a real Google
         // client. Tests never talk to Google; they register FakeGoogle when they need it.
         builder.UseSetting("Authentication:Google:ClientId", "");
+
+        builder.UseSetting("Email:Smtp:Host", TestMailbox.SmtpHost);
+        builder.UseSetting("Email:Smtp:Port", TestMailbox.SmtpMappedPort.ToString(CultureInfo.InvariantCulture));
 
         if (configureServices is not null)
         {

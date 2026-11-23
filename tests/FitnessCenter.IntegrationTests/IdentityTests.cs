@@ -85,6 +85,10 @@ public sealed class IdentityTests
         var result = await accounts.CreateLocalAccountAsync(
             new NewLocalAccount(email, password, "Test", "Member"), CancellationToken.None);
         Assert.IsTrue(result.Succeeded, string.Join(", ", result.Errors.Select(e => e.Code)));
+
+        // D-038: accounts log in only after confirming their email.
+        using var client = factory.CreateClient();
+        await TestAccounts.ResendAndConfirmEmailAsync(client, email);
         return email;
     }
 

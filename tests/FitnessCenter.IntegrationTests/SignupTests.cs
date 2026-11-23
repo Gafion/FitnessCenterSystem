@@ -10,8 +10,9 @@ public sealed class SignupTests
 {
     private const string Password = "correct horse battery";
 
+    /// <summary>D-038: a password signup is logged in only after confirming the email.</summary>
     [TestMethod]
-    public async Task Signup_creates_the_member_and_signs_them_in()
+    public async Task Signup_creates_the_member_who_logs_in_after_confirming_the_email()
     {
         await using var factory = new ApiFactory();
         using var client = factory.CreateClient();
@@ -23,6 +24,15 @@ public sealed class SignupTests
         Assert.AreEqual(HttpStatusCode.Created, signup.StatusCode, await signup.Content.ReadAsStringAsync());
         var body = await signup.Content.ReadFromJsonAsync<SignupResponse>();
         Assert.AreNotEqual(Guid.Empty, body?.MemberId);
+        Assert.IsTrue(body?.EmailConfirmationRequired);
+
+        using var meBefore = await client.GetAsync(new Uri("/api/identity/me", UriKind.Relative));
+        Assert.AreEqual(HttpStatusCode.Unauthorized, meBefore.StatusCode, "logged in before confirming the email");
+
+        using var confirm = await TestAccounts.ConfirmEmailAsync(client, email);
+        Assert.AreEqual(HttpStatusCode.NoContent, confirm.StatusCode, await confirm.Content.ReadAsStringAsync());
+        using var login = await TestAccounts.LogInAsync(client, email, Password);
+        Assert.AreEqual(HttpStatusCode.NoContent, login.StatusCode);
 
         var me = await client.GetFromJsonAsync<CurrentAccount>("/api/identity/me");
         Assert.AreEqual(email, me?.Email);
@@ -138,7 +148,7 @@ public sealed class SignupTests
         string FirstName, string LastName, string Email, string Password,
         bool AcceptTerms, string TermsVersion, bool StartNow, string EarlyStartVersion);
 
-    private sealed record SignupResponse(Guid MemberId);
+    private sealed record SignupResponse(Guid MemberId, bool EmailConfirmationRequired);
 
     private sealed record CurrentAccount(Guid AccountId, string Email, string FirstName, string LastName);
 }

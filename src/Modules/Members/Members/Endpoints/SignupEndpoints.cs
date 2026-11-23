@@ -42,7 +42,10 @@ internal static class SignupEndpoints
         bool StartNow,
         string EarlyStartVersion);
 
-    internal sealed record SignupResponse(Guid MemberId);
+    /// <param name="EmailConfirmationRequired">
+    /// True after a password signup: the member must confirm their email before logging in (D-038).
+    /// </param>
+    internal sealed record SignupResponse(Guid MemberId, bool EmailConfirmationRequired);
 
     /// <summary>The texts the signup form shows; their versions are sent back with the signup.</summary>
     private static Ok<SignupTerms> GetTerms() => TypedResults.Ok(new SignupTerms(
@@ -89,6 +92,6 @@ internal static class SignupEndpoints
 
     private static Results<Created<SignupResponse>, ValidationProblem> ToResponse(SignupResult result) =>
         result.Succeeded
-            ? TypedResults.Created((string?)null, new SignupResponse(result.MemberId!.Value.Value))
+            ? TypedResults.Created((string?)null, new SignupResponse(result.MemberId!.Value.Value, !result.SignedIn))
             : TypedResults.ValidationProblem(result.Errors);
 }
