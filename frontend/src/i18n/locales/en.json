@@ -4,7 +4,26 @@
   },
   "landing": {
     "title": "Welcome to FitnessCenter",
-    "classes": "See classes"
+    "tagline": "PLACEHOLDER: a short tagline about the center.",
+    "classes": "See classes",
+    "upcoming": {
+      "title": "Next classes",
+      "when": "{{day}}, {{time}}",
+      "none": "No classes are scheduled right now.",
+      "all": "See all classes"
+    },
+    "membership": {
+      "join": "Become a member"
+    },
+    "visit": {
+      "title": "Visit us",
+      "hours": "Opening hours",
+      "hoursPlaceholder": "PLACEHOLDER: opening hours",
+      "address": "Address",
+      "addressPlaceholder": "PLACEHOLDER: address",
+      "contact": "Contact",
+      "contactPlaceholder": "PLACEHOLDER: phone and email"
+    }
   },
   "signup": {
     "title": "Sign up",
