@@ -1,4 +1,5 @@
 using System.Transactions;
+using FitnessCenter.Modules.Access.Contracts;
 using FitnessCenter.Modules.Identity.Contracts;
 using FitnessCenter.Modules.Members.Domain;
 using FitnessCenter.Modules.Members.Infrastructure;
@@ -37,11 +38,12 @@ internal sealed record SignupResult(MemberId? MemberId, IReadOnlyDictionary<stri
 }
 
 /// <summary>
-/// Signup for the general membership (D-032): creates the Identity account, the member
-/// and the consents in one transaction (D-015, D-034), then signs the member in.
+/// Signup for the general membership (D-032): creates the Identity account, the member,
+/// the consents and the member's access card in one transaction (D-003, D-015, D-034),
+/// then signs the member in.
 /// </summary>
 internal sealed class SignupHandler(
-    IAccountService accounts, MembersDbContext db, IClock clock, ILogger<SignupHandler> logger)
+    IAccountService accounts, IAccessCards cards, MembersDbContext db, IClock clock, ILogger<SignupHandler> logger)
 {
     public Task<SignupResult> HandleAsync(SignupCommand command, CancellationToken cancellationToken) =>
         SignUpAsync(
@@ -107,6 +109,9 @@ internal sealed class SignupHandler(
 
             db.Members.Add(member);
             await db.SaveChangesAsync(cancellationToken);
+
+            // After the member is saved: the card points to it.
+            await cards.IssueCardAsync(member.Id.Value, cancellationToken);
 
             transaction.Complete();
         }

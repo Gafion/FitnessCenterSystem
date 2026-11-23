@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Access.Contracts/Access.Contracts.csproj" />
+    <ProjectReference Include="../../Members/Members.Contracts/Members.Contracts.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/FitnessCenter.SharedKernel/FitnessCenter.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.15">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.15" />
+    <PackageReference Include="NodaTime" Version="3.3.7" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="FitnessCenter.Modules.Access.Tests" />
+    <!-- The integration tests look up the cards Access issued at signup. -->
+    <InternalsVisibleTo Include="FitnessCenter.IntegrationTests" />
+  </ItemGroup>
+
+</Project>
