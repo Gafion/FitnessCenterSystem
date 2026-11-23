@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using FitnessCenter.Api.Database;
+using Microsoft.AspNetCore.HttpOverrides;
 using FitnessCenter.Modules.Identity;
 using FitnessCenter.Modules.Members;
 using NodaTime;
@@ -23,13 +24,22 @@ builder.Services.AddFitnessCenterDatabase(builder.Configuration);
 builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 
 // Modules (D-008, D-031).
-builder.Services.AddIdentityModule();
+builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddMembersModule();
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    // The Vite dev server proxies /api from the browser's address; Google login needs
+    // that address, not the API's own. Only loopback proxies are trusted (the default).
+    // Production hosting, and any proxy in front of it, is still open (SA4).
+    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedHost | ForwardedHeaders.XForwardedProto,
+        AllowedHosts = ["localhost"],
+    });
+
     // Production migrations wait for the deployment decision (SA4).
     await app.Services.MigrateDatabaseAsync();
     app.MapOpenApi();

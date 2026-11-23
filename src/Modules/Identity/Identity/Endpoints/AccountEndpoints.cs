@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FitnessCenter.Modules.Identity.Application;
 using FitnessCenter.Modules.Identity.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -25,7 +26,7 @@ internal static class AccountEndpoints
 
     internal sealed record LoginRequest(string Email, string Password);
 
-    internal sealed record CurrentAccount(Guid AccountId, string Email, string FirstName, string LastName);
+    internal sealed record CurrentAccount(Guid AccountId, string Email, string FirstName, string LastName, bool HasGoogleLogin);
 
     private static async Task<Results<NoContent, UnauthorizedHttpResult>> LoginAsync(
         LoginRequest request, SignInManager<Account> signIn)
@@ -48,8 +49,14 @@ internal static class AccountEndpoints
         ClaimsPrincipal user, UserManager<Account> users)
     {
         var account = await users.GetUserAsync(user);
-        return account is null
-            ? TypedResults.Unauthorized()
-            : TypedResults.Ok(new CurrentAccount(account.Id, account.Email!, account.FirstName, account.LastName));
+        if (account is null)
+        {
+            return TypedResults.Unauthorized();
+        }
+
+        var logins = await users.GetLoginsAsync(account);
+        return TypedResults.Ok(new CurrentAccount(
+            account.Id, account.Email!, account.FirstName, account.LastName,
+            logins.Any(login => login.LoginProvider == ExternalLogins.Google)));
     }
 }

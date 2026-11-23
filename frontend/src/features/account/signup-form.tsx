@@ -10,13 +10,15 @@ import { FieldError } from './field-error';
 
 type Props = {
   terms: Schemas['SignupTerms'];
+  /** Set when the signup started with Google: the email comes from Google and there's no password. */
+  google?: Schemas['PendingExternalLogin'];
   /** Sends the signup; resolves to the validation errors, or null when it succeeded. */
   onSubmit: (request: Schemas['SignupRequest']) => Promise<FieldErrors | null>;
 };
 
 const textFields = ['firstName', 'lastName', 'email', 'password'] as const;
 
-export function SignupForm({ terms, onSubmit }: Props) {
+export function SignupForm({ terms, google, onSubmit }: Props) {
   const { t } = useTranslation();
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [startNow, setStartNow] = useState(false);
@@ -43,8 +45,13 @@ export function SignupForm({ terms, onSubmit }: Props) {
     setErrors(result ?? {});
   }
 
+  const fields = google ? (['firstName', 'lastName'] as const) : textFields;
+  const defaults: Partial<Record<(typeof textFields)[number], string>> = google
+    ? { firstName: google.firstName ?? '', lastName: google.lastName ?? '' }
+    : {};
+
   // Errors on fields the form doesn't show (or on no field) go at the top.
-  const shownFields: string[] = [...textFields, 'acceptTerms'];
+  const shownFields: string[] = [...fields, 'acceptTerms'];
   const otherErrors = Object.entries(errors)
     .filter(([field]) => !shownFields.includes(field))
     .flatMap(([, messages]) => messages);
@@ -60,7 +67,13 @@ export function SignupForm({ terms, onSubmit }: Props) {
 
       <FieldError id="signup-errors" messages={otherErrors} />
 
-      {textFields.map((field) => (
+      {google && (
+        <p className="text-sm">
+          {t('signup.googleEmail', { email: google.email })}
+        </p>
+      )}
+
+      {fields.map((field) => (
         <div key={field} className="flex flex-col gap-2">
           <Label htmlFor={field}>{t(`signup.fields.${field}`)}</Label>
           <Input
@@ -74,6 +87,7 @@ export function SignupForm({ terms, onSubmit }: Props) {
                   : 'text'
             }
             autoComplete={autoComplete[field]}
+            defaultValue={defaults[field]}
             aria-invalid={errors[field] ? true : undefined}
             aria-describedby={errors[field] ? `${field}-error` : undefined}
             required

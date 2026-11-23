@@ -11,8 +11,10 @@ var api = builder.AddDotnetProject("api", "../FitnessCenter.Api/FitnessCenter.Ap
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints();
 
+// A fixed port, because Google's redirect URI must match exactly (FIT-51).
 var webfrontend = builder.AddViteApp("webfrontend", "../../frontend")
     .WithBun()
+    .WithEndpoint("http", endpoint => endpoint.Port = 5173)
     .WithReference(api)
     .WaitFor(api);
 

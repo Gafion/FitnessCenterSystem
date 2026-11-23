@@ -2,10 +2,12 @@ using FitnessCenter.Modules.Identity.Application;
 using FitnessCenter.Modules.Identity.Contracts;
 using FitnessCenter.Modules.Identity.Endpoints;
 using FitnessCenter.Modules.Identity.Infrastructure;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 
@@ -17,14 +19,16 @@ namespace FitnessCenter.Modules.Identity;
 /// </summary>
 public static class IdentityModule
 {
-    public static IServiceCollection AddIdentityModule(this IServiceCollection services)
+    public static IServiceCollection AddIdentityModule(this IServiceCollection services, IConfiguration configuration)
     {
         // The shared, request-scoped connection lets one transaction span modules (D-015).
         services.AddDbContext<IdentityDbContext>((provider, options) =>
             options.UseNpgsql(provider.GetRequiredService<NpgsqlConnection>(), npgsql =>
                 npgsql.MigrationsHistoryTable("__EFMigrationsHistory", IdentityDbContext.Schema)));
 
-        services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
+        var authentication = services.AddAuthentication(IdentityConstants.ApplicationScheme);
+        authentication.AddIdentityCookies();
+        AddGoogle(authentication, configuration.GetSection("Authentication:Google"));
         services.AddAuthorization();
 
         services.AddIdentityCore<Account>(options =>
@@ -69,7 +73,33 @@ public static class IdentityModule
 
     public static IEndpointRouteBuilder MapIdentityEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        return endpoints.MapAccountEndpoints();
+        return endpoints.MapAccountEndpoints().MapExternalLoginEndpoints();
+    }
+
+    /// <summary>
+    /// Google login (D-011), only when a client is configured: locally from user-secrets
+    /// (FIT-51). Without one, the API runs with email/password login only, as in CI.
+    /// </summary>
+    private static void AddGoogle(AuthenticationBuilder authentication, IConfiguration google)
+    {
+        var clientId = google["ClientId"];
+        if (string.IsNullOrEmpty(clientId))
+        {
+            return;
+        }
+
+        authentication.AddGoogle(ExternalLogins.Google, options =>
+        {
+            options.ClientId = clientId;
+            options.ClientSecret = google["ClientSecret"]
+                ?? throw new InvalidOperationException("Authentication:Google:ClientSecret is missing.");
+            options.SignInScheme = IdentityConstants.ExternalScheme;
+
+            // Registered in the Google console (FIT-51). Under /api so it goes through the
+            // frontend's proxy and the cookie lands on the address the member uses.
+            options.CallbackPath = "/api/identity/signin-google";
+            options.ClaimActions.MapJsonKey(ExternalLogins.EmailVerifiedClaim, "email_verified");
+        });
     }
 
     /// <summary>Applies this module's migrations. The host calls it at startup in Development.</summary>

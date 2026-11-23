@@ -17,7 +17,10 @@
     "acceptTerms": "I accept the terms",
     "startNow": "Start my membership now",
     "submit": "Sign up",
-    "haveAccount": "Already a member?"
+    "haveAccount": "Already a member?",
+    "google": "Sign up with Google",
+    "googleTitle": "Finish signing up",
+    "googleEmail": "Your email from Google: {{email}}"
   },
   "login": {
     "title": "Log in",
@@ -25,13 +28,20 @@
     "password": "Password",
     "submit": "Log in",
     "failed": "The email or password is wrong.",
-    "noAccount": "Not a member yet?"
+    "noAccount": "Not a member yet?",
+    "google": "Log in with Google"
   },
   "account": {
     "welcome": "Welcome, {{name}}",
-    "logout": "Log out"
+    "logout": "Log out",
+    "connectGoogle": "Connect Google",
+    "googleConnected": "Google is connected. You can log in with it."
   },
   "errors": {
-    "unexpected": "Something went wrong. Please try again."
+    "unexpected": "Something went wrong. Please try again.",
+    "google-failed": "The Google login didn't work. Please try again.",
+    "google-unverified": "Google hasn't verified your email address, so it can't be used to sign up.",
+    "google-email-taken": "This email already has an account. Log in with your password, then connect Google from your account page.",
+    "google-in-use": "That Google account is already connected to another member."
   }
 }

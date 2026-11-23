@@ -67,6 +67,101 @@
         }
       }
     },
+    "/api/identity/login-options": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "GetLoginOptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginOptions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/identity/external/google": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "StartGoogleLogin",
+        "responses": {
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/identity/external/google/callback": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "FinishGoogleLogin",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/identity/external/pending": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "GetPendingExternalLogin",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingExternalLogin"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/identity/external/google/link": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "StartGoogleLink",
+        "responses": {
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/identity/external/google/link/callback": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "FinishGoogleLink",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/members/signup/terms": {
       "get": {
         "tags": [
@@ -126,6 +221,46 @@
           }
         }
       }
+    },
+    "/api/members/signup/google": {
+      "post": {
+        "tags": [
+          "Members"
+        ],
+        "operationId": "SignUpWithGoogle",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleSignupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignupResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -135,7 +270,8 @@
           "accountId",
           "email",
           "firstName",
-          "lastName"
+          "lastName",
+          "hasGoogleLogin"
         ],
         "type": "object",
         "properties": {
@@ -150,6 +286,40 @@
             "type": "string"
           },
           "lastName": {
+            "type": "string"
+          },
+          "hasGoogleLogin": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GoogleSignupRequest": {
+        "required": [
+          "firstName",
+          "lastName",
+          "acceptTerms",
+          "termsVersion",
+          "startNow",
+          "earlyStartVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "acceptTerms": {
+            "type": "boolean"
+          },
+          "termsVersion": {
+            "type": "string"
+          },
+          "startNow": {
+            "type": "boolean"
+          },
+          "earlyStartVersion": {
             "type": "string"
           }
         }
@@ -199,6 +369,17 @@
           }
         }
       },
+      "LoginOptions": {
+        "required": [
+          "google"
+        ],
+        "type": "object",
+        "properties": {
+          "google": {
+            "type": "boolean"
+          }
+        }
+      },
       "LoginRequest": {
         "required": [
           "email",
@@ -211,6 +392,31 @@
           },
           "password": {
             "type": "string"
+          }
+        }
+      },
+      "PendingExternalLogin": {
+        "required": [
+          "email",
+          "firstName",
+          "lastName"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lastName": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

@@ -22,6 +22,9 @@ export default defineConfig({
       '/api': {
         target: process.env.API_HTTPS || process.env.API_HTTP,
         changeOrigin: true,
+        // Tells the API the browser's address (X-Forwarded-Host/Proto), so the
+        // Google redirect URI it builds is http://localhost:5173/... (FIT-51).
+        xfwd: true,
       },
     },
   },

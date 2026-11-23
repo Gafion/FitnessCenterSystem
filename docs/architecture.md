@@ -55,6 +55,7 @@ flowchart LR
 | [D-028](decisions.md) | Rules 1–3 and 6, CI gate and protected acceptance tests are enforced checks; rules 4–5 by review |
 | [D-029](decisions.md) | MSTest for C# tests |
 | [D-036](decisions.md) | CsCheck for property-based tests in C# |
+| [D-037](decisions.md) | Google never links to an existing account by email |
 | [D-030](decisions.md) | ArchUnitNET for architecture tests |
 | [D-031](decisions.md) | Two projects per module: Contracts + one project with layer folders |
 | [D-032](decisions.md) | Signup slice: name/email/password, email + Google login, one placeholder membership awaiting payment, consent records |

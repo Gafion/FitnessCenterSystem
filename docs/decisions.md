@@ -1094,3 +1094,42 @@ Owner decision on a recommendation. CsCheck runs inside `[TestMethod]` without a
 - https://www.nuget.org/packages/CsCheck (5.0.1; net10.0/net11.0; no dependencies; the date shown is UNVERIFIED)
 - https://fscheck.github.io/FsCheck/RunningTests.html (xUnit/NUnit integrations, `QuickThrowOnFailure`, `Arb.fromGen` does not shrink)
 - https://www.nuget.org/packages/FsCheck (3.6.0; FSharp.Core dependency)
+
+## D-037: Google never links to an existing account by email
+- **Date:** 2026-11-23
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-011, D-026, D-032, FIT-47, FIT-51
+
+### Problem statement
+Someone logs in with Google, and the email Google gives us already belongs to a member who signed up with a password. Do we log them into that account?
+
+### Options considered
+From [research/authentication.md](research/authentication.md) §4:
+1. **Refuse, and ask them to log in first.** They log in with their password and connect Google from the account page. Accounts are matched by (provider, subject), never by email alone (ASVS 6.8.1 [A5]).
+2. **Link automatically** when Google says the email is verified. Smoother, but trusts Google's email check with access to the account. Auto-linking on email match is a known account-takeover route (UNVERIFIED in the research).
+
+### Decision
+**Option 1.** Built in FIT-47 slice D:
+
+```mermaid
+flowchart TD
+  A[Google callback: subject S, email E, email_verified V] --> B{An account has Google login S?}
+  B -- yes --> Z[Log in]
+  B -- no --> C{V is true?}
+  C -- no --> R1[Refuse: email not verified]
+  C -- yes --> D{An account has email E?}
+  D -- yes --> R2[Refuse: log in with your password, then connect Google]
+  D -- no --> F[Finish signup page: names, terms] --> G[Create account + member, link S] --> Z
+  H[Logged-in member: Connect Google] --> I{Google login S used by another account?}
+  I -- no --> J[Link S to this account]
+  I -- yes --> R3[Refuse: Google account in use]
+```
+
+A new account takes its email from Google only when `email_verified` is true. Otherwise someone could claim an address they don't own.
+
+### Reasoning
+Owner decision on a recommendation. Logging in proves control of the existing account, which is what the research asks for before linking. Connecting from the account page also lets a member use a Google account with a different email.
+
+### Sources
+- [research/authentication.md](research/authentication.md) §4, risk R3, [A5] ASVS 6.8.1
