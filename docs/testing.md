@@ -81,7 +81,7 @@ From the repo root (CLAUDE.md, "Commands"). Docker must run for the backend test
 
 ## 4. What CI runs
 
-[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs two jobs on every pull request and every push to `main`. Branch protection on `main` requires both (comment at the top of `ci.yml`; CLAUDE.md).
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs two jobs on every pull request and every push to `main`. Branch protection on `main` requires both (comment at the top of `ci.yml`; CLAUDE.md). This sentence is a throwaway docs-only change to prove the D-045 skip.
 
 ```mermaid
 flowchart LR
