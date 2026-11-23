@@ -117,6 +117,18 @@ public sealed class PaymentTests
         Assert.IsEmpty((await GetPaymentsAsync(client)).Payments, "the history still works, and nothing was paid");
     }
 
+    /// <summary>D-041 checks the setting first: off means 404, with or without a login.</summary>
+    [TestMethod]
+    public async Task The_simulation_answers_404_when_it_is_off_even_without_a_login()
+    {
+        await using var factory = Factory(simulation: false);
+        using var client = factory.CreateClient();
+
+        using var pay = await client.PostAsJsonAsync("/api/simulation/payments", new { });
+
+        Assert.AreEqual(HttpStatusCode.NotFound, pay.StatusCode);
+    }
+
     [TestMethod]
     public async Task Payments_need_a_login()
     {

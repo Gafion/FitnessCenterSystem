@@ -23,14 +23,21 @@ internal static class PaymentEndpoints
             .MapGet("/me/payments", GetMyPaymentsAsync).WithName("GetMyPayments").RequireAuthorization()
             .Produces(StatusCodes.Status401Unauthorized);
 
-        // Mapped always, so the OpenAPI document and the generated client know it; answers
-        // 404 unless the simulation is on (D-041).
+        // Mapped always, so the OpenAPI document and the generated client know it. D-041 checks
+        // the setting before the login: 404 when the simulation is off, even without a login,
+        // then 401 without one. RequireAuthorization would answer 401 first, so the filter does both.
         endpoints.MapGroup("/api/simulation").WithTags("Simulation")
-            .MapPost("/payments", SimulatePaymentAsync).WithName("SimulatePayment").RequireAuthorization()
+            .MapPost("/payments", SimulatePaymentAsync).WithName("SimulatePayment")
             .AddEndpointFilter(async (context, next) =>
-                context.HttpContext.RequestServices.GetRequiredService<IConfiguration>().GetValue<bool>(SimulationEnabledSetting)
-                    ? await next(context)
-                    : TypedResults.NotFound())
+            {
+                var http = context.HttpContext;
+                if (!http.RequestServices.GetRequiredService<IConfiguration>().GetValue<bool>(SimulationEnabledSetting))
+                {
+                    return TypedResults.NotFound();
+                }
+
+                return http.User.Identity?.IsAuthenticated == true ? await next(context) : TypedResults.Unauthorized();
+            })
             .Produces(StatusCodes.Status401Unauthorized);
 
         return endpoints;
