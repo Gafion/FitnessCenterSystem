@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using FitnessCenter.Api;
 using FitnessCenter.Api.Database;
 using Microsoft.AspNetCore.HttpOverrides;
 using FitnessCenter.Modules.Access;
@@ -65,6 +66,7 @@ app.MapIdentityEndpoints();
 app.MapMembersEndpoints();
 app.MapBookingEndpoints();
 app.MapAccessEndpoints();
+app.MapSimulationEndpoints();
 
 app.MapDefaultEndpoints();
 

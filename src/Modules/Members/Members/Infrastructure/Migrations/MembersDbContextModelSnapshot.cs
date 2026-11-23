@@ -83,6 +83,48 @@ namespace Members.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("FitnessCenter.Modules.Members.Domain.PaymentRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("bigint")
+                        .HasColumnName("AmountOre");
+
+                    b.Property<string>("CardLast4")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("character(4)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Instant>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PaymentRef")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<LocalDate>("PeriodFrom")
+                        .HasColumnType("date");
+
+                    b.Property<LocalDate>("PeriodTo")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("PaymentRef")
+                        .IsUnique();
+
+                    b.ToTable("payment_records", "members");
+                });
+
             modelBuilder.Entity("FitnessCenter.Modules.Members.Domain.Member", b =>
                 {
                     b.HasOne("FitnessCenter.Modules.Members.Domain.MembershipType", null)
@@ -128,6 +170,15 @@ namespace Members.Infrastructure.Migrations
                         });
 
                     b.Navigation("Consents");
+                });
+
+            modelBuilder.Entity("FitnessCenter.Modules.Members.Domain.PaymentRecord", b =>
+                {
+                    b.HasOne("FitnessCenter.Modules.Members.Domain.Member", null)
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

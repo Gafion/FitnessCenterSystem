@@ -60,7 +60,8 @@
     "classes": "Book a class",
     "card": "Your access card:",
     "noCard": "You have no access card yet.",
-    "checkIn": "Try the card reader"
+    "checkIn": "Try the card reader",
+    "simulatedPayments": "Simulated payments"
   },
   "errors": {
     "unexpected": "Something went wrong. Please try again.",
@@ -107,7 +108,7 @@
   },
   "simulation": {
     "label": "Simulation",
-    "text": "This page stands in for hardware the center doesn't have in the system yet. Only synthetic data is used."
+    "text": "This page stands in for hardware or a service the center doesn't have in the system yet. Only synthetic data is used."
   },
   "checkIn": {
     "title": "Card reader",
@@ -121,5 +122,30 @@
     "unknownCard": "Unknown card",
     "unknownCardHelp": "This card isn't registered. Ask the staff for help.",
     "failed": "The reader didn't answer. Try again."
+  },
+  "payments": {
+    "title": "Payments",
+    "paidUntil": "Paid until {{date}}.",
+    "awaitingFirst": "No payment yet. Your membership starts with the first payment.",
+    "none": "No payments yet.",
+    "period": "Period",
+    "amount": "Amount",
+    "card": "Card",
+    "periodRange": "{{from}} – {{to}}",
+    "cardEnding": "ending {{last4}}",
+    "failed": "Your payments could not be loaded. Please try again later."
+  },
+  "simulatedPayments": {
+    "title": "Simulated payments",
+    "price": "Each payment covers one month at {{price}}.",
+    "payNext": "Pay next month",
+    "periodFrom": "Or pay one month starting on",
+    "periodHint": "Choose a past date to try a missing payment. Later payments must start the day after the paid-until date.",
+    "payChosen": "Pay for this month",
+    "skip": "To skip a payment, just don't send one.",
+    "back": "Back to your account",
+    "errors": {
+      "period-not-contiguous": "A payment must start the day after the paid-until date."
+    }
   }
 }

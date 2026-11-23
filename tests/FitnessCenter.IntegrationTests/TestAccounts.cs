@@ -12,7 +12,8 @@ internal static class TestAccounts
     // Synthetic data only (CLAUDE.md): a unique address on the reserved example.com domain.
     public static string SyntheticEmail() => $"member-{Guid.NewGuid():N}@example.com";
 
-    public static async Task SignUpAsync(HttpClient client, string email)
+    /// <returns>The new member's id.</returns>
+    public static async Task<Guid> SignUpAsync(HttpClient client, string email)
     {
         var terms = await client.GetFromJsonAsync<Terms>("/api/members/signup/terms");
         using var signup = await client.PostAsJsonAsync("/api/members/signup", new
@@ -27,6 +28,7 @@ internal static class TestAccounts
             earlyStartVersion = terms.EarlyStartVersion,
         });
         Assert.AreEqual(HttpStatusCode.Created, signup.StatusCode, await signup.Content.ReadAsStringAsync());
+        return (await signup.Content.ReadFromJsonAsync<Signup>())!.MemberId;
     }
 
     /// <summary>Follows the newest confirmation link in the test mailbox (D-038).</summary>
@@ -54,14 +56,18 @@ internal static class TestAccounts
         await client.PostAsJsonAsync("/api/identity/login", new { email, password });
 
     /// <summary>Signup, confirmation and login: a member who is logged in on <paramref name="client"/>.</summary>
-    public static async Task SignUpConfirmedAndLoggedInAsync(HttpClient client, string email)
+    /// <returns>The member's id.</returns>
+    public static async Task<Guid> SignUpConfirmedAndLoggedInAsync(HttpClient client, string email)
     {
-        await SignUpAsync(client, email);
+        var memberId = await SignUpAsync(client, email);
         using var confirm = await ConfirmEmailAsync(client, email);
         Assert.AreEqual(HttpStatusCode.NoContent, confirm.StatusCode, await confirm.Content.ReadAsStringAsync());
         using var login = await LogInAsync(client, email);
         Assert.AreEqual(HttpStatusCode.NoContent, login.StatusCode, await login.Content.ReadAsStringAsync());
+        return memberId;
     }
+
+    private sealed record Signup(Guid MemberId);
 
     private sealed record Terms(string TermsVersion, string EarlyStartVersion);
 }

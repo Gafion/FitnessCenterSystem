@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\src\Modules\Identity\Identity.Contracts\Identity.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Modules\Booking\Booking\Booking.csproj" />
     <ProjectReference Include="..\..\src\Modules\Access\Access\Access.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Members\Members.Contracts\Members.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

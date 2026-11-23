@@ -6,7 +6,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import type { BookingResult } from '@/features/classes/class-card';
 import { Schedule } from '@/features/classes/schedule';
-import { api } from '@/lib/api';
+import { api, problemType } from '@/lib/api';
 
 export const Route = createFileRoute('/classes')({
   loader: async () => {
@@ -22,16 +22,6 @@ export const Route = createFileRoute('/classes')({
   },
   component: ClassesPage,
 });
-
-/** The `type` of an API problem answer, e.g. "class-full", or "unexpected". */
-function problemType(error: unknown): string {
-  return typeof error === 'object' &&
-    error !== null &&
-    'type' in error &&
-    typeof error.type === 'string'
-    ? error.type
-    : 'unexpected';
-}
 
 function ClassesPage() {
   const { t } = useTranslation();

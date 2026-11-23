@@ -28,6 +28,9 @@ async function mockApi(page: Page, options: { simulation: boolean }) {
   await page.route('**/api/access/simulation/reader', (route) =>
     route.fulfill({ status: options.simulation ? 204 : 404 }),
   );
+  await page.route('**/api/simulation', (route) =>
+    route.fulfill({ json: { enabled: options.simulation } }),
+  );
 }
 
 test('a member opens the reader from the account page and swipes their card', async ({
