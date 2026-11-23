@@ -2,7 +2,7 @@
 
 Member and employee administration for **one real, single-site fitness center in Denmark** (~10 staff). It is also the owner's learning project, but a **working end product is the priority**.
 
-**Phase:** scaffolding (FIT-31). Template, frontend tooling, Identity + Members module shells, PostgreSQL, architecture and integration tests, and CI exist; no features yet. `main` is protected: a PR merges only when CI passes. The PRD waits on the owner's meeting with the center ([D-004](docs/decisions.md)).
+**Phase:** scaffolding (FIT-31). Template, frontend tooling, Identity + Members modules, PostgreSQL, architecture and integration tests, and CI exist. The first feature, signup and login with email/password (FIT-47), is being built. `main` is protected: a PR merges only when CI passes. The PRD waits on the owner's meeting with the center ([D-004](docs/decisions.md)).
 
 ## Where things are
 
@@ -74,5 +74,6 @@ Run from the repo root.
 - `dotnet tool restore` once, then `dotnet ef migrations add <Name> --project src/Modules/<M>/<M> --context <M>DbContext --output-dir Infrastructure/Migrations`: add a migration after changing a module's data model. CI fails if one is missing. Dev applies migrations at API startup
 - `bun run --cwd frontend lint && bun run --cwd frontend typecheck && bun run --cwd frontend test && bun run --cwd frontend knip`: frontend gate (verified)
 - `bun run --cwd frontend e2e`: Playwright E2E tests in Chromium; builds and serves the app itself (verified). First time: `bunx playwright install chromium` in `frontend/`
+- `bun run --cwd frontend api:generate`: regenerate the typed API client in `frontend/src/api/` after an endpoint changes. The backend build writes `frontend/src/api/openapi.json` first. CI fails if either file is out of date
 - `bun run --cwd frontend format`: auto-fix formatting and imports (Biome)
 - Note: `bun --cwd frontend run …` (flag before `run`) prints help and exits 0. Always put `--cwd` after `run`.

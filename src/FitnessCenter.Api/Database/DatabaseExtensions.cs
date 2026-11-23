@@ -16,11 +16,15 @@ internal static class DatabaseExtensions
     /// </summary>
     public static IServiceCollection AddFitnessCenterDatabase(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString(ConnectionName)
-            ?? throw new InvalidOperationException(
-                $"Missing connection string '{ConnectionName}'. Aspire sets it locally (D-009).");
-
-        services.AddSingleton(_ => new NpgsqlDataSourceBuilder(connectionString).UseNodaTime().Build());
+        // Read on first use, not here: the build-time OpenAPI generator starts the app
+        // without a database.
+        services.AddSingleton(_ =>
+        {
+            var connectionString = configuration.GetConnectionString(ConnectionName)
+                ?? throw new InvalidOperationException(
+                    $"Missing connection string '{ConnectionName}'. Aspire sets it locally (D-009).");
+            return new NpgsqlDataSourceBuilder(connectionString).UseNodaTime().Build();
+        });
         services.AddScoped(provider => provider.GetRequiredService<NpgsqlDataSource>().CreateConnection());
 
         return services;
