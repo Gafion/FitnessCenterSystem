@@ -47,6 +47,24 @@ public sealed class SignupTests
     }
 
     [TestMethod]
+    public async Task Signup_reports_consent_and_account_errors_together()
+    {
+        await using var factory = new ApiFactory();
+        using var client = factory.CreateClient();
+        var terms = await GetTermsAsync(client);
+        var email = SyntheticEmail();
+
+        using var signup = await client.PostAsJsonAsync(
+            "/api/members/signup", Request(email, terms) with { AcceptTerms = false, Password = "short" });
+
+        Assert.AreEqual(HttpStatusCode.BadRequest, signup.StatusCode);
+        var body = await signup.Content.ReadAsStringAsync();
+        Assert.Contains("acceptTerms", body);
+        Assert.Contains("password", body);
+        await AssertNoAccountAsync(client, email);
+    }
+
+    [TestMethod]
     public async Task Signup_with_outdated_terms_is_refused()
     {
         await using var factory = new ApiFactory();
