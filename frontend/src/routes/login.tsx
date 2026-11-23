@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { ErrorMessage } from '@/features/account/error-message';
 import { GoogleButton } from '@/features/account/google-button';
-import { LoginForm } from '@/features/account/login-form';
+import { LoginForm, type LoginOutcome } from '@/features/account/login-form';
 import {
   api,
   errorSearch,
@@ -23,14 +23,17 @@ function LoginPage() {
   const { error } = Route.useSearch();
   const navigate = useNavigate();
 
-  async function logIn(request: Schemas['LoginRequest']): Promise<boolean> {
+  async function logIn(
+    request: Schemas['LoginRequest'],
+  ): Promise<LoginOutcome> {
     const { response } = await api.POST('/api/identity/login', {
       body: request,
     });
     if (response.ok) {
       await navigate({ to: '/account' });
+      return 'ok';
     }
-    return response.ok;
+    return response.status === 403 ? 'unconfirmed' : 'wrong';
   }
 
   return (

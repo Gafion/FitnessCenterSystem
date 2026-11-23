@@ -19,6 +19,12 @@ public interface IAccountService
     /// </summary>
     Task<CreateAccountResult> CreateExternalAccountAsync(NewExternalAccount account, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Emails the account a link to confirm its address. The account can't log in until it
+    /// does (D-038). Call it after the caller's transaction has committed.
+    /// </summary>
+    Task SendEmailConfirmationAsync(AccountId accountId, CancellationToken cancellationToken);
+
     /// <summary>Signs the account in with the auth cookie for the current HTTP request.</summary>
     Task SignInAsync(AccountId accountId, CancellationToken cancellationToken);
 }

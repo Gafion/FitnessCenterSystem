@@ -1133,3 +1133,51 @@ Owner decision on a recommendation. Logging in proves control of the existing ac
 
 ### Sources
 - [research/authentication.md](research/authentication.md) §4, risk R3, [A5] ASVS 6.8.1
+
+## D-038: Members confirm their email before they can log in
+- **Date:** 2026-11-23
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-011, D-026, D-032, D-037, FIT-47, AU9
+
+### Problem statement
+Anyone could sign up with an email address they don't own. When does a password member have to prove they control their email, and how do emails get sent before a provider is chosen?
+
+### Options considered
+From [research/authentication.md](research/authentication.md) §4 ("email verification: required before local accounts are active"):
+1. **No login until the email is confirmed.** A link in an email confirms it. Built into ASP.NET Core Identity (`SignIn.RequireConfirmedEmail`).
+2. **Log in at once, limited until confirmed**, e.g. no booking. Smoother, but every feature must check "confirmed?".
+
+Sending: the provider is open ([research/integrations-and-architecture.md](research/integrations-and-architecture.md) row 8: Amazon SES, Postmark, Resend; prices and EU hosting **UNVERIFIED**). Until one is chosen, development uses a local test mailbox.
+
+### Decision
+**Option 1**, with **Mailpit** as the local test mailbox. Built in FIT-47:
+
+```mermaid
+sequenceDiagram
+  participant B as Browser
+  participant A as API
+  participant M as Mail (Mailpit locally)
+  B->>A: POST /api/members/signup
+  A->>M: "Confirm your email" with a link
+  A-->>B: 201, emailConfirmationRequired
+  B->>A: POST /api/identity/login
+  A-->>B: 403 email-not-confirmed (only with the right password)
+  B->>A: POST /api/identity/confirm-email (from the link)
+  A-->>B: 204
+  B->>A: POST /api/identity/login
+  A-->>B: 204, logged in
+```
+
+- **Google signups** are confirmed at once, because Google verified the address (D-037).
+- **The "confirm your email" answer** is given only after the right password. Otherwise the login answers 401, as for an unknown email. Wrong passwords for an unconfirmed account count towards lockout.
+- **A new link** can be requested from the login and "check your email" pages. The answer is the same whether or not the email has an account.
+- **Mailpit** runs in a container that the AppHost starts. It catches every email, and its web page (linked from the Aspire dashboard) shows them. The integration tests send to a Mailpit container too.
+
+### Reasoning
+Owner decision. Option 1 is what the research asks for, and it is the simplest to keep correct. Building with Mailpit lets the whole flow work and be tested now. The provider choice needs facts we don't have yet: what the center uses, EU hosting, and price (AU9).
+
+### Sources
+- [research/authentication.md](research/authentication.md) §4
+- [research/integrations-and-architecture.md](research/integrations-and-architecture.md) row 8, [S34]
+- Mailpit: https://github.com/axllent/mailpit (image `axllent/mailpit`; HTTP API used by the tests, checked against v1.33.1)

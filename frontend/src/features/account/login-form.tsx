@@ -5,36 +5,49 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Schemas } from '@/lib/api';
 import { FieldError } from './field-error';
+import { ResendConfirmation } from './resend-confirmation';
+
+/** "unconfirmed": the password was right, but the email isn't confirmed yet (D-038). */
+export type LoginOutcome = 'ok' | 'wrong' | 'unconfirmed';
 
 type Props = {
-  /** Sends the login; resolves to true when it succeeded. */
-  onSubmit: (request: Schemas['LoginRequest']) => Promise<boolean>;
+  onSubmit: (request: Schemas['LoginRequest']) => Promise<LoginOutcome>;
 };
 
 export function LoginForm({ onSubmit }: Props) {
   const { t } = useTranslation();
-  const [failed, setFailed] = useState(false);
+  const [outcome, setOutcome] = useState<LoginOutcome>();
+  const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
 
+    const submittedEmail = String(form.get('email') ?? '');
+
     setSubmitting(true);
-    const succeeded = await onSubmit({
-      email: String(form.get('email') ?? ''),
+    const result = await onSubmit({
+      email: submittedEmail,
       password: String(form.get('password') ?? ''),
     });
     setSubmitting(false);
-    setFailed(!succeeded);
+    setEmail(submittedEmail);
+    setOutcome(result);
   }
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
       <FieldError
         id="login-error"
-        messages={failed ? [t('login.failed')] : undefined}
+        messages={outcome === 'wrong' ? [t('login.failed')] : undefined}
       />
+      {outcome === 'unconfirmed' && (
+        <div className="flex flex-col gap-3">
+          <FieldError id="login-error" messages={[t('login.unconfirmed')]} />
+          <ResendConfirmation email={email} />
+        </div>
+      )}
       <div className="flex flex-col gap-2">
         <Label htmlFor="email">{t('login.email')}</Label>
         <Input

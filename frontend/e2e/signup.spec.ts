@@ -30,18 +30,20 @@ async function mockApi(page: Page, options: { signedIn: () => boolean }) {
   );
 }
 
-test('a new member signs up and lands on their account page', async ({
+// D-038: a password signup confirms the email before the member can log in.
+test('a new member signs up and is asked to confirm their email', async ({
   page,
 }) => {
-  let signedIn = false;
   let sent: unknown;
-  await mockApi(page, { signedIn: () => signedIn });
+  await mockApi(page, { signedIn: () => false });
   await page.route('**/api/members/signup', async (route) => {
     sent = route.request().postDataJSON();
-    signedIn = true;
     await route.fulfill({
       status: 201,
-      json: { memberId: '0199a3c0-0000-7000-8000-0000000000bb' },
+      json: {
+        memberId: '0199a3c0-0000-7000-8000-0000000000bb',
+        emailConfirmationRequired: true,
+      },
     });
   });
 
@@ -55,13 +57,78 @@ test('a new member signs up and lands on their account page', async ({
   await page.getByRole('button', { name: 'Sign up' }).click();
 
   await expect(
-    page.getByRole('heading', { name: 'Welcome, Test' }),
+    page.getByRole('heading', { name: 'Check your email' }),
+  ).toBeVisible();
+  await expect(
+    page.getByText('We sent a link to test.person@example.com.', {
+      exact: false,
+    }),
   ).toBeVisible();
   expect(sent).toMatchObject({
     acceptTerms: true,
     termsVersion: 'terms-v1',
     startNow: false,
   });
+});
+
+test('the link in the email confirms it', async ({ page }) => {
+  let confirmed: unknown;
+  await page.route('**/api/identity/confirm-email', async (route) => {
+    confirmed = route.request().postDataJSON();
+    await route.fulfill({ status: 204 });
+  });
+
+  await page.goto(
+    '/confirm-email?account=0199a3c0-0000-7000-8000-0000000000bb&code=c3ludGhldGlj',
+  );
+
+  await expect(
+    page.getByRole('heading', { name: 'Your email is confirmed' }),
+  ).toBeVisible();
+  expect(confirmed).toEqual({
+    accountId: '0199a3c0-0000-7000-8000-0000000000bb',
+    code: 'c3ludGhldGlj',
+  });
+});
+
+test('an old confirmation link says so', async ({ page }) => {
+  await page.route('**/api/identity/confirm-email', (route) =>
+    route.fulfill({ status: 400 }),
+  );
+
+  await page.goto(
+    '/confirm-email?account=0199a3c0-0000-7000-8000-0000000000bb&code=b2xk',
+  );
+
+  await expect(
+    page.getByRole('heading', { name: "This link doesn't work" }),
+  ).toBeVisible();
+});
+
+test('logging in before confirming offers a new link', async ({ page }) => {
+  let resent: unknown;
+  await page.route('**/api/identity/login', (route) =>
+    route.fulfill({
+      status: 403,
+      contentType: 'application/problem+json',
+      body: JSON.stringify({ type: 'email-not-confirmed', status: 403 }),
+    }),
+  );
+  await page.route('**/api/identity/confirm-email/resend', async (route) => {
+    resent = route.request().postDataJSON();
+    await route.fulfill({ status: 204 });
+  });
+
+  await page.goto('/login');
+  await page.getByLabel('Email').fill('test.person@example.com');
+  await page.getByLabel('Password').fill('correct-horse');
+  await page.getByRole('button', { name: 'Log in', exact: true }).click();
+  await page.getByRole('button', { name: 'Send a new link' }).click();
+
+  await expect(
+    page.getByText('We sent a new link to test.person@example.com.'),
+  ).toBeVisible();
+  expect(resent).toEqual({ email: 'test.person@example.com' });
 });
 
 test('signup errors from the API are shown on the form', async ({ page }) => {

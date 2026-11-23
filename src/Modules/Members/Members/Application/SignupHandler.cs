@@ -3,6 +3,7 @@ using FitnessCenter.Modules.Identity.Contracts;
 using FitnessCenter.Modules.Members.Domain;
 using FitnessCenter.Modules.Members.Infrastructure;
 using FitnessCenter.SharedKernel;
+using Microsoft.Extensions.Logging;
 using NodaTime;
 
 namespace FitnessCenter.Modules.Members.Application;
@@ -26,7 +27,11 @@ internal sealed record GoogleSignupCommand(
     bool StartNow,
     string EarlyStartVersion);
 
-internal sealed record SignupResult(MemberId? MemberId, IReadOnlyDictionary<string, string[]> Errors)
+/// <param name="SignedIn">
+/// True when the member is logged in now (Google). False when they must confirm their
+/// email first (password signup, D-038).
+/// </param>
+internal sealed record SignupResult(MemberId? MemberId, IReadOnlyDictionary<string, string[]> Errors, bool SignedIn = false)
 {
     public bool Succeeded => MemberId is not null;
 }
@@ -35,7 +40,8 @@ internal sealed record SignupResult(MemberId? MemberId, IReadOnlyDictionary<stri
 /// Signup for the general membership (D-032): creates the Identity account, the member
 /// and the consents in one transaction (D-015, D-034), then signs the member in.
 /// </summary>
-internal sealed class SignupHandler(IAccountService accounts, MembersDbContext db, IClock clock)
+internal sealed class SignupHandler(
+    IAccountService accounts, MembersDbContext db, IClock clock, ILogger<SignupHandler> logger)
 {
     public Task<SignupResult> HandleAsync(SignupCommand command, CancellationToken cancellationToken) =>
         SignUpAsync(
@@ -43,6 +49,7 @@ internal sealed class SignupHandler(IAccountService accounts, MembersDbContext d
             () => accounts.CreateLocalAccountAsync(
                 new NewLocalAccount(command.Email, command.Password, command.FirstName, command.LastName),
                 cancellationToken),
+            SendEmailConfirmationAsync,
             cancellationToken);
 
     public Task<SignupResult> HandleAsync(GoogleSignupCommand command, CancellationToken cancellationToken) =>
@@ -50,10 +57,19 @@ internal sealed class SignupHandler(IAccountService accounts, MembersDbContext d
             new SignupConsents(command.AcceptTerms, command.TermsVersion, command.StartNow, command.EarlyStartVersion),
             () => accounts.CreateExternalAccountAsync(
                 new NewExternalAccount(command.FirstName, command.LastName), cancellationToken),
+            // Google verified the email, so the member is logged in straight away.
+            async (accountId, ct) =>
+            {
+                await accounts.SignInAsync(accountId, ct);
+                return true;
+            },
             cancellationToken);
 
     private async Task<SignupResult> SignUpAsync(
-        SignupConsents consents, Func<Task<CreateAccountResult>> createAccount, CancellationToken cancellationToken)
+        SignupConsents consents,
+        Func<Task<CreateAccountResult>> createAccount,
+        Func<AccountId, CancellationToken, Task<bool>> afterCommit,
+        CancellationToken cancellationToken)
     {
         var errors = Validate(consents);
         Member member;
@@ -95,8 +111,26 @@ internal sealed class SignupHandler(IAccountService accounts, MembersDbContext d
             transaction.Complete();
         }
 
-        await accounts.SignInAsync(new AccountId(member.AccountId), cancellationToken);
-        return new SignupResult(member.Id, new Dictionary<string, string[]>());
+        var signedIn = await afterCommit(new AccountId(member.AccountId), cancellationToken);
+        return new SignupResult(member.Id, new Dictionary<string, string[]>(), signedIn);
+    }
+
+    /// <summary>
+    /// The member is saved by now. If the email can't be sent, signup still succeeds and the
+    /// member asks for a new link from the "check your email" page.
+    /// </summary>
+    private async Task<bool> SendEmailConfirmationAsync(AccountId accountId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await accounts.SendEmailConfirmationAsync(accountId, cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogError(exception, "Could not send the confirmation email for account {AccountId}", accountId.Value);
+        }
+
+        return false;
     }
 
     private static Dictionary<string, string[]> Validate(SignupConsents consents)

@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.Identity;
 
 namespace FitnessCenter.Modules.Identity.Application;
 
-internal sealed class AccountService(UserManager<Account> users, SignInManager<Account> signIn) : IAccountService
+internal sealed class AccountService(
+    UserManager<Account> users, SignInManager<Account> signIn, IEmailSender<Account> emails) : IAccountService
 {
     public async Task<CreateAccountResult> CreateLocalAccountAsync(
         NewLocalAccount newAccount, CancellationToken cancellationToken)
@@ -60,15 +61,24 @@ internal sealed class AccountService(UserManager<Account> users, SignInManager<A
         return ToResult(account, await users.AddLoginAsync(account, login));
     }
 
+    public async Task SendEmailConfirmationAsync(AccountId accountId, CancellationToken cancellationToken)
+    {
+        var account = await FindAsync(accountId);
+        await EmailConfirmation.SendAsync(users, emails, account, signIn.Context.Request);
+    }
+
     public async Task SignInAsync(AccountId accountId, CancellationToken cancellationToken)
     {
-        var account = await users.FindByIdAsync(accountId.Value.ToString())
-            ?? throw new InvalidOperationException($"Account {accountId.Value} does not exist.");
+        var account = await FindAsync(accountId);
         await signIn.SignInAsync(account, isPersistent: true);
 
         // A pending Google login has done its job once the account is signed in.
         await signIn.Context.SignOutAsync(IdentityConstants.ExternalScheme);
     }
+
+    private async Task<Account> FindAsync(AccountId accountId) =>
+        await users.FindByIdAsync(accountId.Value.ToString())
+            ?? throw new InvalidOperationException($"Account {accountId.Value} does not exist.");
 
     private static Account NewAccount(string email, string firstName, string lastName) => new()
     {
