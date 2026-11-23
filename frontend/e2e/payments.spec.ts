@@ -79,7 +79,9 @@ test('pays a past month, then the next, and the account page lists both', async 
   await expect(page.getByText('No payments yet.')).toBeVisible();
   await page.getByRole('link', { name: 'Simulated payments' }).click();
 
-  await expect(page.getByRole('complementary', { name: 'Simulation' })).toBeVisible();
+  await expect(
+    page.getByRole('complementary', { name: 'Simulation' }),
+  ).toBeVisible();
   await page.getByLabel('Or pay one month starting on').fill('2026-09-01');
   await page.getByRole('button', { name: 'Pay for this month' }).click();
   await expect(
@@ -123,7 +125,9 @@ test('the simulator is hidden when the simulation is off', async ({ page }) => {
   ).toHaveCount(0);
 
   await page.goto('/simulation/payments');
-  await expect(page.getByRole('complementary', { name: 'Simulation' })).toHaveCount(0);
+  await expect(
+    page.getByRole('complementary', { name: 'Simulation' }),
+  ).toHaveCount(0);
   await expect(
     page.getByRole('button', { name: 'Pay next month' }),
   ).toHaveCount(0);

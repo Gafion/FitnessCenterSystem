@@ -6,12 +6,12 @@ import {
   useRouter,
 } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { SimulationBanner } from '@/features/simulation/simulation-banner';
 import { PaymentHistory } from '@/features/payments/payment-history';
 import {
   type PaymentResult,
   SimulatedPayments,
 } from '@/features/payments/simulated-payments';
+import { SimulationBanner } from '@/features/simulation/simulation-banner';
 import {
   api,
   getMyPayments,
