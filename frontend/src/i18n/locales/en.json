@@ -4,5 +4,34 @@
   },
   "landing": {
     "title": "Welcome to FitnessCenter"
+  },
+  "signup": {
+    "title": "Sign up",
+    "price": "{{price}} per month",
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "password": "Password (at least 8 characters)"
+    },
+    "acceptTerms": "I accept the terms",
+    "startNow": "Start my membership now",
+    "submit": "Sign up",
+    "haveAccount": "Already a member?"
+  },
+  "login": {
+    "title": "Log in",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Log in",
+    "failed": "The email or password is wrong.",
+    "noAccount": "Not a member yet?"
+  },
+  "account": {
+    "welcome": "Welcome, {{name}}",
+    "logout": "Log out"
+  },
+  "errors": {
+    "unexpected": "Something went wrong. Please try again."
   }
 }

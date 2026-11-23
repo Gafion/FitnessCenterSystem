@@ -29,7 +29,12 @@ internal sealed class AccountService(UserManager<Account> users, SignInManager<A
 
         return result.Succeeded
             ? CreateAccountResult.Success(new AccountId(account.Id))
-            : CreateAccountResult.Failure(result.Errors.Select(e => new AccountError(e.Code, e.Description)).ToList());
+            : CreateAccountResult.Failure(result.Errors
+                // The user name is the email, so a taken email is also reported as a taken
+                // user name. Callers only know about emails; keep that one.
+                .Where(e => e.Code != nameof(IdentityErrorDescriber.DuplicateUserName))
+                .Select(e => new AccountError(e.Code, e.Description))
+                .ToList());
     }
 
     public async Task SignInAsync(AccountId accountId, CancellationToken cancellationToken)

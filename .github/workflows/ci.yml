@@ -31,6 +31,17 @@ jobs:
         run: dotnet build FitnessCenter.sln -warnaserror
 
       # Fails when a module's data model changed without a new migration.
+      # The build writes the API's OpenAPI document (D-033). A diff means an endpoint
+      # changed without the committed document, and so the frontend client, following.
+      - name: OpenAPI document is up to date
+        run: |
+          if [ -n "$(git status --porcelain frontend/src/api)" ]; then
+            git status --porcelain frontend/src/api
+            git diff frontend/src/api
+            echo "::error::Build the backend, run 'bun run --cwd frontend api:generate' and commit frontend/src/api."
+            exit 1
+          fi
+
       - name: Migrations are up to date
         run: |
           dotnet tool restore
@@ -62,6 +73,16 @@ jobs:
 
       - name: Install
         run: bun install --frozen-lockfile
+
+      # Rule 6: frontend/src/api is generated, never hand-edited (D-028, D-033).
+      - name: Generated API client matches the OpenAPI document
+        run: |
+          bun run api:generate
+          if [ -n "$(git status --porcelain src/api)" ]; then
+            git diff src/api
+            echo "::error::frontend/src/api differs from what the generator writes. Run 'bun run --cwd frontend api:generate' and commit; don't hand-edit it."
+            exit 1
+          fi
 
       - name: Lint and format (Biome)
         run: bun run lint

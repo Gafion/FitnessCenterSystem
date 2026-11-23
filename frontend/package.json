@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "api:generate": "openapi-typescript src/api/openapi.json -o src/api/schema.d.ts",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b",
     "test": "vitest run",
@@ -25,6 +26,7 @@
     "cn": "^0.5.2",
     "i18next": "27.2.1",
     "lucide-react": "^1.76.0",
+    "openapi-fetch": "0.17.0",
     "radix-ui": "^1.8.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -45,6 +47,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "jsdom": "31.0.1",
     "knip": "6.46.1",
+    "openapi-typescript": "7.13.0",
     "typescript": "~5.9.3",
     "vite": "^8.2.4",
     "vitest": "5.1.1"
