@@ -15,6 +15,8 @@ internal static class ClassEndpoints
         var group = endpoints.MapGroup("/api/booking").WithTags("Booking");
 
         group.MapGet("/schedule", GetScheduleAsync).WithName("GetSchedule");
+        group.MapGet("/my-bookings", GetMyBookingsAsync).WithName("GetMyBookings").RequireAuthorization()
+            .Produces(StatusCodes.Status401Unauthorized);
         group.MapPost("/classes/{classId:guid}/booking", BookAsync).WithName("BookClass").RequireAuthorization()
             .Produces(StatusCodes.Status401Unauthorized);
         group.MapDelete("/classes/{classId:guid}/booking", CancelAsync).WithName("CancelBooking").RequireAuthorization()
@@ -34,6 +36,31 @@ internal static class ClassEndpoints
         int SpotsLeft,
         bool BookedByMe,
         DateTimeOffset CancelUntil);
+
+    /// <param name="CancelUntil">After this moment the booking can't be cancelled (D-039).</param>
+    internal sealed record MyBooking(
+        Guid ClassId,
+        string ClassName,
+        string InstructorName,
+        DateTimeOffset StartsAt,
+        DateTimeOffset EndsAt,
+        DateTimeOffset CancelUntil);
+
+    /// <summary>The logged-in account's booked classes that haven't started yet, soonest first.</summary>
+    private static async Task<Ok<MyBooking[]>> GetMyBookingsAsync(
+        ClaimsPrincipal user, BookingHandler handler, CancellationToken cancellationToken)
+    {
+        var bookings = await handler.GetUpcomingBookingsAsync(AccountIdOf(user)!.Value, cancellationToken);
+        return TypedResults.Ok(bookings
+            .Select(b => new MyBooking(
+                b.Id.Value,
+                b.ClassName,
+                b.InstructorName,
+                b.StartsAt.ToDateTimeOffset(),
+                b.EndsAt.ToDateTimeOffset(),
+                b.CancelUntil.ToDateTimeOffset()))
+            .ToArray());
+    }
 
     /// <summary>Open to everyone; <c>bookedByMe</c> is only ever true for a logged-in account.</summary>
     private static async Task<Ok<ScheduleEntry[]>> GetScheduleAsync(

@@ -14,7 +14,7 @@ function spots(count: number): string {
   return count === 1 ? '1 spot left' : `${count} spots left`;
 }
 
-test('a member books a class and cancels it again', async ({
+test('a member books a class, sees it on the account page and cancels it', async ({
   page,
   request,
 }) => {
@@ -39,6 +39,15 @@ test('a member books a class and cancels it again', async ({
   await expect(
     card.getByText(spots(before - 1), { exact: true }),
   ).toBeVisible();
+
+  // The account page lists the booking under the upcoming classes (D-022).
+  const className = await page.locator(`[id="${id}"]`).textContent();
+  await page.goto('/account');
+  const upcoming = page.getByRole('region', { name: 'Upcoming classes' });
+  await expect(upcoming.getByRole('listitem')).toHaveCount(1);
+  await expect(upcoming.getByRole('listitem')).toContainText(className ?? '');
+  await upcoming.getByRole('link', { name: 'Book a class' }).click();
+  await expect(page.getByRole('heading', { name: 'Classes' })).toBeVisible();
 
   await card.getByRole('button', { name: 'Cancel booking' }).click();
 

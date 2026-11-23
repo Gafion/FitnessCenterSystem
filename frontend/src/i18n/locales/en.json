@@ -61,7 +61,16 @@
     "card": "Your access card:",
     "noCard": "You have no access card yet.",
     "checkIn": "Try the card reader",
-    "simulatedPayments": "Simulated payments"
+    "simulatedPayments": "Simulated payments",
+    "sections": {
+      "profile": "Profile",
+      "membership": "Membership",
+      "bookings": "Upcoming classes",
+      "card": "Access card"
+    },
+    "noMembership": "You have no membership.",
+    "membershipFailed": "Your membership could not be loaded. Please try again later.",
+    "bookingsFailed": "Your bookings could not be loaded. Please try again later."
   },
   "errors": {
     "unexpected": "Something went wrong. Please try again.",
@@ -147,5 +156,21 @@
     "errors": {
       "period-not-contiguous": "A payment must start the day after the paid-until date."
     }
+  },
+  "membership": {
+    "type": "Type",
+    "price": "Price",
+    "perMonth": "{{price}} per month",
+    "status": "Status",
+    "statuses": {
+      "AwaitingFirstPayment": "Awaiting first payment",
+      "Active": "Active"
+    },
+    "memberSince": "Member since",
+    "paidUntil": "Paid until"
+  },
+  "myBookings": {
+    "none": "You have no upcoming classes.",
+    "when": "{{start}}–{{end}}, Danish time"
   }
 }

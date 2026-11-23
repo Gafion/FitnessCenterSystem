@@ -79,3 +79,26 @@ export async function getMyPayments(): Promise<
   }
   return data;
 }
+
+/** The logged-in account's membership (D-022). Null for an account without one. */
+export async function getMyMembership(): Promise<
+  Schemas['MyMembership'] | null
+> {
+  const { data, response } = await api.GET('/api/members/me');
+  if (response.status === 404) {
+    return null;
+  }
+  if (!data) {
+    throw new Error('Could not load the membership.');
+  }
+  return data;
+}
+
+/** The logged-in account's booked classes that haven't started, soonest first (D-022). */
+export async function getMyBookings(): Promise<Schemas['MyBooking'][]> {
+  const { data } = await api.GET('/api/booking/my-bookings');
+  if (!data) {
+    throw new Error('Could not load the bookings.');
+  }
+  return data;
+}

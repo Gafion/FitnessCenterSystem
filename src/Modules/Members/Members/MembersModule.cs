@@ -26,6 +26,7 @@ public static class MembersModule
         services.AddScoped<IMemberDirectory, MemberDirectory>();
         services.AddScoped<IPaymentConfirmations, PaymentIntake>();
         services.AddScoped<PaymentsHandler>();
+        services.AddScoped<MembershipHandler>();
 
         services.AddHealthChecks().AddDbContextCheck<MembersDbContext>("members-db");
 
@@ -34,7 +35,7 @@ public static class MembersModule
 
     public static IEndpointRouteBuilder MapMembersEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        return endpoints.MapSignupEndpoints().MapPaymentEndpoints();
+        return endpoints.MapSignupEndpoints().MapMembershipEndpoints().MapPaymentEndpoints();
     }
 
     /// <summary>Applies this module's migrations. The host calls it at startup in Development.</summary>

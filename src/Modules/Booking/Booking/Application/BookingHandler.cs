@@ -17,6 +17,10 @@ internal sealed record ScheduledClass(
     bool BookedByMe,
     Instant CancelUntil);
 
+/// <summary>A class the account has booked.</summary>
+internal sealed record BookedClass(
+    ClassSessionId Id, string ClassName, string InstructorName, Instant StartsAt, Instant EndsAt, Instant CancelUntil);
+
 /// <summary>Booking and cancelling class spots (D-022, D-039).</summary>
 internal sealed class BookingHandler(BookingDbContext db, IClock clock)
 {
@@ -43,6 +47,23 @@ internal sealed class BookingHandler(BookingDbContext db, IClock clock)
                 s.SpotsLeft,
                 accountId is { } id && s.IsBookedBy(id),
                 s.CancelUntil))
+            .ToList();
+    }
+
+    /// <summary>The account's booked classes that haven't started yet, soonest first (D-022).</summary>
+    public async Task<IReadOnlyList<BookedClass>> GetUpcomingBookingsAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        var now = clock.GetCurrentInstant();
+        var sessions = await db.ClassSessions
+            .AsNoTracking()
+            .Where(s => s.StartsAt > now
+                && s.Bookings.Any(b => b.AccountId == accountId && b.Status == ClassBookingStatus.Booked))
+            .OrderBy(s => s.StartsAt)
+            .ToListAsync(cancellationToken);
+        var names = ClassType.All.ToDictionary(t => t.Id, t => t.Name);
+
+        return sessions
+            .Select(s => new BookedClass(s.Id, names[s.ClassTypeId], s.InstructorName, s.StartsAt, s.EndsAt, s.CancelUntil))
             .ToList();
     }
 

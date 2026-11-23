@@ -228,6 +228,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/members/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMyMembership"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/members/me/payments": {
         parameters: {
             query?: never;
@@ -268,6 +284,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["GetSchedule"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/booking/my-bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMyBookings"];
         put?: never;
         post?: never;
         delete?: never;
@@ -417,8 +449,30 @@ export interface components {
             email: string;
             password: string;
         };
+        MyBooking: {
+            /** Format: uuid */
+            classId: string;
+            className: string;
+            instructorName: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: date-time */
+            cancelUntil: string;
+        };
         MyCard: {
             uid: string;
+        };
+        MyMembership: {
+            membershipType: string;
+            /** Format: int64 */
+            monthlyPriceOre: number;
+            status: string;
+            /** Format: date */
+            memberSince: string;
+            /** Format: date */
+            paidUntil: null | string;
         };
         MyPayments: {
             status: string;
@@ -853,6 +907,40 @@ export interface operations {
             };
         };
     };
+    GetMyMembership: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyMembership"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     GetMyPayments: {
         parameters: {
             query?: never;
@@ -942,6 +1030,33 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ScheduleEntry"][];
                 };
+            };
+        };
+    };
+    GetMyBookings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyBooking"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
