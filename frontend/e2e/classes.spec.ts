@@ -138,9 +138,15 @@ test('a member books a spot and cancels it again', async ({ page }) => {
 });
 
 test('a class that filled up meanwhile says it is full', async ({ page }) => {
-  await mockApi(page, { signedIn: true, schedule: () => [spinning] });
-  await page.route('**/api/booking/classes/*/booking', (route) =>
-    route.fulfill({
+  // The last spot goes to someone else while the page is open.
+  let filledUp = false;
+  await mockApi(page, {
+    signedIn: true,
+    schedule: () => [filledUp ? { ...spinning, spotsLeft: 0 } : spinning],
+  });
+  await page.route('**/api/booking/classes/*/booking', (route) => {
+    filledUp = true;
+    return route.fulfill({
       status: 409,
       contentType: 'application/problem+json',
       body: JSON.stringify({
@@ -148,12 +154,19 @@ test('a class that filled up meanwhile says it is full', async ({ page }) => {
         title: 'This class is full.',
         status: 409,
       }),
-    }),
-  );
+    });
+  });
 
   await page.goto('/classes');
+  await expect(page.getByText('5 spots left')).toBeVisible();
   await page.getByRole('button', { name: 'Book', exact: true }).click();
 
+  await expect(page.getByRole('alert')).toHaveText('This class is full.');
+  // The schedule reloaded: the class now shows as full, and the message stays.
+  await expect(page.getByText('0 spots left')).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Book', exact: true }),
+  ).toBeDisabled();
   await expect(page.getByRole('alert')).toHaveText('This class is full.');
 });
 

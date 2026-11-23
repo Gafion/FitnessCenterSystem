@@ -52,11 +52,11 @@ function ClassesPage() {
       await navigate({ to: '/login', search: {} });
       return undefined;
     }
-    if (!response.ok) {
-      return problemType(error);
-    }
+    // Reload the schedule after a refused attempt too: "class-full" means the page
+    // was out of date. The cards stay mounted (keyed by class), so ClassCard keeps
+    // the error message it shows.
     await router.invalidate();
-    return undefined;
+    return response.ok ? undefined : problemType(error);
   }
 
   async function book(classId: string): Promise<BookingResult> {
