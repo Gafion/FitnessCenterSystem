@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using FitnessCenter.Api.Database;
 using Microsoft.AspNetCore.HttpOverrides;
+using FitnessCenter.Modules.Booking;
 using FitnessCenter.Modules.Identity;
 using FitnessCenter.Modules.Members;
 using NodaTime;
@@ -26,6 +27,7 @@ builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 // Modules (D-008, D-031).
 builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddMembersModule();
+builder.Services.AddBookingModule();
 
 var app = builder.Build();
 
@@ -42,6 +44,14 @@ if (app.Environment.IsDevelopment())
 
     // Production migrations wait for the deployment decision (SA4).
     await app.Services.MigrateDatabaseAsync();
+
+    // Synthetic classes to click through locally (D-022, D-039). The integration tests turn
+    // this off: they schedule their own classes, and some replace the clock with one that fails.
+    if (app.Configuration.GetValue("Booking:SeedDevelopmentSchedule", defaultValue: true))
+    {
+        await app.Services.SeedDevelopmentScheduleAsync(CancellationToken.None);
+    }
+
     app.MapOpenApi();
 }
 
@@ -51,6 +61,7 @@ app.UseAuthorization();
 
 app.MapIdentityEndpoints();
 app.MapMembersEndpoints();
+app.MapBookingEndpoints();
 
 app.MapDefaultEndpoints();
 

@@ -229,3 +229,5 @@ Source: [database-schemas.md](research/database-schemas.md) §5, §9.
 | — | Everything listed under "deliberately left out", to be filled in after the meeting |
 
 > **Built so far (FIT-47 signup slice, 2026-11-19):** the `identity` schema has ASP.NET Core Identity's tables. Its account (`AspNetUsers`) holds first name, last name and email. The `members` schema has `members`, `membership_types` (one seeded placeholder) and `consents`. `members.AccountId` has a foreign key to `identity.AspNetUsers` for integrity only (D-014). Column names follow EF Core's defaults (PascalCase).
+>
+> **Built so far (FIT-48 classes slice, 2026-11-23):** the `booking` schema has `class_types` (two seeded: Spinning, CrossFit), `class_sessions` (class type, instructor name as plain text, start, end, capacity) and `bookings` (class session, account, status Booked/Cancelled, booked at, cancelled at). A booking belongs to the Identity account, not to the member (D-039): `bookings.AccountId` has a foreign key to `identity.AspNetUsers` for integrity only (D-014). A filtered unique index allows one active booking per account and class. Cancelled bookings are kept with their status.

@@ -3,7 +3,8 @@
     "name": "FitnessCenter"
   },
   "landing": {
-    "title": "Welcome to FitnessCenter"
+    "title": "Welcome to FitnessCenter",
+    "classes": "See classes"
   },
   "signup": {
     "title": "Sign up",
@@ -36,7 +37,8 @@
     "welcome": "Welcome, {{name}}",
     "logout": "Log out",
     "connectGoogle": "Connect Google",
-    "googleConnected": "Google is connected. You can log in with it."
+    "googleConnected": "Google is connected. You can log in with it.",
+    "classes": "Book a class"
   },
   "errors": {
     "unexpected": "Something went wrong. Please try again.",
@@ -57,5 +59,28 @@
     "doneBody": "You can log in now.",
     "failed": "This link doesn't work",
     "failedBody": "It may be old. Log in with your email and password to ask for a new link."
+  },
+  "classes": {
+    "title": "Classes",
+    "intro": "Classes in the next 14 days. Times are Danish time.",
+    "introLoggedOut": "Classes in the next 14 days. Times are Danish time. Log in to book a spot.",
+    "empty": "There are no classes in the next 14 days.",
+    "instructor": "with {{name}}",
+    "time": "{{start}}–{{end}}",
+    "spotsLeft_one": "{{count}} spot left",
+    "spotsLeft_other": "{{count}} spots left",
+    "book": "Book",
+    "cancel": "Cancel booking",
+    "booked": "You're booked.",
+    "cancelUntil": "You can cancel until {{time}}.",
+    "cancelClosed": "Cancelling closed at {{time}}.",
+    "full": "This class is full.",
+    "errors": {
+      "class-full": "This class is full.",
+      "class-started": "This class has already started.",
+      "booking-not-open": "Booking opens 14 days before the class.",
+      "already-booked": "You have already booked this class.",
+      "cancellation-closed": "Cancelling closes 12 hours before the class starts."
+    }
   }
 }

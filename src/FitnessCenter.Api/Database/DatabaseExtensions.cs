@@ -1,3 +1,4 @@
+using FitnessCenter.Modules.Booking;
 using FitnessCenter.Modules.Identity;
 using FitnessCenter.Modules.Members;
 using Npgsql;
@@ -30,10 +31,11 @@ internal static class DatabaseExtensions
         return services;
     }
 
-    /// <summary>Applies every module's migrations in dependency order (D-014): Identity, then Members.</summary>
+    /// <summary>Applies every module's migrations in dependency order (D-014): Identity, then Members and Booking.</summary>
     public static async Task MigrateDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
     {
         await services.MigrateIdentityDatabaseAsync(cancellationToken);
         await services.MigrateMembersDatabaseAsync(cancellationToken);
+        await services.MigrateBookingDatabaseAsync(cancellationToken);
     }
 }

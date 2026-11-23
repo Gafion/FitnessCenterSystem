@@ -1,4 +1,9 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
+import {
+  createFileRoute,
+  Link,
+  redirect,
+  useNavigate,
+} from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ErrorMessage } from '@/features/account/error-message';
@@ -45,6 +50,9 @@ function AccountPage() {
           <GoogleButton href={googleLinkUrl} label="account.connectGoogle" />
         )
       )}
+      <Button asChild className="self-start">
+        <Link to="/classes">{t('account.classes')}</Link>
+      </Button>
       <Button variant="outline" onClick={logOut} className="self-start">
         {t('account.logout')}
       </Button>

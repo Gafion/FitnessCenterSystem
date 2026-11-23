@@ -20,6 +20,9 @@ export function LandingPage() {
         <Button asChild variant="outline">
           <Link to="/login">{t('login.title')}</Link>
         </Button>
+        <Button asChild variant="outline">
+          <Link to="/classes">{t('landing.classes')}</Link>
+        </Button>
       </div>
     </section>
   );

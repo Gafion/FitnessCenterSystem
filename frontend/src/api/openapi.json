@@ -317,6 +317,87 @@
           }
         }
       }
+    },
+    "/api/booking/schedule": {
+      "get": {
+        "tags": [
+          "Booking"
+        ],
+        "operationId": "GetSchedule",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleEntry"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/booking/classes/{classId}/booking": {
+      "post": {
+        "tags": [
+          "Booking"
+        ],
+        "operationId": "BookClass",
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Booking"
+        ],
+        "operationId": "CancelBooking",
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -539,6 +620,55 @@
           }
         }
       },
+      "ScheduleEntry": {
+        "required": [
+          "classId",
+          "className",
+          "instructorName",
+          "startsAt",
+          "endsAt",
+          "capacity",
+          "spotsLeft",
+          "bookedByMe",
+          "cancelUntil"
+        ],
+        "type": "object",
+        "properties": {
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "className": {
+            "type": "string"
+          },
+          "instructorName": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "spotsLeft": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bookedByMe": {
+            "type": "boolean"
+          },
+          "cancelUntil": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "SignupRequest": {
         "required": [
           "firstName",
@@ -634,6 +764,9 @@
     },
     {
       "name": "Members"
+    },
+    {
+      "name": "Booking"
     }
   ]
 }

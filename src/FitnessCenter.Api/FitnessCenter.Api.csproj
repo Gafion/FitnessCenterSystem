@@ -29,6 +29,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Modules\Identity\Identity\Identity.csproj" />
     <ProjectReference Include="..\Modules\Members\Members\Members.csproj" />
+    <ProjectReference Include="..\Modules\Booking\Booking\Booking.csproj" />
   </ItemGroup>
 
   <!-- The generator only reruns when this project's own assembly changes, so an endpoint

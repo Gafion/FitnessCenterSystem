@@ -1181,3 +1181,57 @@ Owner decision. Option 1 is what the research asks for, and it is the simplest t
 - [research/authentication.md](research/authentication.md) §4
 - [research/integrations-and-architecture.md](research/integrations-and-architecture.md) row 8, [S34]
 - Mailpit: https://github.com/axllent/mailpit (image `axllent/mailpit`; HTTP API used by the tests, checked against v1.33.1)
+
+## D-039: Class booking: who books, the booking window and cancelling
+- **Date:** 2026-11-23
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-014, D-022, D-038, FIT-48
+
+### Problem statement
+The classes page (one of the six MVP pages, D-022) needs booking rules before the center has answered its own policy (fitness-domain-operations questions 35–36: capacity, waitlists, late-cancel window, no-show penalties). Who may book, how far ahead, and until when can a booking be cancelled?
+
+### Options considered
+1. **Booking belongs to the member** (needs a gym membership). Matches centers where classes are part of the plan, but locks out people who only come for classes.
+2. **Booking belongs to the Identity account** (any logged-in account). Class booking needs no gym plan; the booking points at `identity.AspNetUsers`.
+
+For the cancellation cut-off there is no answer from the center yet; any value is a placeholder.
+
+### Decision
+**Option 2**, with these rules (placeholders until the center answers questions 35–36):
+
+- **Who books:** any logged-in account (email confirmed, D-038). No gym membership needed. A booking references the account, with a foreign key to `identity.AspNetUsers` for integrity only (D-014).
+- **Schedule and booking window:** the next **14 days**. A class can be booked until it **starts**.
+- **Cancelling:** closes **12 hours** before the start.
+- **Instructor:** the name as plain text until a Staff module exists.
+- **No waitlist and no penalties** (D-022).
+- **Capacity is never exceeded:** the class row is locked (`SELECT … FOR UPDATE`) while a booking is made, so two requests for the last spot take turns.
+
+```mermaid
+flowchart TD
+  B[Book] --> S{Class started?}
+  S -- yes --> RS[409 class-started]
+  S -- no --> W{Starts more than 14 days from now?}
+  W -- yes --> RW[409 booking-not-open]
+  W -- no --> A{Already booked by this account?}
+  A -- yes --> RA[409 already-booked]
+  A -- no --> F{Spots left?}
+  F -- no --> RF[409 class-full]
+  F -- yes --> OK[204 booked]
+
+  C[Cancel] --> CB{Booked by this account?}
+  CB -- no --> RN[404]
+  CB -- yes --> CT{Now after start minus 12 hours?}
+  CT -- yes --> RC[409 cancellation-closed]
+  CT -- no --> OKC[204 cancelled]
+```
+
+The classes page (`/classes`) shows the schedule grouped by day in Europe/Copenhagen time, with spots left, a Book button (visitors who aren't logged in go to login), and a Cancel button with the "cancel until" time for the account's own bookings.
+
+### Reasoning
+Owner decision (FIT-48). The owner's reasoning for option 2: class booking needs no gym plan, so tying it to the member would block class-only customers. The 14-day window and the 12-hour cut-off are placeholders that keep the slice buildable; they live in one place (`BookingPolicy`) so the center's answers change one constant. The row lock is needed: with it removed, the integration test `Simultaneous_bookings_never_overfill_a_class` failed in 3 of 3 runs, with all 12 simultaneous bookings accepted for 3 spots (FIT-48, 2026-11-23).
+
+### Sources
+- [research/fitness-domain-operations.md](research/fitness-domain-operations.md) questions 35–36 (open)
+- D-022 (MVP scope: no waitlist, no penalties), D-014 (cross-module foreign keys), D-038 (email confirmation)
+- PostgreSQL row locks: https://www.postgresql.org/docs/current/explicit-locking.html#LOCKING-ROWS
