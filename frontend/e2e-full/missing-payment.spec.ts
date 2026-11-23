@@ -15,7 +15,7 @@ test('a member who paid only for a past month is refused at the reader and remin
   await page.getByRole('link', { name: 'Simulated payments' }).click();
   await page.getByLabel('Or pay one month starting on').fill('2020-01-01');
   await page.getByRole('button', { name: 'Pay for this month' }).click();
-  await expect(page.getByText(/Paid until/)).toBeVisible();
+  await expect(page.getByText('Paid until 31 Jan 2020.').first()).toBeVisible();
 
   await page.goto('/simulation/check-in');
   await page.getByRole('button', { name: 'Swipe my card' }).click();
