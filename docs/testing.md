@@ -96,6 +96,7 @@ flowchart LR
   FJ --> OK
 ```
 
+- **Docs-only PRs skip the tests (D-045).** A first `changes` job checks the PR's diff. If every changed file is `.md`, both jobs are skipped; GitHub reports them as passing, so the PR stays mergeable. Any other file runs everything, and pushes to `main` always run everything.
 - Each job has a 15-minute timeout. A newer push to the same ref cancels the running workflow.
 - Playwright in CI: `forbidOnly` is on, failed tests are retried up to 2 times, and a trace is kept on the first retry ([`playwright.config.ts`](../frontend/playwright.config.ts)). The HTML report is uploaded as an artifact when the job fails.
 - Nothing runs on a schedule yet: there is no nightly job.
