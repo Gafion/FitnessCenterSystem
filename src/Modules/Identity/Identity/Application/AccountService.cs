@@ -76,6 +76,9 @@ internal sealed class AccountService(
         await signIn.Context.SignOutAsync(IdentityConstants.ExternalScheme);
     }
 
+    public async Task<string?> FindFirstNameAsync(AccountId accountId, CancellationToken cancellationToken) =>
+        (await users.FindByIdAsync(accountId.Value.ToString()))?.FirstName;
+
     private async Task<Account> FindAsync(AccountId accountId) =>
         await users.FindByIdAsync(accountId.Value.ToString())
             ?? throw new InvalidOperationException($"Account {accountId.Value} does not exist.");

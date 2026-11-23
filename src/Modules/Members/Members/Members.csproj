@@ -8,6 +8,7 @@
     <ProjectReference Include="../Members.Contracts/Members.Contracts.csproj" />
     <ProjectReference Include="../../../BuildingBlocks/FitnessCenter.SharedKernel/FitnessCenter.SharedKernel.csproj" />
     <ProjectReference Include="../../Identity/Identity.Contracts/Identity.Contracts.csproj" />
+    <ProjectReference Include="../../Access/Access.Contracts/Access.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

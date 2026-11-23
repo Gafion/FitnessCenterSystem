@@ -57,7 +57,10 @@
     "logout": "Log out",
     "connectGoogle": "Connect Google",
     "googleConnected": "Google is connected. You can log in with it.",
-    "classes": "Book a class"
+    "classes": "Book a class",
+    "card": "Your access card:",
+    "noCard": "You have no access card yet.",
+    "checkIn": "Try the card reader"
   },
   "errors": {
     "unexpected": "Something went wrong. Please try again.",
@@ -101,5 +104,22 @@
       "already-booked": "You have already booked this class.",
       "cancellation-closed": "Cancelling closes 12 hours before the class starts."
     }
+  },
+  "simulation": {
+    "label": "Simulation",
+    "text": "This page stands in for hardware the center doesn't have in the system yet. Only synthetic data is used."
+  },
+  "checkIn": {
+    "title": "Card reader",
+    "intro": "Swipe a card as if you stood at the entrance.",
+    "yourCard": "Your card:",
+    "noCard": "You have no access card, so there is nothing to swipe. You can still type a UID.",
+    "swipeMyCard": "Swipe my card",
+    "uidLabel": "Card UID",
+    "swipe": "Swipe",
+    "welcome": "Welcome, {{name}}!",
+    "unknownCard": "Unknown card",
+    "unknownCardHelp": "This card isn't registered. Ask the staff for help.",
+    "failed": "The reader didn't answer. Try again."
   }
 }

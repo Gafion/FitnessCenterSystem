@@ -20,14 +20,25 @@ export const Route = createFileRoute('/account')({
     if (!data) {
       throw new Error('Could not load the account.');
     }
-    return { account: data, options: await getLoginOptions() };
+    const [options, card, reader] = await Promise.all([
+      getLoginOptions(),
+      api.GET('/api/access/cards/mine'),
+      api.GET('/api/access/simulation/reader'),
+    ]);
+    return {
+      account: data,
+      options,
+      cardUid: card.data?.uid ?? null,
+      // The reader answers 204 only while the simulation is on (D-041).
+      simulation: reader.response.ok,
+    };
   },
   component: AccountPage,
 });
 
 function AccountPage() {
   const { t } = useTranslation();
-  const { account, options } = Route.useLoaderData();
+  const { account, options, cardUid, simulation } = Route.useLoaderData();
   const { error } = Route.useSearch();
   const navigate = useNavigate();
 
@@ -42,6 +53,13 @@ function AccountPage() {
         {t('account.welcome', { name: account.firstName })}
       </h1>
       <p className="text-muted-foreground">{account.email}</p>
+      {cardUid ? (
+        <p>
+          {t('account.card')} <code className="font-mono">{cardUid}</code>
+        </p>
+      ) : (
+        <p>{t('account.noCard')}</p>
+      )}
       <ErrorMessage code={error} />
       {account.hasGoogleLogin ? (
         <p className="text-sm">{t('account.googleConnected')}</p>
@@ -53,6 +71,11 @@ function AccountPage() {
       <Button asChild className="self-start">
         <Link to="/classes">{t('account.classes')}</Link>
       </Button>
+      {simulation && (
+        <Button asChild variant="outline" className="self-start">
+          <Link to="/simulation/check-in">{t('account.checkIn')}</Link>
+        </Button>
+      )}
       <Button variant="outline" onClick={logOut} className="self-start">
         {t('account.logout')}
       </Button>
