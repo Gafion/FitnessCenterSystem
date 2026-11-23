@@ -1,6 +1,8 @@
 # CI gate (D-010, D-028): every PR and every push to main must pass both jobs.
 # Branch protection on main requires the two job names below. Renaming a job
 # means updating the protection rule too, or merges will wait forever.
+# A pull request that changes only .md files skips both jobs (D-045). GitHub
+# reports a job skipped by its `if:` as passing, so such a PR stays mergeable.
 name: CI
 
 on:
@@ -16,8 +18,47 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Decides whether the test jobs run (D-045). Only a pull request whose every
+  # changed file is *.md skips them. Pushes to main always run everything, so
+  # main is fully checked after each merge whatever the diff looks like.
+  changes:
+    name: Detect docs-only change
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      # A pull_request run checks out the PR's merge commit, so HEAD^1 is the
+      # base branch and the diff is exactly what the PR would change.
+      - name: Any changed file other than .md?
+        id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" != "pull_request" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed=$(git diff --name-only HEAD^1 HEAD)
+          echo "$changed"
+          # An empty diff also counts as code: when in doubt, run the tests.
+          if [ -n "$changed" ] && ! echo "$changed" | grep -qv '\.md$'; then
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          fi
+
   backend:
     name: Backend (build, tests, architecture tests)
+    needs: changes
+    # Runs unless the changes job positively says docs-only. If that job fails,
+    # its output is empty and the tests still run (`!cancelled()` overrides the
+    # default skip on a failed need, which would otherwise count as passing).
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -59,6 +100,8 @@ jobs:
 
   frontend:
     name: Frontend (lint, typecheck, unit, unused code, E2E)
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:

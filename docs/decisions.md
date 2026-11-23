@@ -1420,3 +1420,39 @@ Owner decision. It keeps the MVP slice whole without guessing at the center's br
 ### Sources
 - D-022 (MVP page 1: landing page)
 - U10 in [open-questions.md](open-questions.md), FIT-26 (center meeting), FIT-46
+
+## D-045: CI skips the tests when a PR changes only `.md` files
+- **Date:** 2026-11-23
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-010, D-028, FIT-62
+
+### Problem statement
+Every PR runs the full backend and frontend jobs (D-010, D-028), even one that only edits documentation. That costs runner time and waiting for changes that cannot break code. Both jobs are required by branch protection on `main`, so any skip must still let docs-only PRs merge.
+
+### Options considered
+1. **A. A "changes" job plus `if:` on the required jobs.** The first job checks whether every changed file is `*.md`; the two required jobs `needs:` it and are skipped for docs-only PRs. Pros: one workflow, same job names; GitHub reports a job skipped by a condition as passing, so required checks are satisfied. Cons: one extra short job on every run.
+2. **B. A second no-op workflow with the same job names** that runs only for `.md` changes. Pros: the main workflow is unchanged. Cons: two copies of the job names must be kept in sync, or merges stall.
+3. **Workflow-level `paths-ignore: ['**.md']`.** Pros: simplest. Cons: the workflow never starts for docs-only PRs, so the required checks never report and the PR stays blocked.
+
+### Decision
+**Option A.** A `changes` job diffs the PR's merge commit against its base (`git diff HEAD^1 HEAD`). If every changed file ends in `.md`, the backend and frontend jobs are skipped; anything else runs everything. Pushes to `main` always run everything. If the `changes` job fails or the diff is empty, the tests run.
+
+```mermaid
+flowchart TD
+  E([PR or push to main]) --> C{changes job}
+  C -->|push to main| RUN[Backend + Frontend run]
+  C -->|PR, some file not .md| RUN
+  C -->|PR, every file .md| SKIP[Backend + Frontend skipped<br/>reported as passing]
+  C -->|job failed / empty diff| RUN
+  RUN --> M([Mergeable when green])
+  SKIP --> M
+```
+
+### Reasoning
+Owner decision. Option A keeps one source of truth for the required job names. `paths-ignore` is ruled out because GitHub documents that a workflow skipped by path filtering leaves its required checks "Pending" and the PR cannot merge. GitHub also documents that a job skipped by a conditional reports "Success" for required checks; FIT-62 proves this in this repo with a throwaway docs-only PR (linked on the ticket). Running everything on `main` keeps the branch fully checked after each merge.
+
+### Sources
+- https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/troubleshooting-required-status-checks#handling-skipped-but-required-checks (path filtering leaves required checks pending; skipped-by-conditional jobs report success)
+- https://docs.github.com/en/actions/using-jobs/using-conditions-to-control-job-execution
+- FIT-62 (implementation and the docs-only PR test)
