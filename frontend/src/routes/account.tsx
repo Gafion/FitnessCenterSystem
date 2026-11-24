@@ -262,7 +262,7 @@ function AccountPage() {
           <Button
             variant="ghost"
             onClick={logOut}
-            className="mt-auto -ml-3 self-start text-muted-foreground"
+            className="mt-auto -ml-4 self-start text-muted-foreground"
           >
             <LogOutIcon aria-hidden="true" />
             {t('account.logout')}

@@ -80,7 +80,7 @@ export function CancelMembership({
       // Quieter than the page's main actions (FIT-99): a plain text button.
       <Button
         variant="ghost"
-        className="-ml-3 self-start text-muted-foreground hover:not-data-disabled:text-destructive"
+        className="-ml-4 self-start text-muted-foreground hover:not-data-disabled:text-destructive"
         onClick={() => setConfirming(true)}
       >
         {t('membership.cancellation.cancel')}
