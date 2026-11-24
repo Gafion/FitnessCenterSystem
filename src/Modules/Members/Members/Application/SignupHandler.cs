@@ -14,6 +14,7 @@ internal sealed record SignupCommand(
     string LastName,
     string Email,
     string Password,
+    LocalDate? DateOfBirth,
     bool AcceptTerms,
     string TermsVersion,
     bool StartNow,
@@ -52,7 +53,9 @@ internal sealed class SignupHandler(
                 new NewLocalAccount(command.Email, command.Password, command.FirstName, command.LastName),
                 cancellationToken),
             SendEmailConfirmationAsync,
-            cancellationToken);
+            cancellationToken,
+            dateOfBirthRequired: true,
+            command.DateOfBirth);
 
     public Task<SignupResult> HandleAsync(GoogleSignupCommand command, CancellationToken cancellationToken) =>
         SignUpAsync(
@@ -71,7 +74,9 @@ internal sealed class SignupHandler(
         SignupConsents consents,
         Func<Task<CreateAccountResult>> createAccount,
         Func<AccountId, CancellationToken, Task<bool>> afterCommit,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool dateOfBirthRequired = false,
+        LocalDate? dateOfBirth = null)
     {
         var errors = Validate(consents);
         Member member;
@@ -95,6 +100,13 @@ internal sealed class SignupHandler(
                 }
             }
 
+            // Read after the account is created, so a failing clock rolls the account back.
+            var now = clock.GetCurrentInstant();
+            if (dateOfBirthRequired && ValidateDateOfBirth(dateOfBirth, now.InZone(CenterTime.Zone).Date) is { } dateOfBirthError)
+            {
+                errors["dateOfBirth"] = [dateOfBirthError];
+            }
+
             if (errors.Count > 0)
             {
                 return new SignupResult(null, errors);
@@ -104,8 +116,9 @@ internal sealed class SignupHandler(
                 account.AccountId!.Value.Value,
                 MembershipType.General,
                 consents,
-                clock.GetCurrentInstant(),
-                CenterTime.Zone);
+                now,
+                CenterTime.Zone,
+                dateOfBirth);
 
             db.Members.Add(member);
             await db.SaveChangesAsync(cancellationToken);
@@ -158,6 +171,14 @@ internal sealed class SignupHandler(
 
         return errors;
     }
+
+    /// <summary>D-052: the date of birth is required and the person must be 18 on the signup date.</summary>
+    private static string? ValidateDateOfBirth(LocalDate? dateOfBirth, LocalDate today) => dateOfBirth switch
+    {
+        null => "Enter your date of birth.",
+        { } born when !MinimumAge.IsMetOn(born, today) => "You must be 18 or older to become a member.",
+        _ => null,
+    };
 
     private static Dictionary<string, string[]> ToFieldErrors(IReadOnlyList<AccountError> errors)
     {

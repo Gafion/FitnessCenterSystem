@@ -65,6 +65,7 @@ export async function signUp(page: Page, member: Member) {
   await page.goto('/signup');
   await page.getByLabel('First name').fill(member.firstName);
   await page.getByLabel('Last name').fill('Member');
+  await page.getByLabel('Date of birth').fill('1990-01-01');
   await page.getByLabel('Email').fill(member.email);
   await page.getByLabel(/^Password/).fill(member.password);
   await page.getByLabel('I accept the terms').check();

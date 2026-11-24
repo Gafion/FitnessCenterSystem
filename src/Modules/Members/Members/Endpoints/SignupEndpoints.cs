@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
+using NodaTime;
 
 namespace FitnessCenter.Modules.Members.Endpoints;
 
@@ -28,6 +29,7 @@ internal static class SignupEndpoints
         string LastName,
         string Email,
         string Password,
+        DateOnly? DateOfBirth,
         bool AcceptTerms,
         string TermsVersion,
         bool StartNow,
@@ -65,6 +67,7 @@ internal static class SignupEndpoints
                 request.LastName,
                 request.Email,
                 request.Password,
+                request.DateOfBirth is { } born ? LocalDate.FromDateOnly(born) : null,
                 request.AcceptTerms,
                 request.TermsVersion,
                 request.StartNow,

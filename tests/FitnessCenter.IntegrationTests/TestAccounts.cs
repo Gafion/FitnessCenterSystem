@@ -22,6 +22,7 @@ internal static class TestAccounts
             lastName = "Member",
             email,
             password = Password,
+            dateOfBirth = "1990-01-01", // synthetic, 18+ (D-052)
             acceptTerms = true,
             termsVersion = terms!.TermsVersion,
             startNow = false,

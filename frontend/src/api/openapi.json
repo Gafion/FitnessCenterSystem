@@ -1064,6 +1064,7 @@
           "lastName",
           "email",
           "password",
+          "dateOfBirth",
           "acceptTerms",
           "termsVersion",
           "startNow",
@@ -1082,6 +1083,13 @@
           },
           "password": {
             "type": "string"
+          },
+          "dateOfBirth": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           },
           "acceptTerms": {
             "type": "boolean"

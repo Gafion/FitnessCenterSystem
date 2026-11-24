@@ -51,6 +51,7 @@ erDiagram
     uuid identity_id FK
     string membership_level
     date member_since
+    date date_of_birth "nullable; required at password signup, 18+ (D-052)"
     string status
     date paid_until "from payment confirmations (D-020)"
   }

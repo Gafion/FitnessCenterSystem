@@ -16,7 +16,13 @@ type Props = {
   onSubmit: (request: Schemas['SignupRequest']) => Promise<FieldErrors | null>;
 };
 
-const textFields = ['firstName', 'lastName', 'email', 'password'] as const;
+const textFields = [
+  'firstName',
+  'lastName',
+  'dateOfBirth',
+  'email',
+  'password',
+] as const;
 
 export function SignupForm({ terms, google, onSubmit }: Props) {
   const { t } = useTranslation();
@@ -36,6 +42,8 @@ export function SignupForm({ terms, google, onSubmit }: Props) {
       lastName: value('lastName'),
       email: value('email'),
       password: value('password'),
+      // D-052: the API refuses a missing date of birth and anyone under 18.
+      dateOfBirth: value('dateOfBirth') || null,
       acceptTerms,
       termsVersion: terms.termsVersion,
       startNow,
@@ -79,19 +87,25 @@ export function SignupForm({ terms, google, onSubmit }: Props) {
           <Input
             id={field}
             name={field}
-            type={
-              field === 'password'
-                ? 'password'
-                : field === 'email'
-                  ? 'email'
-                  : 'text'
-            }
+            type={inputType[field]}
             autoComplete={autoComplete[field]}
             defaultValue={defaults[field]}
             aria-invalid={errors[field] ? true : undefined}
-            aria-describedby={errors[field] ? `${field}-error` : undefined}
+            aria-describedby={
+              [
+                field === 'dateOfBirth' ? 'dateOfBirth-hint' : undefined,
+                errors[field] ? `${field}-error` : undefined,
+              ]
+                .filter(Boolean)
+                .join(' ') || undefined
+            }
             required
           />
+          {field === 'dateOfBirth' && (
+            <p id="dateOfBirth-hint" className="text-sm text-muted-foreground">
+              {t('signup.dateOfBirthHint')}
+            </p>
+          )}
           <FieldError id={`${field}-error`} messages={errors[field]} />
         </div>
       ))}
@@ -135,6 +149,15 @@ export function SignupForm({ terms, google, onSubmit }: Props) {
 const autoComplete = {
   firstName: 'given-name',
   lastName: 'family-name',
+  dateOfBirth: 'bday',
   email: 'email',
   password: 'new-password',
+} as const;
+
+const inputType = {
+  firstName: 'text',
+  lastName: 'text',
+  dateOfBirth: 'date',
+  email: 'email',
+  password: 'password',
 } as const;

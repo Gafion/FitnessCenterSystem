@@ -32,6 +32,9 @@ namespace Members.Infrastructure.Migrations
                     b.Property<Guid>("AccountId")
                         .HasColumnType("uuid");
 
+                    b.Property<LocalDate?>("DateOfBirth")
+                        .HasColumnType("date");
+
                     b.Property<LocalDate>("MemberSince")
                         .HasColumnType("date");
 

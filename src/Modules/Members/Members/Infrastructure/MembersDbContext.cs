@@ -50,6 +50,8 @@ internal sealed class MembersDbContext(DbContextOptions<MembersDbContext> option
                 .HasConversion(id => id.Value, value => new MembershipTypeId(value));
             member.HasIndex(m => m.AccountId).IsUnique();
             member.Property(m => m.Status).HasConversion<string>().HasMaxLength(40);
+            // Nullable: older members and Google signups have none yet (D-052, FIT-68).
+            member.Property(m => m.DateOfBirth);
             member.HasOne<MembershipType>().WithMany().HasForeignKey(m => m.MembershipTypeId);
 
             member.OwnsMany(m => m.Consents, consent =>

@@ -122,6 +122,58 @@ public sealed class SignupTests
         await AssertNoAccountAsync(failingClient, email);
     }
 
+    /// <summary>D-052: the day before the 18th birthday (in Copenhagen) is refused and creates nothing.</summary>
+    [TestMethod]
+    public async Task Signup_under_18_is_refused_and_creates_nothing()
+    {
+        await using var factory = new ApiFactory(services => services.AddSingleton<IClock>(new FixedClock(SignupInstant)));
+        using var client = factory.CreateClient();
+        var terms = await GetTermsAsync(client);
+        var email = SyntheticEmail();
+
+        using var signup = await client.PostAsJsonAsync(
+            "/api/members/signup", Request(email, terms) with { DateOfBirth = new DateOnly(2008, 11, 25) });
+
+        Assert.AreEqual(HttpStatusCode.BadRequest, signup.StatusCode);
+        var body = await signup.Content.ReadAsStringAsync();
+        Assert.Contains("dateOfBirth", body);
+        Assert.Contains("18 or older", body);
+        await AssertNoAccountAsync(client, email);
+    }
+
+    /// <summary>D-052: on the 18th birthday (in Copenhagen) the signup succeeds.</summary>
+    [TestMethod]
+    public async Task Signup_on_the_18th_birthday_succeeds()
+    {
+        await using var factory = new ApiFactory(services => services.AddSingleton<IClock>(new FixedClock(SignupInstant)));
+        using var client = factory.CreateClient();
+        var terms = await GetTermsAsync(client);
+
+        using var signup = await client.PostAsJsonAsync(
+            "/api/members/signup", Request(SyntheticEmail(), terms) with { DateOfBirth = new DateOnly(2008, 11, 24) });
+
+        Assert.AreEqual(HttpStatusCode.Created, signup.StatusCode, await signup.Content.ReadAsStringAsync());
+    }
+
+    [TestMethod]
+    public async Task Signup_without_a_date_of_birth_is_refused_and_creates_nothing()
+    {
+        await using var factory = new ApiFactory();
+        using var client = factory.CreateClient();
+        var terms = await GetTermsAsync(client);
+        var email = SyntheticEmail();
+
+        using var signup = await client.PostAsJsonAsync(
+            "/api/members/signup", Request(email, terms) with { DateOfBirth = null });
+
+        Assert.AreEqual(HttpStatusCode.BadRequest, signup.StatusCode);
+        Assert.Contains("dateOfBirth", await signup.Content.ReadAsStringAsync());
+        await AssertNoAccountAsync(client, email);
+    }
+
+    /// <summary>24 November 2026, 00:30 in Copenhagen (UTC+1), while UTC is still 23 November.</summary>
+    private static readonly Instant SignupInstant = Instant.FromUtc(2026, 11, 23, 23, 30);
+
     private static async Task AssertNoAccountAsync(HttpClient client, string email)
     {
         using var login = await client.PostAsJsonAsync("/api/identity/login", new { email, password = Password });
@@ -132,10 +184,18 @@ public sealed class SignupTests
         (await client.GetFromJsonAsync<SignupTerms>("/api/members/signup/terms"))!;
 
     private static SignupRequest Request(string email, SignupTerms terms, bool startNow = false) =>
-        new("Test", "Member", email, Password, AcceptTerms: true, terms.TermsVersion, startNow, terms.EarlyStartVersion);
+        new("Test", "Member", email, Password, AdultDateOfBirth, AcceptTerms: true, terms.TermsVersion, startNow, terms.EarlyStartVersion);
+
+    /// <summary>A synthetic date of birth that is 18+ on any date the tests run (D-052).</summary>
+    private static readonly DateOnly AdultDateOfBirth = new(1990, 1, 1);
 
     // Synthetic data only (CLAUDE.md): a unique address on the reserved example.com domain.
     private static string SyntheticEmail() => $"member-{Guid.NewGuid():N}@example.com";
+
+    private sealed class FixedClock(Instant now) : IClock
+    {
+        public Instant GetCurrentInstant() => now;
+    }
 
     private sealed class FailingClock : IClock
     {
@@ -145,7 +205,7 @@ public sealed class SignupTests
     private sealed record SignupTerms(string TermsVersion, string EarlyStartVersion);
 
     private sealed record SignupRequest(
-        string FirstName, string LastName, string Email, string Password,
+        string FirstName, string LastName, string Email, string Password, DateOnly? DateOfBirth,
         bool AcceptTerms, string TermsVersion, bool StartNow, string EarlyStartVersion);
 
     private sealed record SignupResponse(Guid MemberId, bool EmailConfirmationRequired);

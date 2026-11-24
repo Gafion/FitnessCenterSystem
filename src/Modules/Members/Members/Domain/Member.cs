@@ -52,6 +52,12 @@ internal sealed class Member
     /// <summary>The signup date in Europe/Copenhagen, where the center's business rules apply.</summary>
     public LocalDate MemberSince { get; private set; }
 
+    /// <summary>
+    /// Collected at signup to check the 18+ rule (D-052). Null for members who signed up
+    /// before D-052 and for Google signups, whose date of birth is undecided (FIT-68).
+    /// </summary>
+    public LocalDate? DateOfBirth { get; private set; }
+
     public MemberStatus Status { get; private set; }
 
     /// <summary>Last day covered by a payment confirmation (D-020). Null until the first one.</summary>
@@ -62,16 +68,29 @@ internal sealed class Member
     /// <summary>
     /// Signs a person up. The terms must be accepted; starting early is optional.
     /// <paramref name="now"/> comes from the injected clock, never the system clock (rule 2).
+    /// A given <paramref name="dateOfBirth"/> must make the person 18 or older on the signup
+    /// date in <paramref name="businessZone"/> (D-052).
     /// </summary>
     public static Member SignUp(
-        Guid accountId, MembershipType membershipType, SignupConsents consents, Instant now, DateTimeZone businessZone)
+        Guid accountId,
+        MembershipType membershipType,
+        SignupConsents consents,
+        Instant now,
+        DateTimeZone businessZone,
+        LocalDate? dateOfBirth = null)
     {
         if (!consents.TermsAccepted)
         {
             throw new InvalidOperationException("The terms must be accepted to sign up.");
         }
 
-        var member = new Member(MemberId.New(), accountId, membershipType.Id, now.InZone(businessZone).Date);
+        var today = now.InZone(businessZone).Date;
+        if (dateOfBirth is { } born && !MinimumAge.IsMetOn(born, today))
+        {
+            throw new InvalidOperationException("Members must be 18 or older.");
+        }
+
+        var member = new Member(MemberId.New(), accountId, membershipType.Id, today) { DateOfBirth = dateOfBirth };
 
         member._consents.Add(new Consent(
             ConsentId.New(), member.Id, ConsentKind.Terms, consents.TermsVersion, now, ConsentChannel.Online));
