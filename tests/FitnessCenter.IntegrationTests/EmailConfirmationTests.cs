@@ -128,6 +128,7 @@ public sealed class EmailConfirmationTests
         {
             firstName = "Test",
             lastName = "Googler",
+            dateOfBirth = "1990-01-01", // synthetic; required since D-054
             acceptTerms = true,
             termsVersion = terms!.TermsVersion,
             startNow = false,

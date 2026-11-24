@@ -51,7 +51,7 @@ test('a Google email that already has an account explains what to do', async ({
   ).toBeVisible();
 });
 
-test('a new Google user accepts the terms and lands on their account', async ({
+test('a new Google user gives a date of birth, accepts the terms and lands on their account', async ({
   page,
 }) => {
   let signedIn = false;
@@ -92,6 +92,8 @@ test('a new Google user accepts the terms and lands on their account', async ({
 
   await page.goto('/signup/google');
   await expect(page.getByLabel('First name')).toHaveValue('Test');
+  // D-054: a Google signup gives a date of birth too (synthetic).
+  await page.getByLabel('Date of birth').fill('1990-01-01');
   await page.getByLabel('I accept the terms').check();
   await page.getByRole('button', { name: 'Sign up' }).click();
 
@@ -104,6 +106,7 @@ test('a new Google user accepts the terms and lands on their account', async ({
   expect(sent).toEqual({
     firstName: 'Test',
     lastName: 'Googler',
+    dateOfBirth: '1990-01-01',
     acceptTerms: true,
     termsVersion: 'terms-v1',
     startNow: false,

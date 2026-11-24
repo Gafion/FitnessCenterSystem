@@ -1731,3 +1731,41 @@ Owner decision, as recommended. Health data is special-category data, and the re
 ### Sources
 - [research/compliance-legal-security.md](research/compliance-legal-security.md) — §3.2
 - [open-questions.md](open-questions.md) — "Owner decides (D-047)" row 10 (moved to Answered)
+
+---
+
+## D-054: Google signups give their date of birth on the completion page
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-24
+- **Relates to:** D-032, D-037, D-052, FIT-68
+
+### Problem statement
+D-052 requires members to be 18 or older and collects the date of birth at signup. A Google signup (D-037) skips our signup form: the email and login come from Google, so it had no date of birth and the 18+ rule was not checked.
+
+### Options considered
+1. **A: ask for the date of birth on the Google signup completion page (recommended).** The page where a new Google user confirms their name and accepts the terms also asks for the date of birth, and the API applies the same 18+ rule as the password signup. Pros: no member is created without a checked age; one rule for both signups; no new page. Cons: one more field for Google users.
+2. **B: let Google signups in and ask later on the account page.** Pros: the quickest Google signup. Cons: an under-18 could use the system until they answer, and the age rule would need a second place to enforce it.
+3. **C: turn off Google signup.** Pros: only one signup path to check. Cons: members lose the convenience of Google (D-011).
+
+### Decision
+**Option A.** The Google signup completion page (`frontend/src/routes/signup_.google.tsx`) asks for the date of birth. The 18+ rule applies exactly as for the password signup, and the account and member are created only if the person is 18 or older on the signup date (Copenhagen time). Existing members, including Google members, are not asked for a date of birth now.
+
+```mermaid
+flowchart TD
+    G[Log in with Google] --> P{Known Google account?}
+    P -- yes --> Acc[Account page]
+    P -- no --> C[Completion page: name, date of birth, terms]
+    C --> V{"18 or older on the signup date? (D-052)"}
+    V -- no --> E[Error next to the date of birth; nothing is created]
+    E --> C
+    V -- yes --> M[Account, member and card created in one transaction] --> Acc
+```
+
+### Reasoning
+Owner decision. B was rejected because an under-18 could use the system in the meantime, which D-052 forbids. C was rejected because members lose the convenience of Google login. A reuses the existing validation in `SignupHandler`, so both signups share one rule.
+
+### Sources
+- [D-052](#d-052-members-must-be-18-or-older-date-of-birth-collected-at-signup) — 18+ and date of birth at signup
+- [D-037](#d-037-google-never-links-to-an-existing-account-by-email) — the Google signup flow
+- Linear FIT-68 — "Owner decision (2026-11-24): option A"

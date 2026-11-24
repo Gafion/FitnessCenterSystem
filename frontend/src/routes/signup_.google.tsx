@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { SignupForm } from '@/features/account/signup-form';
 import { api, type FieldErrors, getSignupTerms, type Schemas } from '@/lib/api';
 
-// Where the API sends a new person after Google: they confirm their name and accept the
-// terms before the member is created (D-032, D-037).
+// Where the API sends a new person after Google: they confirm their name, give their date
+// of birth and accept the terms before the member is created (D-032, D-037, D-054).
 export const Route = createFileRoute('/signup_/google')({
   loader: async () => {
     const { data: google } = await api.GET('/api/identity/external/pending');
@@ -24,8 +24,6 @@ function GoogleSignupPage() {
   async function signUp({
     email: _email,
     password: _password,
-    // Google signups give no date of birth yet (FIT-68).
-    dateOfBirth: _dateOfBirth,
     ...request
   }: Schemas['SignupRequest']): Promise<FieldErrors | null> {
     const { response, error } = await api.POST('/api/members/signup/google', {

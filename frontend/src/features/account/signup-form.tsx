@@ -53,7 +53,10 @@ export function SignupForm({ terms, google, onSubmit }: Props) {
     setErrors(result ?? {});
   }
 
-  const fields = google ? (['firstName', 'lastName'] as const) : textFields;
+  // D-054: a Google signup asks for the date of birth too; the email and login come from Google.
+  const fields = google
+    ? (['firstName', 'lastName', 'dateOfBirth'] as const)
+    : textFields;
   const defaults: Partial<Record<(typeof textFields)[number], string>> = google
     ? { firstName: google.firstName ?? '', lastName: google.lastName ?? '' }
     : {};
