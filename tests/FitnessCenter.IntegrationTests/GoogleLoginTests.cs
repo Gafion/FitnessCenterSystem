@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.Extensions.DependencyInjection;
+using NodaTime;
 
 namespace FitnessCenter.IntegrationTests;
 
@@ -33,7 +35,7 @@ public sealed class GoogleLoginTests
         var terms = await client.GetFromJsonAsync<SignupTerms>("/api/members/signup/terms");
         using var signup = await client.PostAsJsonAsync(
             "/api/members/signup/google",
-            new GoogleSignupRequest("Test", "Googler", AcceptTerms: true, terms!.TermsVersion, StartNow: false, terms.EarlyStartVersion));
+            new GoogleSignupRequest("Test", "Googler", AdultDateOfBirth, AcceptTerms: true, terms!.TermsVersion, StartNow: false, terms.EarlyStartVersion));
         Assert.AreEqual(HttpStatusCode.Created, signup.StatusCode, await signup.Content.ReadAsStringAsync());
 
         var me = await client.GetFromJsonAsync<CurrentAccount>("/api/identity/me");
@@ -62,11 +64,79 @@ public sealed class GoogleLoginTests
 
         using var signup = await client.PostAsJsonAsync(
             "/api/members/signup/google",
-            new GoogleSignupRequest("Test", "Googler", AcceptTerms: false, terms!.TermsVersion, StartNow: false, terms.EarlyStartVersion));
+            new GoogleSignupRequest("Test", "Googler", AdultDateOfBirth, AcceptTerms: false, terms!.TermsVersion, StartNow: false, terms.EarlyStartVersion));
 
         Assert.AreEqual(HttpStatusCode.BadRequest, signup.StatusCode);
         using var again = FakeGoogle.CreateClient(factory, subject, email);
         Assert.AreEqual("/signup/google", await FollowGoogleLoginAsync(again), "an account was left behind");
+    }
+
+    /// <summary>
+    /// D-052, D-054: the day before the 18th birthday (in Copenhagen) is refused. No account is
+    /// left, so no member either: both are saved in one transaction.
+    /// </summary>
+    [TestMethod]
+    public async Task Google_signup_under_18_is_refused_and_creates_nothing()
+    {
+        await using var factory = GoogleFactoryAt(SignupInstant);
+        var subject = NewSubject();
+        var email = SyntheticEmail();
+        using var client = FakeGoogle.CreateClient(factory, subject, email);
+        await FollowGoogleLoginAsync(client);
+        var terms = await client.GetFromJsonAsync<SignupTerms>("/api/members/signup/terms");
+
+        using var signup = await client.PostAsJsonAsync(
+            "/api/members/signup/google",
+            new GoogleSignupRequest(
+                "Test", "Googler", new DateOnly(2008, 11, 25), AcceptTerms: true, terms!.TermsVersion, StartNow: false, terms.EarlyStartVersion));
+
+        Assert.AreEqual(HttpStatusCode.BadRequest, signup.StatusCode);
+        var body = await signup.Content.ReadAsStringAsync();
+        Assert.Contains("dateOfBirth", body);
+        Assert.Contains("18 or older", body);
+        using var me = await client.GetAsync(new Uri("/api/identity/me", UriKind.Relative));
+        Assert.AreEqual(HttpStatusCode.Unauthorized, me.StatusCode, "the person was signed in");
+        using var again = FakeGoogle.CreateClient(factory, subject, email);
+        Assert.AreEqual("/signup/google", await FollowGoogleLoginAsync(again), "an account was left behind");
+    }
+
+    [TestMethod]
+    public async Task Google_signup_without_a_date_of_birth_is_refused_and_creates_nothing()
+    {
+        await using var factory = new ApiFactory(FakeGoogle.Register);
+        var subject = NewSubject();
+        var email = SyntheticEmail();
+        using var client = FakeGoogle.CreateClient(factory, subject, email);
+        await FollowGoogleLoginAsync(client);
+        var terms = await client.GetFromJsonAsync<SignupTerms>("/api/members/signup/terms");
+
+        using var signup = await client.PostAsJsonAsync(
+            "/api/members/signup/google",
+            new GoogleSignupRequest("Test", "Googler", null, AcceptTerms: true, terms!.TermsVersion, StartNow: false, terms.EarlyStartVersion));
+
+        Assert.AreEqual(HttpStatusCode.BadRequest, signup.StatusCode);
+        Assert.Contains("dateOfBirth", await signup.Content.ReadAsStringAsync());
+        using var again = FakeGoogle.CreateClient(factory, subject, email);
+        Assert.AreEqual("/signup/google", await FollowGoogleLoginAsync(again), "an account was left behind");
+    }
+
+    /// <summary>D-052, D-054: on the 18th birthday (in Copenhagen) the Google signup succeeds.</summary>
+    [TestMethod]
+    public async Task Google_signup_on_the_18th_birthday_succeeds()
+    {
+        await using var factory = GoogleFactoryAt(SignupInstant);
+        var email = SyntheticEmail();
+        using var client = FakeGoogle.CreateClient(factory, NewSubject(), email);
+        await FollowGoogleLoginAsync(client);
+        var terms = await client.GetFromJsonAsync<SignupTerms>("/api/members/signup/terms");
+
+        using var signup = await client.PostAsJsonAsync(
+            "/api/members/signup/google",
+            new GoogleSignupRequest(
+                "Test", "Googler", new DateOnly(2008, 11, 24), AcceptTerms: true, terms!.TermsVersion, StartNow: false, terms.EarlyStartVersion));
+
+        Assert.AreEqual(HttpStatusCode.Created, signup.StatusCode, await signup.Content.ReadAsStringAsync());
+        Assert.AreEqual(email, (await client.GetFromJsonAsync<CurrentAccount>("/api/identity/me"))?.Email);
     }
 
     [TestMethod]
@@ -78,7 +148,7 @@ public sealed class GoogleLoginTests
 
         using var signup = await client.PostAsJsonAsync(
             "/api/members/signup/google",
-            new GoogleSignupRequest("Test", "Googler", AcceptTerms: true, terms!.TermsVersion, StartNow: false, terms.EarlyStartVersion));
+            new GoogleSignupRequest("Test", "Googler", AdultDateOfBirth, AcceptTerms: true, terms!.TermsVersion, StartNow: false, terms.EarlyStartVersion));
 
         Assert.AreEqual(HttpStatusCode.BadRequest, signup.StatusCode);
         Assert.Contains("expired", await signup.Content.ReadAsStringAsync());
@@ -198,6 +268,22 @@ public sealed class GoogleLoginTests
 
     private static string NewSubject() => Guid.NewGuid().ToString("N");
 
+    private static readonly DateOnly AdultDateOfBirth = new(1990, 1, 1);
+
+    /// <summary>24 November 2026, 00:30 in Copenhagen (UTC+1), while UTC is still 23 November.</summary>
+    private static readonly Instant SignupInstant = Instant.FromUtc(2026, 11, 23, 23, 30);
+
+    private static ApiFactory GoogleFactoryAt(Instant now) => new(services =>
+    {
+        FakeGoogle.Register(services);
+        services.AddSingleton<IClock>(new FixedClock(now));
+    });
+
+    private sealed class FixedClock(Instant now) : IClock
+    {
+        public Instant GetCurrentInstant() => now;
+    }
+
     private sealed record LoginOptions(bool Google);
 
     private sealed record PendingExternalLogin(string Email, string? FirstName, string? LastName);
@@ -205,7 +291,7 @@ public sealed class GoogleLoginTests
     private sealed record SignupTerms(string TermsVersion, string EarlyStartVersion);
 
     private sealed record GoogleSignupRequest(
-        string FirstName, string LastName, bool AcceptTerms, string TermsVersion, bool StartNow, string EarlyStartVersion);
+        string FirstName, string LastName, DateOnly? DateOfBirth, bool AcceptTerms, string TermsVersion, bool StartNow, string EarlyStartVersion);
 
     private sealed record CurrentAccount(string Email, bool HasGoogleLogin);
 }

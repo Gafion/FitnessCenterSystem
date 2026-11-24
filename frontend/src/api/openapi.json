@@ -698,6 +698,7 @@
         "required": [
           "firstName",
           "lastName",
+          "dateOfBirth",
           "acceptTerms",
           "termsVersion",
           "startNow",
@@ -710,6 +711,13 @@
           },
           "lastName": {
             "type": "string"
+          },
+          "dateOfBirth": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           },
           "acceptTerms": {
             "type": "boolean"

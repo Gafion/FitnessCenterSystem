@@ -20,10 +20,14 @@ internal sealed record SignupCommand(
     bool StartNow,
     string EarlyStartVersion);
 
-/// <summary>Signup that started with Google: the email and login come from Google (D-037).</summary>
+/// <summary>
+/// Signup that started with Google: the email and login come from Google (D-037). The date
+/// of birth is asked on the completion page, as in the password signup (D-052, D-054).
+/// </summary>
 internal sealed record GoogleSignupCommand(
     string FirstName,
     string LastName,
+    LocalDate? DateOfBirth,
     bool AcceptTerms,
     string TermsVersion,
     bool StartNow,
@@ -49,17 +53,17 @@ internal sealed class SignupHandler(
     public Task<SignupResult> HandleAsync(SignupCommand command, CancellationToken cancellationToken) =>
         SignUpAsync(
             new SignupConsents(command.AcceptTerms, command.TermsVersion, command.StartNow, command.EarlyStartVersion),
+            command.DateOfBirth,
             () => accounts.CreateLocalAccountAsync(
                 new NewLocalAccount(command.Email, command.Password, command.FirstName, command.LastName),
                 cancellationToken),
             SendEmailConfirmationAsync,
-            cancellationToken,
-            dateOfBirthRequired: true,
-            command.DateOfBirth);
+            cancellationToken);
 
     public Task<SignupResult> HandleAsync(GoogleSignupCommand command, CancellationToken cancellationToken) =>
         SignUpAsync(
             new SignupConsents(command.AcceptTerms, command.TermsVersion, command.StartNow, command.EarlyStartVersion),
+            command.DateOfBirth,
             () => accounts.CreateExternalAccountAsync(
                 new NewExternalAccount(command.FirstName, command.LastName), cancellationToken),
             // Google verified the email, so the member is logged in straight away.
@@ -72,11 +76,10 @@ internal sealed class SignupHandler(
 
     private async Task<SignupResult> SignUpAsync(
         SignupConsents consents,
+        LocalDate? dateOfBirth,
         Func<Task<CreateAccountResult>> createAccount,
         Func<AccountId, CancellationToken, Task<bool>> afterCommit,
-        CancellationToken cancellationToken,
-        bool dateOfBirthRequired = false,
-        LocalDate? dateOfBirth = null)
+        CancellationToken cancellationToken)
     {
         var errors = Validate(consents);
         Member member;
@@ -102,7 +105,7 @@ internal sealed class SignupHandler(
 
             // Read after the account is created, so a failing clock rolls the account back.
             var now = clock.GetCurrentInstant();
-            if (dateOfBirthRequired && ValidateDateOfBirth(dateOfBirth, now.InZone(CenterTime.Zone).Date) is { } dateOfBirthError)
+            if (ValidateDateOfBirth(dateOfBirth, now.InZone(CenterTime.Zone).Date) is { } dateOfBirthError)
             {
                 errors["dateOfBirth"] = [dateOfBirthError];
             }
@@ -172,7 +175,10 @@ internal sealed class SignupHandler(
         return errors;
     }
 
-    /// <summary>D-052: the date of birth is required and the person must be 18 on the signup date.</summary>
+    /// <summary>
+    /// D-052: the date of birth is required and the person must be 18 on the signup date. The
+    /// same rule covers password and Google signups (D-054).
+    /// </summary>
     private static string? ValidateDateOfBirth(LocalDate? dateOfBirth, LocalDate today) => dateOfBirth switch
     {
         null => "Enter your date of birth.",

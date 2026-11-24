@@ -426,6 +426,8 @@ export interface components {
         GoogleSignupRequest: {
             firstName: string;
             lastName: string;
+            /** Format: date */
+            dateOfBirth: null | string;
             acceptTerms: boolean;
             termsVersion: string;
             startNow: boolean;

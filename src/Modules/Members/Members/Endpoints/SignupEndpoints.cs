@@ -35,10 +35,14 @@ internal static class SignupEndpoints
         bool StartNow,
         string EarlyStartVersion);
 
-    /// <summary>Finishes a signup that started with Google; the email comes from Google.</summary>
+    /// <summary>
+    /// Finishes a signup that started with Google; the email comes from Google. The date of
+    /// birth is required, as in the password signup (D-052, D-054).
+    /// </summary>
     internal sealed record GoogleSignupRequest(
         string FirstName,
         string LastName,
+        DateOnly? DateOfBirth,
         bool AcceptTerms,
         string TermsVersion,
         bool StartNow,
@@ -84,6 +88,7 @@ internal static class SignupEndpoints
             new GoogleSignupCommand(
                 request.FirstName,
                 request.LastName,
+                request.DateOfBirth is { } born ? LocalDate.FromDateOnly(born) : null,
                 request.AcceptTerms,
                 request.TermsVersion,
                 request.StartNow,

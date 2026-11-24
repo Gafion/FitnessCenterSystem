@@ -115,7 +115,8 @@ test('sends no date of birth when it is left empty', async () => {
   );
 });
 
-test('with Google, shows the Google email, prefills the names and asks for no password', async () => {
+// D-054: a Google signup asks for the date of birth too.
+test('with Google, shows the Google email, prefills the names and asks for the date of birth but no password', async () => {
   const onSubmit = vi.fn().mockResolvedValue(null);
   render(
     <SignupForm
@@ -134,10 +135,13 @@ test('with Google, shows the Google email, prefills the names and asks for no pa
   ).toBeInTheDocument();
   expect(screen.queryByLabelText(/^password/i)).not.toBeInTheDocument();
   expect(screen.queryByLabelText(/^email/i)).not.toBeInTheDocument();
-  expect(screen.queryByLabelText(/date of birth/i)).not.toBeInTheDocument();
+  expect(screen.getByLabelText(/date of birth/i)).toHaveAccessibleDescription(
+    'You must be 18 or older to become a member.',
+  );
   expect(screen.getByLabelText(/first name/i)).toHaveValue('Test');
 
   fill(/last name/i, 'Googler');
+  fill(/date of birth/i, '1990-01-01');
   fireEvent.click(screen.getByLabelText('I accept the terms'));
   fireEvent.click(screen.getByRole('button', { name: 'Sign up' }));
 
@@ -146,7 +150,43 @@ test('with Google, shows the Google email, prefills the names and asks for no pa
     expect.objectContaining({
       firstName: 'Test',
       lastName: 'Googler',
+      dateOfBirth: '1990-01-01',
       acceptTerms: true,
     }),
   );
+});
+
+test('with Google, shows the under-18 error next to the date of birth', async () => {
+  const onSubmit = vi.fn().mockResolvedValue({
+    dateOfBirth: ['You must be 18 or older to become a member.'],
+  });
+  render(
+    <SignupForm
+      terms={terms}
+      google={{
+        email: 'test.googler@example.com',
+        firstName: 'Test',
+        lastName: 'Googler',
+      }}
+      onSubmit={onSubmit}
+    />,
+  );
+
+  fill(/date of birth/i, '2010-06-15');
+  fireEvent.click(screen.getByLabelText('I accept the terms'));
+  fireEvent.click(screen.getByRole('button', { name: 'Sign up' }));
+
+  await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+  expect(onSubmit).toHaveBeenCalledWith(
+    expect.objectContaining({ dateOfBirth: '2010-06-15' }),
+  );
+  expect(screen.getByLabelText(/date of birth/i)).toHaveAttribute(
+    'aria-invalid',
+    'true',
+  );
+  expect(
+    await screen.findByText('You must be 18 or older to become a member.', {
+      selector: '#dateOfBirth-error',
+    }),
+  ).toBeInTheDocument();
 });
