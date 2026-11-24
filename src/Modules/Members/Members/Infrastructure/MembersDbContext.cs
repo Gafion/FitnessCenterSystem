@@ -52,6 +52,9 @@ internal sealed class MembersDbContext(DbContextOptions<MembersDbContext> option
             member.Property(m => m.Status).HasConversion<string>().HasMaxLength(40);
             // Nullable: older members and Google signups have none yet (D-052, FIT-68).
             member.Property(m => m.DateOfBirth);
+            // Null until the member cancels (D-048): the instant as timestamptz, the last day of access as a date.
+            member.Property(m => m.CancelledAt);
+            member.Property(m => m.CancellationEffectiveOn);
             member.HasOne<MembershipType>().WithMany().HasForeignKey(m => m.MembershipTypeId);
 
             member.OwnsMany(m => m.Consents, consent =>

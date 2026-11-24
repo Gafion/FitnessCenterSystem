@@ -10,6 +10,8 @@ const newMembership: Schemas['MyMembership'] = {
   status: 'AwaitingFirstPayment',
   memberSince: '2026-11-23',
   paidUntil: null,
+  cancelledAt: null,
+  cancellationEffectiveOn: null,
 };
 
 /** The value next to a term in the summary's description list. */
@@ -40,4 +42,22 @@ test('a paying member also sees the paid-until date', () => {
 
   expect(valueNextTo('Status')).toBe('Active');
   expect(valueNextTo('Paid until')).toBe('22 Dec 2026');
+});
+
+test('a member with a pending cancellation sees when it was made and the last day of access', () => {
+  render(
+    <MembershipSummary
+      membership={{
+        ...newMembership,
+        status: 'Active',
+        paidUntil: '2027-03-22',
+        // 23:30 on 10 March in Copenhagen (UTC+1).
+        cancelledAt: '2027-03-10T22:30:00Z',
+        cancellationEffectiveOn: '2027-04-30',
+      }}
+    />,
+  );
+
+  expect(valueNextTo('Cancelled on')).toBe('10 Mar 2027');
+  expect(valueNextTo('Access until')).toBe('30 Apr 2027');
 });

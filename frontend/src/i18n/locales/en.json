@@ -171,7 +171,17 @@
       "Active": "Active"
     },
     "memberSince": "Member since",
-    "paidUntil": "Paid until"
+    "paidUntil": "Paid until",
+    "cancelledOn": "Cancelled on",
+    "accessUntil": "Access until",
+    "cancellation": {
+      "pending": "Your membership is cancelled. You have access until {{date}}, the end of that day.",
+      "cancel": "Cancel membership",
+      "notice": "You have one month's notice to the end of a month. Your access lasts until the cancellation takes effect.",
+      "confirm": "Yes, cancel my membership",
+      "back": "Go back",
+      "failed": "Your membership could not be cancelled. Please try again."
+    }
   },
   "myBookings": {
     "none": "You have no upcoming classes.",
