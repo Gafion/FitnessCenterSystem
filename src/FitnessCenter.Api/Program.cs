@@ -55,6 +55,13 @@ if (app.Environment.IsDevelopment())
         await app.Services.SeedDevelopmentScheduleAsync(CancellationToken.None);
     }
 
+    // One synthetic staff account per role (D-049), when a development password is set.
+    // The integration tests turn this off, except the ones that test the staff policies.
+    if (app.Configuration.GetValue("Identity:SeedDevelopmentStaff", defaultValue: true))
+    {
+        await app.Services.SeedDevelopmentStaffAsync(CancellationToken.None);
+    }
+
     app.MapOpenApi();
 }
 

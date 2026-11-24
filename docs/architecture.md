@@ -420,7 +420,19 @@ Decided ([D-011](decisions.md)): social login **and** local email/password.
 - account linking
 - MFA for staff
 
-**Authorisation (candidate):** role-based (Member, Front desk, Trainer, Manager, Admin) with per-resource checks, for example a trainer sees only their own sessions (open question D13).
+**Authorisation ([D-049](decisions.md)):** role-based with four staff roles: Admin, Manager, Front desk, Instructor. Members have no staff role. Instructors see only their own classes; that per-resource check comes with the staff class features. No site scopes (single site, D-001).
+
+- The roles are rows in `identity.AspNetRoles`, created by the `StaffRoles` migration, and go into the login cookie as role claims.
+- Endpoints in any module require a policy from `StaffPolicies` in `Identity.Contracts`: one per role, plus `AnyStaff`. A role's policy admits that role only; D-049 defines no hierarchy between the roles.
+- How staff accounts are created and given a role is open (FIT-75). For local development, the API seeds one synthetic account per role (`dev-admin@example.com`, `dev-manager@example.com`, `dev-frontdesk@example.com`, `dev-instructor@example.com`) when `Identity:DevelopmentStaffPassword` is set in user-secrets.
+
+```mermaid
+flowchart LR
+  COOKIE["Login cookie<br/>role claims"] --> POL{"Endpoint policy<br/>(StaffPolicies)"}
+  POL -->|role matches| OK[200]
+  POL -->|member or other role| NO[403]
+  POL -->|not logged in| UN[401]
+```
 
 ---
 

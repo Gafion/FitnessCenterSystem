@@ -23,5 +23,7 @@ internal sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> opti
             account.Property(a => a.FirstName).HasMaxLength(Account.NameMaxLength);
             account.Property(a => a.LastName).HasMaxLength(Account.NameMaxLength);
         });
+
+        builder.Entity<IdentityRole<Guid>>().HasData(StaffRoleSeed.Roles);
     }
 }
