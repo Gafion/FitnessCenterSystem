@@ -368,6 +368,30 @@
             "description": "Unauthorized"
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "Members"
+        ],
+        "operationId": "UndoMyCancellation",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyMembership"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
       }
     },
     "/api/members/me/payments": {
@@ -885,7 +909,8 @@
           "memberSince",
           "paidUntil",
           "cancelledAt",
-          "cancellationEffectiveOn"
+          "cancellationEffectiveOn",
+          "canUndoCancellation"
         ],
         "type": "object",
         "properties": {
@@ -923,6 +948,9 @@
               "string"
             ],
             "format": "date"
+          },
+          "canUndoCancellation": {
+            "type": "boolean"
           }
         }
       },
