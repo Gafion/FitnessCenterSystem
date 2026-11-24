@@ -69,6 +69,17 @@ internal sealed class MembersDbContext(DbContextOptions<MembersDbContext> option
                 consent.Property(c => c.TextVersion).HasMaxLength(100);
             });
             member.Navigation(m => m.Consents).HasField("_consents");
+
+            // The cancellation history (FIT-95): undone cancellations are kept, with when they were undone.
+            member.OwnsMany(m => m.Cancellations, cancellation =>
+            {
+                cancellation.ToTable("cancellations");
+                cancellation.WithOwner().HasForeignKey(c => c.MemberId);
+                cancellation.HasKey(c => c.Id);
+                cancellation.Property(c => c.Id).HasConversion(id => id.Value, value => new CancellationRecordId(value));
+                cancellation.Property(c => c.MemberId).HasConversion(id => id.Value, value => new MemberId(value));
+            });
+            member.Navigation(m => m.Cancellations).HasField("_cancellations");
         });
 
         modelBuilder.Entity<PaymentRecord>(payment =>

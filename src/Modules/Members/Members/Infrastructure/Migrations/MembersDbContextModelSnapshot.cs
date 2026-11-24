@@ -167,6 +167,33 @@ namespace Members.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsMany("FitnessCenter.Modules.Members.Domain.CancellationRecord", "Cancellations", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Instant>("CancelledAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<LocalDate>("EffectiveOn")
+                                .HasColumnType("date");
+
+                            b1.Property<Guid>("MemberId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Instant?>("UndoneAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("MemberId");
+
+                            b1.ToTable("cancellations", "members");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MemberId");
+                        });
+
                     b.OwnsMany("FitnessCenter.Modules.Members.Domain.Consent", "Consents", b1 =>
                         {
                             b1.Property<Guid>("Id")
@@ -202,6 +229,8 @@ namespace Members.Infrastructure.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("MemberId");
                         });
+
+                    b.Navigation("Cancellations");
 
                     b.Navigation("Consents");
                 });

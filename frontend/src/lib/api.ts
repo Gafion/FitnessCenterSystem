@@ -114,6 +114,26 @@ export async function cancelMyMembership(): Promise<
   return data;
 }
 
+/**
+ * Undoes the pending cancellation, up to and including its effective date (D-055). With
+ * nothing pending it changes nothing. "ended" when the effective date has passed.
+ */
+export async function undoMyCancellation(): Promise<
+  Schemas['MyMembership'] | 'ended' | 'logged-out'
+> {
+  const { data, response } = await api.DELETE('/api/members/me/cancellation');
+  if (response.status === 401) {
+    return 'logged-out';
+  }
+  if (response.status === 409) {
+    return 'ended';
+  }
+  if (!data) {
+    throw new Error('Could not undo the cancellation.');
+  }
+  return data;
+}
+
 /** The logged-in account's booked classes that haven't started, soonest first (D-022). */
 export async function getMyBookings(): Promise<Schemas['MyBooking'][]> {
   const { data } = await api.GET('/api/booking/my-bookings');

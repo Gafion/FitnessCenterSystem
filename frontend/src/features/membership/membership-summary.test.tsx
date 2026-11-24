@@ -12,6 +12,7 @@ const newMembership: Schemas['MyMembership'] = {
   paidUntil: null,
   cancelledAt: null,
   cancellationEffectiveOn: null,
+  canUndoCancellation: false,
 };
 
 /** The value next to a term in the summary's description list. */
