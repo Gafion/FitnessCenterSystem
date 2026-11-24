@@ -1,3 +1,5 @@
+// Amounts are Danish kroner, shown the Danish way ("299,00 kr.") in both languages:
+// the owner chose `kr.` amounts (D-065), and English Intl would write "DKK 299.00".
 const kroner = new Intl.NumberFormat('da-DK', {
   style: 'currency',
   currency: 'DKK',

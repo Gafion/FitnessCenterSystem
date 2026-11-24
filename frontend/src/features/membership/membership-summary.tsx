@@ -1,18 +1,15 @@
 import { useTranslation } from 'react-i18next';
-import { formatDate } from '@/features/payments/payment-date';
+import { dateOptions, formatDate } from '@/features/payments/payment-date';
+import { dateLocale } from '@/i18n';
 import type { Schemas } from '@/lib/api';
 import { formatOre } from '@/lib/money';
 
 // The day the member cancelled, as a date in Denmark (the center's business zone).
-const copenhagenDate = new Intl.DateTimeFormat('en-GB', {
-  timeZone: 'Europe/Copenhagen',
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-});
-
 function formatInstantDate(instant: string): string {
-  return copenhagenDate.format(new Date(instant));
+  return new Intl.DateTimeFormat(
+    dateLocale(),
+    dateOptions('Europe/Copenhagen'),
+  ).format(new Date(instant));
 }
 
 /**

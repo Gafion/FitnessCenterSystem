@@ -1,5 +1,8 @@
+import { dateLocale } from '@/i18n';
+
 // Class times are business rules in Europe/Copenhagen (CLAUDE.md), so the page shows
-// them in that zone whatever the visitor's device is set to.
+// them in that zone whatever the visitor's device is set to. Dates and times follow
+// the UI language (D-065), so the formats are built when they are used.
 const timeZone = 'Europe/Copenhagen';
 
 const dayKeyFormat = new Intl.DateTimeFormat('en-CA', {
@@ -8,44 +11,49 @@ const dayKeyFormat = new Intl.DateTimeFormat('en-CA', {
   month: '2-digit',
   day: '2-digit',
 });
-const dayFormat = new Intl.DateTimeFormat('en-GB', {
+const dayOptions: Intl.DateTimeFormatOptions = {
   timeZone,
   weekday: 'long',
   day: 'numeric',
   month: 'long',
-});
-const timeFormat = new Intl.DateTimeFormat('en-GB', {
+};
+const timeOptions: Intl.DateTimeFormatOptions = {
   timeZone,
   hour: '2-digit',
   minute: '2-digit',
-});
-const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
-  timeZone,
+  hourCycle: 'h23',
+};
+const dateTimeOptions: Intl.DateTimeFormatOptions = {
+  ...dayOptions,
+  ...timeOptions,
   weekday: 'short',
-  day: 'numeric',
   month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-});
+};
 
 /** The Copenhagen calendar day of an instant, as YYYY-MM-DD. */
 function dayKey(instant: string): string {
   return dayKeyFormat.format(new Date(instant));
 }
 
-/** "Monday 24 November" */
+function format(instant: string, options: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat(dateLocale(), options).format(
+    new Date(instant),
+  );
+}
+
+/** "tirsdag 24. november" / "Monday 24 November" */
 export function formatDay(instant: string): string {
-  return dayFormat.format(new Date(instant));
+  return format(instant, dayOptions);
 }
 
-/** "18:00" */
+/** "18.00" / "18:00" */
 export function formatTime(instant: string): string {
-  return timeFormat.format(new Date(instant));
+  return format(instant, timeOptions);
 }
 
-/** "Mon 24 Nov, 06:00" */
+/** "tirs. 24. nov., 06.00" / "Mon 24 Nov, 06:00" */
 export function formatDateTime(instant: string): string {
-  return dateTimeFormat.format(new Date(instant));
+  return format(instant, dateTimeOptions);
 }
 
 /** Groups entries by Copenhagen day, keeping their order (the API sends them soonest first). */
