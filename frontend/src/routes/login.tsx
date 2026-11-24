@@ -1,7 +1,12 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorMessage } from '@/features/account/error-message';
 import { GoogleButton } from '@/features/account/google-button';
+import {
+  LoginCodeForm,
+  type LoginCodeOutcome,
+} from '@/features/account/login-code-form';
 import { LoginForm, type LoginOutcome } from '@/features/account/login-form';
 import {
   api,
@@ -11,8 +16,19 @@ import {
   type Schemas,
 } from '@/lib/api';
 
+/** `step=code`: the Google login needs the authenticator code next (D-059). */
+function loginSearch(search: Record<string, unknown>): {
+  error?: string;
+  step?: 'code';
+} {
+  return {
+    ...errorSearch(search),
+    ...(search.step === 'code' ? { step: 'code' as const } : {}),
+  };
+}
+
 export const Route = createFileRoute('/login')({
-  validateSearch: errorSearch,
+  validateSearch: loginSearch,
   loader: getLoginOptions,
   component: LoginPage,
 });
@@ -20,20 +36,52 @@ export const Route = createFileRoute('/login')({
 function LoginPage() {
   const { t } = useTranslation();
   const options = Route.useLoaderData();
-  const { error } = Route.useSearch();
+  const { error, step } = Route.useSearch();
   const navigate = useNavigate();
+  const [needsCode, setNeedsCode] = useState(step === 'code');
 
   async function logIn(
     request: Schemas['LoginRequest'],
   ): Promise<LoginOutcome> {
-    const { response } = await api.POST('/api/identity/login', {
+    const { error: problem, response } = await api.POST('/api/identity/login', {
       body: request,
     });
     if (response.ok) {
       await navigate({ to: '/account' });
       return 'ok';
     }
-    return response.status === 403 ? 'unconfirmed' : 'wrong';
+    if (response.status === 403) {
+      // The password was right; the problem's type says what comes next.
+      if (problem?.type === 'two-factor-required') {
+        setNeedsCode(true);
+        return 'ok';
+      }
+      return 'unconfirmed';
+    }
+    return 'wrong';
+  }
+
+  async function logInWithCode(
+    code: string,
+    isRecoveryCode: boolean,
+  ): Promise<LoginCodeOutcome> {
+    const { response } = await api.POST('/api/identity/login/two-factor', {
+      body: { code, isRecoveryCode },
+    });
+    if (response.ok) {
+      await navigate({ to: '/account' });
+      return 'ok';
+    }
+    return 'wrong';
+  }
+
+  if (needsCode) {
+    return (
+      <section className="mx-auto flex max-w-md flex-col gap-6 p-8">
+        <h1 className="text-3xl font-semibold">{t('login.title')}</h1>
+        <LoginCodeForm onSubmit={logInWithCode} />
+      </section>
+    );
   }
 
   return (
