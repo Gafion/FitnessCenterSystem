@@ -1,5 +1,6 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { Page, PageHeader } from '@/components/shell/page';
 import {
   AuthenticatorSetup,
   type ConfirmOutcome,
@@ -42,8 +43,8 @@ function AuthenticatorPage() {
   }
 
   return (
-    <section className="mx-auto flex max-w-md flex-col gap-6 p-4 sm:p-8">
-      <h1 className="text-3xl font-semibold">{t('authenticator.title')}</h1>
+    <Page width="narrow">
+      <PageHeader title={t('authenticator.title')} />
       {setup.enabled || !setup.sharedKey || !setup.authenticatorUri ? (
         <p>{t('authenticator.alreadyOn')}</p>
       ) : (
@@ -55,6 +56,6 @@ function AuthenticatorPage() {
           onDone={() => navigate({ to: '/account' })}
         />
       )}
-    </section>
+    </Page>
   );
 }
