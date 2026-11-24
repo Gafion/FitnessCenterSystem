@@ -184,7 +184,9 @@
       "notice": "You have one month's notice to the end of a month. Your access lasts until the cancellation takes effect.",
       "confirm": "Yes, cancel my membership",
       "back": "Go back",
-      "failed": "Your membership could not be cancelled. Please try again."
+      "failed": "Your membership could not be cancelled. Please try again.",
+      "undo": "Undo cancellation",
+      "undoFailed": "The cancellation could not be undone. Please try again."
     }
   },
   "myBookings": {
