@@ -161,3 +161,35 @@ test('without a cancellation there is no undo button', () => {
     screen.queryByRole('button', { name: 'Undo cancellation' }),
   ).not.toBeInTheDocument();
 });
+
+test('the confirmation says bookings after the last day are cancelled', () => {
+  render(
+    <CancelMembership
+      membership={membership}
+      onCancel={vi.fn()}
+      onUndo={vi.fn()}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel membership' }));
+
+  expect(
+    screen.getByText(
+      /class bookings after your last day of access are cancelled/,
+    ),
+  ).toBeInTheDocument();
+});
+
+test('the undo says cancelled bookings are not restored', () => {
+  render(
+    <CancelMembership
+      membership={pending}
+      onCancel={vi.fn()}
+      onUndo={vi.fn()}
+    />,
+  );
+
+  expect(
+    screen.getByText(/does not restore class bookings/),
+  ).toBeInTheDocument();
+});

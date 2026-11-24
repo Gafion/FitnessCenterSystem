@@ -10,7 +10,8 @@ export type CancelResult = 'ok' | 'failed';
  * Cancels the membership after one confirmation (D-048). There is no "save" or retention
  * step: the confirmation states the notice rule and nothing else. With a pending
  * cancellation it shows the last day of access instead, and an undo button up to and
- * including that day (D-055).
+ * including that day (D-055). Bookings after the last day are cancelled with the membership,
+ * and undoing does not restore them (D-055 amendment, FIT-97).
  */
 export function CancelMembership({
   membership,
@@ -42,6 +43,11 @@ export function CancelMembership({
             date: formatDate(membership.cancellationEffectiveOn),
           })}
         </p>
+        {membership.canUndoCancellation && (
+          <p className="text-sm text-muted-foreground">
+            {t('membership.cancellation.undoKeepsBookingsCancelled')}
+          </p>
+        )}
         {membership.canUndoCancellation && (
           <Button
             variant="outline"
@@ -84,6 +90,7 @@ export function CancelMembership({
   return (
     <div className="flex flex-col gap-3">
       <p>{t('membership.cancellation.notice')}</p>
+      <p>{t('membership.cancellation.bookings')}</p>
       <div className="flex flex-wrap gap-2">
         <Button variant="destructive" disabled={busy} onClick={confirm}>
           {t('membership.cancellation.confirm')}
