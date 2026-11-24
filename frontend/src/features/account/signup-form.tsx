@@ -114,7 +114,9 @@ export function SignupForm({ terms, google, onSubmit }: Props) {
       ))}
 
       <section className="flex flex-col gap-3 rounded-md border border-border p-4">
-        <p className="whitespace-pre-line text-sm text-muted-foreground">{terms.termsText}</p>
+        <p className="whitespace-pre-line text-sm text-muted-foreground">
+          {terms.termsText}
+        </p>
         <div className="flex min-h-11 items-center gap-3">
           <Checkbox
             id="acceptTerms"
@@ -131,7 +133,9 @@ export function SignupForm({ terms, google, onSubmit }: Props) {
       </section>
 
       <section className="flex flex-col gap-3 rounded-md border border-border p-4">
-        <p className="whitespace-pre-line text-sm text-muted-foreground">{terms.earlyStartText}</p>
+        <p className="whitespace-pre-line text-sm text-muted-foreground">
+          {terms.earlyStartText}
+        </p>
         <div className="flex min-h-11 items-center gap-3">
           <Checkbox
             id="startNow"

@@ -1,3 +1,4 @@
+import { CalendarX2Icon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Schemas } from '@/lib/api';
 import { type BookingResult, ClassCard } from './class-card';
@@ -14,7 +15,12 @@ type Props = {
 export function Schedule({ entries, now, onBook, onCancel }: Props) {
   const { t } = useTranslation();
   if (entries.length === 0) {
-    return <p className="text-muted-foreground">{t('classes.empty')}</p>;
+    return (
+      <p className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border-strong px-6 py-12 text-center text-muted-foreground">
+        <CalendarX2Icon aria-hidden="true" className="size-8 text-subtle" />
+        {t('classes.empty')}
+      </p>
+    );
   }
 
   return (
@@ -23,20 +29,25 @@ export function Schedule({ entries, now, onBook, onCancel }: Props) {
         <section
           key={day}
           aria-labelledby={`day-${day}`}
-          className="flex flex-col gap-3"
+          className="flex flex-col gap-2"
         >
-          <h2 id={`day-${day}`} className="text-xl font-semibold">
+          <h2
+            id={`day-${day}`}
+            className="text-eyebrow font-medium text-subtle uppercase"
+          >
             {formatDay(dayEntries[0].startsAt)}
           </h2>
-          {dayEntries.map((entry) => (
-            <ClassCard
-              key={entry.classId}
-              entry={entry}
-              now={now}
-              onBook={() => onBook(entry.classId)}
-              onCancel={() => onCancel(entry.classId)}
-            />
-          ))}
+          <div className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
+            {dayEntries.map((entry) => (
+              <ClassCard
+                key={entry.classId}
+                entry={entry}
+                now={now}
+                onBook={() => onBook(entry.classId)}
+                onCancel={() => onCancel(entry.classId)}
+              />
+            ))}
+          </div>
         </section>
       ))}
     </div>

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useTranslation } from 'react-i18next';
 import { cn } from 'cn';
 import { ArrowRightIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Page } from '@/components/shell/page';
 import { Button, focusRing } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

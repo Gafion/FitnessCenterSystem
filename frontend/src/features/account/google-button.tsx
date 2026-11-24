@@ -15,7 +15,11 @@ export function GoogleButton({
   const { t } = useTranslation();
 
   return (
-    <Button variant="outline" className={cn('w-full', className)} render={<a href={href} />}>
+    <Button
+      variant="outline"
+      className={cn('w-full', className)}
+      render={<a href={href} />}
+    >
       {t(label)}
     </Button>
   );

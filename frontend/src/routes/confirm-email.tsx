@@ -46,7 +46,10 @@ function ConfirmEmailPage() {
       <p>
         {t(confirmed ? 'confirmEmail.doneBody' : 'confirmEmail.failedBody')}
       </p>
-      <Button className="w-full sm:w-auto sm:self-start" render={<Link to="/login" />}>
+      <Button
+        className="w-full sm:w-auto sm:self-start"
+        render={<Link to="/login" />}
+      >
         {t('login.title')}
       </Button>
     </AuthLayout>
