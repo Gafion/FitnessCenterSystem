@@ -459,7 +459,7 @@ Owner decision. It is consistent with the research:
 
 ## D-018: Frontend libraries and tooling follow the acme-corp starter
 - **Date:** 2026-11-13
-- **Status:** Accepted
+- **Status:** Accepted (the UI library part, "shadcn/ui on Radix", is superseded by D-056)
 - **Decided by:** Owner
 - **Extends:** D-007
 
@@ -1829,3 +1829,44 @@ Owner decision. Option B for (a) was rejected because the member would hold a sp
 - [D-020](#d-020-payment-records-in-the-core-a-missing-payment-blocks-check-in-and-emails-the-member) and [architecture.md](architecture.md) §4.2 — cross-module reads through Contracts
 - [open-questions.md](open-questions.md) — D8 (revocation part moved to Answered)
 - Linear FIT-71 — "Owner decision (2026-11-24, option A)" and "Orchestrator notes (2026-11-24)"
+
+## D-056: Fjord visual direction; UI SDK replaces shadcn/ui
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-24
+- **Supersedes:** the UI library part of D-018
+
+### Problem statement
+The app had no visual identity: default shadcn greys, no header, logo or navigation, 32 px buttons and no hierarchy (FIT-96, "Why today's app feels undefined"). The owner wanted a clean, professional, Nordic look in light and dark, based on `docs/design.md`, and chose the component library to build it on.
+
+### Options considered
+1. **A · Fjord.** Cool steel blue accent (#2B5876 light, #8FB6D4 dark) on near-white and blue-black canvases; Inter. Most readable light mode for a phone in a bright gym.
+2. **B · Birch & Pine.** Warm sand canvas, pine accent, Geist. Friendlier, but the sand reads less crisp on cheap screens and the pine sits close to the success green.
+3. **C · Polar Night.** Dark-first, frost teal accent, Inter. Closest to design.md's dark canvas, but dark-first is a weaker default in bright light.
+
+All three passed WCAG AA for every text/background pair in light and dark (FIT-96 contrast table).
+
+### Decision
+**A · Fjord**, in light and dark (the page follows the device's colour-scheme setting).
+- **Rules source:** `docs/design.md`, with FIT-96's Nordic changes: the lavender primary becomes the Fjord accent; the near-black canvas becomes a tinted Nordic canvas; there is a light mode as well as dark; input borders use the subtle text colour (≥3:1, WCAG 1.4.11) instead of the hairline (about 1.6:1); a muted danger red joins the success green.
+- **Component library:** **UI SDK** (`@ui-sdk/react` and `@ui-sdk/core`, pinned to `0.1.0-beta.16`) **replaces shadcn/ui and Radix**. Its components are unstyled; we style them with Tailwind using the Fjord tokens. Pieces UI SDK has no component for (card, badge) are plain elements in `frontend/src/components/ui/`.
+- **Logo:** the placeholder logo stays a hand-drawn SVG, and the name "FitnessCenter" stays a placeholder (D-044).
+
+```mermaid
+flowchart LR
+  T["Fjord tokens<br/>(index.css, light + dark)"] --> TW[Tailwind v4 theme]
+  TW --> UI["components/ui<br/>Button, Input, Label, Checkbox: UI SDK<br/>Card, Badge: plain elements"]
+  UI --> SH["App shell<br/>header, UI SDK Menu on phones, footer"]
+  UI --> P[Pages]
+  SH --> P
+```
+
+### Reasoning
+Owner decision on FIT-96's recommendation. Fjord is the most "clean and professional" of the three, uses Inter (design.md's recommended substitute) and has the most readable light mode. UI SDK supports React 19 (peer dependency `react >=19`) and is unstyled, so it works with Tailwind v4 without a second styling system. It is in beta (0.1.0-beta.16), so the version is pinned exactly and upgrades are deliberate.
+
+### Sources
+- [design.md](design.md) — colours, typography, spacing, radius, elevation
+- Linear FIT-96 — result comment (directions, contrast table, screenshots); FIT-98 — the owner's brief, including "UI SDK replaces shadcn (owner, 2026-11-24)"
+- https://ui-sdk.dev/docs/react/installation — React 19 requirement, unstyled components, Tailwind styling
+- https://ui-sdk.dev/docs/react/components — component list (Button, Input, Label, Checkbox, Menu; no card or badge)
+- https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html — 3:1 for input borders

@@ -280,7 +280,7 @@ New questions only; overlaps folded into F2, M6, A1, M5, E5, T5.
 | U7 | Front-desk hardware? Self check-in kiosk? Device management (MDM)? | ux-patterns |
 | U8 | Staff time-clock method (app, kiosk, PIN)? Biometrics excluded (Datatilsynet says fingerprint clocks unlawful)? | ux-patterns |
 | U9 | Which daily and monthly KPIs does management need? | ux-patterns |
-| U10 | Existing brand/visual identity? ~~Design-system preference (e.g. shadcn/ui)?~~ (answered: shadcn/ui, D-018) Is a generic "AI look" acceptable? (Until answered, the landing page uses marked placeholder content and no logo, D-044.) | ux-patterns |
+| U10 | Existing brand/visual identity? ~~Design-system preference (e.g. shadcn/ui)?~~ (answered: shadcn/ui, D-018; replaced by UI SDK, D-056) Is a generic "AI look" acceptable? (Until answered, the landing page uses marked placeholder content and no logo, D-044.) | ux-patterns |
 
 ## Tier 4d — Domain modelling (from wave 2: domain-modeling §10)
 

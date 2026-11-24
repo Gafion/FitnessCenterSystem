@@ -149,7 +149,7 @@ flowchart LR
 
 | Container | Technology | Deployed as | Status |
 |---|---|---|---|
-| React SPA | React + TypeScript (Vite), TanStack Router, Tailwind v4, shadcn/ui (Radix), i18next | Static files | Decided (D-007, D-018) |
+| React SPA | React + TypeScript (Vite), TanStack Router, Tailwind v4, UI SDK (unstyled components, Fjord theme), i18next | Static files | Decided (D-007, D-018, D-056) |
 | Core API | C#/.NET 10, ASP.NET Core Minimal APIs | One process | Decided (D-007, D-008); Minimal APIs is the research recommendation, see S2 |
 | PostgreSQL | PostgreSQL + EF Core/Npgsql + NodaTime | One database, schema per module | Decided (D-007, D-014) |
 | Payment service | C#/.NET | Separate process | Later (D-006, D-008) |

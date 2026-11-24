@@ -6,7 +6,7 @@ Member and employee administration for one single-site fitness center in Denmark
 
 ## Stack
 
-- **Frontend:** React + TypeScript SPA (Vite, TanStack Router, Tailwind, shadcn/ui), Bun (D-007, D-018)
+- **Frontend:** React + TypeScript SPA (Vite, TanStack Router, Tailwind, UI SDK), Bun (D-007, D-018, D-056)
 - **Backend:** C# / .NET 10, ASP.NET Core, modular monolith (D-007, D-008, D-024)
 - **Database:** PostgreSQL, one schema per module (D-014)
 - **Login:** ASP.NET Core Identity + Google (D-011, D-026)
