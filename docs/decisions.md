@@ -1829,3 +1829,7 @@ Owner decision. Option B for (a) was rejected because the member would hold a sp
 - [D-020](#d-020-payment-records-in-the-core-a-missing-payment-blocks-check-in-and-emails-the-member) and [architecture.md](architecture.md) §4.2 — cross-module reads through Contracts
 - [open-questions.md](open-questions.md) — D8 (revocation part moved to Answered)
 - Linear FIT-71 — "Owner decision (2026-11-24, option A)" and "Orchestrator notes (2026-11-24)"
+
+### Amendment (owner, 2026-11-24, FIT-95)
+- **(b) and (c) together:** undoing a cancellation also sends a confirmation email saying the membership continues. Both emails are sent after the change is saved; a failed send does not reverse the cancellation or the undo. Source: Linear FIT-95, "Email on undo (owner, 2026-11-24)".
+- As built in FIT-95: undo is allowed up to and including the effective date (Copenhagen). Undoing clears the member's cancellation fields, and the cancellation stays in a history table (`members.cancellations`) with the instant it was undone. Undoing with nothing pending changes nothing.
