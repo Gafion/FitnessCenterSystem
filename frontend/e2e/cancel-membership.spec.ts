@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 
-// Cancelling the membership from the account page (D-048, FIT-70) against the built
+// Cancelling and undoing the cancellation from the account page (D-048, D-055, FIT-70, FIT-95) against the built
 // frontend, with the API mocked at the network level like account.spec.ts. Synthetic data only.
 
 const account = {
@@ -19,6 +19,7 @@ const membership = {
   paidUntil: '2026-12-22',
   cancelledAt: null,
   cancellationEffectiveOn: null,
+  canUndoCancellation: false,
 };
 
 // Cancelled at 09:30 Copenhagen time on 24 Nov: one month's notice to the end of December.
@@ -26,11 +27,16 @@ const cancelled = {
   ...membership,
   cancelledAt: '2026-11-24T08:30:00Z',
   cancellationEffectiveOn: '2026-12-31',
+  canUndoCancellation: true,
 };
 
-async function mockApi(page: Page) {
-  let current: typeof membership | typeof cancelled = membership;
+async function mockApi(
+  page: Page,
+  start: typeof membership | typeof cancelled = membership,
+) {
+  let current: typeof membership | typeof cancelled = start;
   let cancelRequests = 0;
+  let undoRequests = 0;
 
   await page.route('**/api/identity/me', (route) =>
     route.fulfill({ json: account }),
@@ -48,6 +54,11 @@ async function mockApi(page: Page) {
     route.fulfill({ json: current }),
   );
   await page.route('**/api/members/me/cancellation', (route) => {
+    if (route.request().method() === 'DELETE') {
+      undoRequests += 1;
+      current = membership;
+      return route.fulfill({ json: membership });
+    }
     cancelRequests += 1;
     current = cancelled;
     return route.fulfill({ json: cancelled });
@@ -66,7 +77,10 @@ async function mockApi(page: Page) {
     route.fulfill({ json: [] }),
   );
 
-  return { cancelRequests: () => cancelRequests };
+  return {
+    cancelRequests: () => cancelRequests,
+    undoRequests: () => undoRequests,
+  };
 }
 
 test('a member cancels with one confirmation and sees the last day of access', async ({
@@ -111,4 +125,43 @@ test('going back from the confirmation does not cancel', async ({ page }) => {
     section.getByRole('button', { name: 'Cancel membership' }),
   ).toBeVisible();
   expect(api.cancelRequests()).toBe(0);
+});
+
+test('a member undoes a pending cancellation and can cancel again', async ({
+  page,
+}) => {
+  const api = await mockApi(page, cancelled);
+
+  await page.goto('/account');
+  const section = page.getByRole('region', { name: 'Membership' });
+  await expect(section.getByRole('status')).toContainText(
+    'You have access until 31 Dec 2026',
+  );
+
+  await section.getByRole('button', { name: 'Undo cancellation' }).click();
+
+  await expect(
+    section.getByRole('button', { name: 'Cancel membership' }),
+  ).toBeVisible();
+  await expect(section.getByRole('status')).toHaveCount(0);
+  await expect(section).not.toContainText('Access until');
+  expect(api.undoRequests()).toBe(1);
+});
+
+test('after the effective date there is nothing to undo', async ({ page }) => {
+  const api = await mockApi(page, {
+    ...cancelled,
+    canUndoCancellation: false,
+  });
+
+  await page.goto('/account');
+  const section = page.getByRole('region', { name: 'Membership' });
+
+  await expect(section.getByRole('status')).toContainText(
+    'You have access until 31 Dec 2026',
+  );
+  await expect(
+    section.getByRole('button', { name: 'Undo cancellation' }),
+  ).toHaveCount(0);
+  expect(api.undoRequests()).toBe(0);
 });

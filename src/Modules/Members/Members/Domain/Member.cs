@@ -33,6 +33,17 @@ internal enum CancellationOutcome
     AlreadyCancelled,
 }
 
+internal enum UndoCancellationOutcome
+{
+    Undone,
+
+    /// <summary>There is no cancellation to undo; nothing changes (FIT-95).</summary>
+    NothingPending,
+
+    /// <summary>The effective date has passed, so the membership has ended (D-055).</summary>
+    AlreadyEffective,
+}
+
 /// <summary>
 /// A person's membership at the center. Name and email live on the Identity account
 /// (data-model.md); the member links to it by account id.
@@ -40,6 +51,7 @@ internal enum CancellationOutcome
 internal sealed class Member
 {
     private readonly List<Consent> _consents = [];
+    private readonly List<CancellationRecord> _cancellations = [];
 
     private Member(MemberId id, Guid accountId, MembershipTypeId membershipTypeId, LocalDate memberSince)
     {
@@ -81,6 +93,12 @@ internal sealed class Member
     public LocalDate? CancellationEffectiveOn { get; private set; }
 
     public IReadOnlyList<Consent> Consents => _consents;
+
+    /// <summary>
+    /// Every cancellation the member made, including undone ones (FIT-95). Undoing clears
+    /// <see cref="CancelledAt"/> and <see cref="CancellationEffectiveOn"/>, but the record stays.
+    /// </summary>
+    public IReadOnlyList<CancellationRecord> Cancellations => _cancellations;
 
     /// <summary>
     /// Signs a person up. The terms must be accepted; starting early is optional.
@@ -140,7 +158,8 @@ internal sealed class Member
 
     /// <summary>
     /// Cancels the membership with one month's notice to the end of a month (D-048). There is
-    /// no retention step. A second cancellation changes nothing. Undoing one is allowed (D-055) and built in FIT-95.
+    /// no retention step. A second cancellation changes nothing. It can be undone until it takes
+    /// effect (D-055); see <see cref="UndoCancellation"/>.
     /// <paramref name="now"/> comes from the injected clock, never the system clock (rule 2).
     /// </summary>
     public CancellationOutcome Cancel(Instant now, DateTimeZone businessZone)
@@ -152,7 +171,47 @@ internal sealed class Member
 
         CancelledAt = now;
         CancellationEffectiveOn = CancellationNotice.EffectiveDate(now, businessZone);
+        _cancellations.Add(new CancellationRecord(CancellationRecordId.New(), Id, now, CancellationEffectiveOn.Value));
         return CancellationOutcome.Cancelled;
+    }
+
+    /// <summary>
+    /// Whether the pending cancellation can still be undone on <paramref name="today"/>
+    /// (Copenhagen): up to and including the effective date (D-055).
+    /// </summary>
+    public bool CanUndoCancellationOn(LocalDate today) =>
+        CancellationEffectiveOn is { } lastDay && today <= lastDay;
+
+    /// <summary>
+    /// Undoes a pending cancellation, up to and including its effective date (D-055). The
+    /// membership continues as if it was never cancelled; the cancellation record is kept with
+    /// the instant it was undone. With nothing pending, nothing changes.
+    /// <paramref name="now"/> comes from the injected clock, never the system clock (rule 2).
+    /// </summary>
+    public UndoCancellationOutcome UndoCancellation(Instant now, DateTimeZone businessZone)
+    {
+        if (CancelledAt is not { } cancelledAt || CancellationEffectiveOn is not { } effectiveOn)
+        {
+            return UndoCancellationOutcome.NothingPending;
+        }
+
+        if (!CanUndoCancellationOn(now.InZone(businessZone).Date))
+        {
+            return UndoCancellationOutcome.AlreadyEffective;
+        }
+
+        var record = _cancellations.LastOrDefault(c => c.UndoneAt is null && c.CancelledAt == cancelledAt);
+        if (record is null)
+        {
+            // A cancellation made before the history existed; keep it in the history now.
+            record = new CancellationRecord(CancellationRecordId.New(), Id, cancelledAt, effectiveOn);
+            _cancellations.Add(record);
+        }
+
+        record.Undo(now);
+        CancelledAt = null;
+        CancellationEffectiveOn = null;
+        return UndoCancellationOutcome.Undone;
     }
 
     /// <summary>

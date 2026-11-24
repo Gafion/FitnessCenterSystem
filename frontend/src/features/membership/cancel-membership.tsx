@@ -9,27 +9,61 @@ export type CancelResult = 'ok' | 'failed';
 /**
  * Cancels the membership after one confirmation (D-048). There is no "save" or retention
  * step: the confirmation states the notice rule and nothing else. With a pending
- * cancellation it shows the last day of access instead.
+ * cancellation it shows the last day of access instead, and an undo button up to and
+ * including that day (D-055). Bookings after the last day are cancelled with the membership,
+ * and undoing does not restore them (D-055 amendment, FIT-97).
  */
 export function CancelMembership({
   membership,
   onCancel,
+  onUndo,
 }: {
   membership: Schemas['MyMembership'];
   onCancel: () => Promise<CancelResult>;
+  onUndo: () => Promise<CancelResult>;
 }) {
   const { t } = useTranslation();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
+  async function undo() {
+    setBusy(true);
+    setFailed(false);
+    const result = await onUndo();
+    setBusy(false);
+    setFailed(result === 'failed');
+  }
+
   if (membership.cancellationEffectiveOn) {
     return (
-      <p role="status">
-        {t('membership.cancellation.pending', {
-          date: formatDate(membership.cancellationEffectiveOn),
-        })}
-      </p>
+      <div className="flex flex-col gap-3">
+        <p role="status">
+          {t('membership.cancellation.pending', {
+            date: formatDate(membership.cancellationEffectiveOn),
+          })}
+        </p>
+        {membership.canUndoCancellation && (
+          <p className="text-sm text-muted-foreground">
+            {t('membership.cancellation.undoKeepsBookingsCancelled')}
+          </p>
+        )}
+        {membership.canUndoCancellation && (
+          <Button
+            variant="outline"
+            className="self-start"
+            disabled={busy}
+            onClick={undo}
+          >
+            {t('membership.cancellation.undo')}
+          </Button>
+        )}
+        {failed && (
+          <p role="alert" className="text-sm text-destructive">
+            {t('membership.cancellation.undoFailed')}
+          </p>
+        )}
+      </div>
     );
   }
 
@@ -56,6 +90,7 @@ export function CancelMembership({
   return (
     <div className="flex flex-col gap-3">
       <p>{t('membership.cancellation.notice')}</p>
+      <p>{t('membership.cancellation.bookings')}</p>
       <div className="flex flex-wrap gap-2">
         <Button variant="destructive" disabled={busy} onClick={confirm}>
           {t('membership.cancellation.confirm')}

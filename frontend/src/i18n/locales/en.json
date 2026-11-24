@@ -182,9 +182,13 @@
       "pending": "Your membership is cancelled. You have access until {{date}}, the end of that day.",
       "cancel": "Cancel membership",
       "notice": "You have one month's notice to the end of a month. Your access lasts until the cancellation takes effect.",
+      "bookings": "Your class bookings after your last day of access are cancelled, so others can take the spots.",
       "confirm": "Yes, cancel my membership",
       "back": "Go back",
-      "failed": "Your membership could not be cancelled. Please try again."
+      "failed": "Your membership could not be cancelled. Please try again.",
+      "undo": "Undo cancellation",
+      "undoKeepsBookingsCancelled": "Undoing does not restore class bookings that were cancelled. You can book them again.",
+      "undoFailed": "The cancellation could not be undone. Please try again."
     }
   },
   "myBookings": {

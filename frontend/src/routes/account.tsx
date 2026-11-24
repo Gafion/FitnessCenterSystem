@@ -28,6 +28,7 @@ import {
   getMyPayments,
   googleLinkUrl,
   isSimulationEnabled,
+  undoMyCancellation,
 } from '@/lib/api';
 
 export const Route = createFileRoute('/account')({
@@ -119,6 +120,20 @@ function AccountPage() {
     return 'ok';
   }
 
+  async function undoCancellation(): Promise<CancelResult> {
+    const result = await undoMyCancellation().catch(() => 'failed' as const);
+    if (result === 'failed') {
+      return 'failed';
+    }
+    if (result === 'logged-out') {
+      await navigate({ to: '/login', search: {} });
+      return 'ok';
+    }
+    // Reload after "ended" too: the page was out of date and hides the button now.
+    await router.invalidate();
+    return 'ok';
+  }
+
   async function logOut() {
     await api.POST('/api/identity/logout');
     await navigate({ to: '/' });
@@ -165,6 +180,7 @@ function AccountPage() {
               <CancelMembership
                 membership={membership}
                 onCancel={cancelMembership}
+                onUndo={undoCancellation}
               />
             </>
           ) : (

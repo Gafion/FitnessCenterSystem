@@ -1,4 +1,5 @@
 using FitnessCenter.Modules.Booking.Application;
+using FitnessCenter.Modules.Booking.Contracts;
 using FitnessCenter.Modules.Booking.Endpoints;
 using FitnessCenter.Modules.Booking.Infrastructure;
 using Microsoft.AspNetCore.Routing;
@@ -23,6 +24,7 @@ public static class BookingModule
                 npgsql.MigrationsHistoryTable("__EFMigrationsHistory", BookingDbContext.Schema).UseNodaTime()));
 
         services.AddScoped<BookingHandler>();
+        services.AddScoped<IMemberBookings, MemberBookings>();
 
         services.AddHealthChecks().AddDbContextCheck<BookingDbContext>("booking-db");
 
