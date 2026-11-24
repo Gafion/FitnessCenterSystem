@@ -1,8 +1,8 @@
 # FitnessCenterSystem
 
-Member and employee administration for **one real, single-site fitness center in Denmark** (~10 staff). It is also the owner's learning project, but a **working end product is the priority**.
+Member and employee administration for a **single-site fitness center in Denmark**. It is our own product: the owner decides the requirements, without designing for a specific center ([D-047](docs/decisions.md)). It is also the owner's learning project, but a **working end product is the priority**.
 
-**Phase:** scaffolding (FIT-31). Template, frontend tooling, Identity, Members and Booking modules, PostgreSQL, architecture and integration tests, and CI exist. Signup and login with email/password or Google (FIT-47) is built; class booking (FIT-48, D-039) is being built. `main` is protected: a PR merges only when CI passes. The PRD waits on the owner's meeting with the center ([D-004](docs/decisions.md)).
+**Phase:** MVP (D-022). Scaffolding is done. Built: signup and login with email/password or Google, class booking, simulated payments, check-in and the missing-payment rules. `main` is protected: a PR merges only when CI passes. Questions that waited on the center now go to the owner ("Owner decides" in `docs/open-questions.md`, D-047).
 
 ## Where things are
 
@@ -14,7 +14,7 @@ Member and employee administration for **one real, single-site fitness center in
 | Testing (levels, enforced checks, CI) | `docs/testing.md` |
 | Data model draft | `docs/data-model.md` |
 | Research (cited, verified) | `docs/research/` (index: `docs/research/README.md`) |
-| Interview guide for the center | `docs/stakeholder-interview-guide.md` |
+| Interview guide for the center (on hold, D-047) | `docs/stakeholder-interview-guide.md` |
 
 Read the relevant decision before changing anything it covers. Load docs on demand; don't read everything.
 

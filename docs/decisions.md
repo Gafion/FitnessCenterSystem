@@ -96,7 +96,7 @@ Owner-stated requirement. Research consequences:
 
 ## D-004: Gather requirements from the center before writing the PRD
 - **Date:** 2026-11-12
-- **Status:** Accepted
+- **Status:** Superseded by D-047
 - **Decided by:** Owner (need), orchestrator (method)
 
 ### Problem statement
@@ -1489,3 +1489,42 @@ Owner decision. Access to the center follows payment, so a sign-up alone doesn't
 ### Sources
 - D-020, D-032, D-042; D11 in [open-questions.md](open-questions.md)
 - FIT-45 (orchestrator review of PR #26, 2026-11-24)
+
+## D-047: Build our own product without waiting for the center
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Supersedes:** D-004
+- **Relates to:** D-001, D-022, D-039, D-042, D-044, D-046, FIT-64
+
+### Problem statement
+D-004 made the PRD and most domain questions (memberships, billing, pay rules, scheduling) wait for a meeting with the center's management and staff. The meeting will not happen within reasonable time, while a working product is the priority (D-001). Many placeholders (D-039, D-042, D-044) and open questions say "until the center answers". Who answers them now?
+
+### Options considered
+1. **Keep waiting for the center (D-004).** Requirements fit one real center. Cons: the PRD and every center question stay blocked for an unknown time.
+2. **Build our own product; the owner decides the requirements.** Pros: work continues; each question gets an answer. Cons: the product may not match that center's practice, and later input from a real center may change things.
+
+### Decision
+**Option 2.** We build our own fitness-center system and decide the requirements ourselves, without designing for that center's needs.
+
+- **What stays:** the system is still for a **single-site Danish fitness center**, so Danish law and Europe/Copenhagen time still apply (D-001). Every other accepted decision stays as it is.
+- **What changes:** a question that waited on the center now goes to the **owner**, who decides it from a **recommended default**. The list is in [open-questions.md](open-questions.md), section "Owner decides (D-047)". Placeholders that said "until the center answers" (D-039, D-042, D-044, D-046) now last until the owner decides.
+- The [stakeholder interview guide](stakeholder-interview-guide.md) is kept, on hold.
+
+```mermaid
+flowchart LR
+  Q[Open question] --> W{Waited on the center?}
+  W -->|no| N[Unchanged]
+  W -->|yes| A{Already answered by an accepted decision?}
+  A -->|yes| ANS[Answered table, with the decision]
+  A -->|no| OD["Owner decides (D-047):<br/>recommended default + source"]
+  OD --> DEC[Owner's answer recorded in decisions.md]
+```
+
+### Reasoning
+Owner decision. The meeting will not happen within reasonable time, and a working product is the priority (D-001). The research already describes how centers work and what Danish law requires, so each question can get a sourced default instead of waiting.
+
+### Sources
+- D-001, D-004
+- [open-questions.md](open-questions.md) — "Owner decides (D-047)"
+- FIT-64
