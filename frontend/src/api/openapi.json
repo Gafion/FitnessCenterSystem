@@ -690,7 +690,8 @@
       "DoorOutcome": {
         "enum": [
           "welcome",
-          "unknown-card"
+          "unknown-card",
+          "payment-missing"
         ]
       },
       "GoogleSignupRequest": {

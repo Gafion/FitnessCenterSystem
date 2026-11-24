@@ -72,6 +72,28 @@ internal static partial class TestMailbox
         return search.Messages.Count;
     }
 
+    /// <summary>How many emails with this subject reached <paramref name="email"/>.</summary>
+    public static async Task<int> CountToAsync(string email, string subject) =>
+        (await QueryAsync($"to:\"{email}\" subject:\"{subject}\"")).Messages.Count;
+
+    /// <summary>The text of the newest email with this subject to <paramref name="email"/>; waits a little for it to arrive.</summary>
+    public static async Task<string> TextToAsync(string email, string subject)
+    {
+        for (var attempt = 0; attempt < 50; attempt++)
+        {
+            var search = await QueryAsync($"to:\"{email}\" subject:\"{subject}\"");
+            if (search.Messages.Count > 0)
+            {
+                var message = await _api!.GetFromJsonAsync<Message>($"/api/v1/message/{search.Messages[0].Id}");
+                return message!.Text;
+            }
+
+            await Task.Delay(100);
+        }
+
+        throw new AssertFailedException($"No email \"{subject}\" reached {email}.");
+    }
+
     private static async Task<string?> NewestTextToAsync(string email)
     {
         var search = await SearchAsync(email);
@@ -85,8 +107,10 @@ internal static partial class TestMailbox
         return message?.Text;
     }
 
-    private static async Task<SearchResult> SearchAsync(string email) =>
-        (await _api!.GetFromJsonAsync<SearchResult>($"/api/v1/search?query={Uri.EscapeDataString($"to:\"{email}\"")}"))!;
+    private static Task<SearchResult> SearchAsync(string email) => QueryAsync($"to:\"{email}\"");
+
+    private static async Task<SearchResult> QueryAsync(string query) =>
+        (await _api!.GetFromJsonAsync<SearchResult>($"/api/v1/search?query={Uri.EscapeDataString(query)}"))!;
 
     [GeneratedRegex(@"\S+/confirm-email\?\S+")]
     private static partial Regex ConfirmationLink();

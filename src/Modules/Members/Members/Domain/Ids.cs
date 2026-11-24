@@ -16,3 +16,8 @@ internal readonly record struct PaymentRecordId(Guid Value)
 {
     public static PaymentRecordId New() => new(Guid.CreateVersion7());
 }
+
+internal readonly record struct PaymentReminderId(Guid Value)
+{
+    public static PaymentReminderId New() => new(Guid.CreateVersion7());
+}

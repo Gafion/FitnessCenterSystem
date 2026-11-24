@@ -15,7 +15,7 @@ export function syntheticMember(): Member {
   };
 }
 
-function mailpitUrl(): string {
+export function mailpitUrl(): string {
   const url = process.env.MAILPIT_URL;
   if (!url) {
     throw new Error(

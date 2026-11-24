@@ -53,6 +53,7 @@ public sealed class AccessTests
         await using var factory = new ApiFactory(services => services.AddSingleton<IClock>(new FixedClock(Now)));
         using var client = factory.CreateClient();
         await SignUpConfirmedAndLoggedInAsync(client, SyntheticEmail());
+        await PayAsync(client); // a member who never paid is refused (D-046)
         var card = await client.GetFromJsonAsync<MyCard>(MyCardUri);
 
         // Typed by hand, in lower case with spaces: the reader still knows the card.
@@ -72,6 +73,7 @@ public sealed class AccessTests
         await using var factory = new ApiFactory(services => services.AddSingleton<IClock>(new FixedClock(Now)));
         using var client = factory.CreateClient();
         await SignUpConfirmedAndLoggedInAsync(client, SyntheticEmail());
+        await PayAsync(client); // a member who never paid is refused (D-046)
         var card = await client.GetFromJsonAsync<MyCard>(MyCardUri);
 
         using var swipe = await client.PostAsync(SwipeMyCardUri, null);

@@ -27,6 +27,8 @@ public static class MembersModule
         services.AddScoped<IPaymentConfirmations, PaymentIntake>();
         services.AddScoped<PaymentsHandler>();
         services.AddScoped<MembershipHandler>();
+        services.AddScoped<PaymentReminders>();
+        services.AddHostedService<PaymentReminderJob>();
 
         services.AddHealthChecks().AddDbContextCheck<MembersDbContext>("members-db");
 

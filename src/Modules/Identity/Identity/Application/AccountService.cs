@@ -6,7 +6,8 @@ using Microsoft.AspNetCore.Identity;
 namespace FitnessCenter.Modules.Identity.Application;
 
 internal sealed class AccountService(
-    UserManager<Account> users, SignInManager<Account> signIn, IEmailSender<Account> emails) : IAccountService
+    UserManager<Account> users, SignInManager<Account> signIn, IEmailSender<Account> emails, SmtpEmailSender smtp)
+    : IAccountService
 {
     public async Task<CreateAccountResult> CreateLocalAccountAsync(
         NewLocalAccount newAccount, CancellationToken cancellationToken)
@@ -74,6 +75,16 @@ internal sealed class AccountService(
 
         // A pending Google login has done its job once the account is signed in.
         await signIn.Context.SignOutAsync(IdentityConstants.ExternalScheme);
+    }
+
+    public async Task SendEmailAsync(AccountId accountId, string subject, string body, CancellationToken cancellationToken)
+    {
+        var account = await FindAsync(accountId);
+        await smtp.SendAsync(
+            account.Email ?? throw new InvalidOperationException($"Account {accountId.Value} has no email."),
+            subject,
+            body,
+            cancellationToken);
     }
 
     public async Task<string?> FindFirstNameAsync(AccountId accountId, CancellationToken cancellationToken) =>

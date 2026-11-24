@@ -4,7 +4,10 @@ namespace FitnessCenter.Modules.Members.Domain;
 
 internal enum MemberStatus
 {
-    /// <summary>Signed up; no payment confirmation yet (D-032). Check-in is refused (D-020).</summary>
+    /// <summary>
+    /// Signed up; no payment confirmation yet (D-032). Check-in is refused until the first
+    /// payment (D-046); see <see cref="PaymentStanding.NeverPaid"/>.
+    /// </summary>
     AwaitingFirstPayment,
 
     /// <summary>
@@ -87,6 +90,10 @@ internal sealed class Member
     /// <paramref name="today"/> (Copenhagen) before the first payment.
     /// </summary>
     public LocalDate NextPeriodStart(LocalDate today) => PaidUntil?.PlusDays(1) ?? today;
+
+    /// <summary>Whether a payment is missing at <paramref name="now"/> (D-020, D-042).</summary>
+    public PaymentStanding PaymentStandingAt(Instant now, DateTimeZone businessZone) =>
+        MissingPayment.StandingAt(PaidUntil, now, businessZone);
 
     /// <summary>
     /// Moves paid-until to the end of a confirmed payment's period. The first payment may

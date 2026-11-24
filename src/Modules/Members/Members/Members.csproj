@@ -24,6 +24,8 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="FitnessCenter.Modules.Members.Tests" />
+    <!-- The reminder tests run the reminders with a fake clock and read what was stored (FIT-45). -->
+    <InternalsVisibleTo Include="FitnessCenter.IntegrationTests" />
   </ItemGroup>
 
 </Project>

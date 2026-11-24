@@ -130,6 +130,8 @@
     "welcome": "Welcome, {{name}}!",
     "unknownCard": "Unknown card",
     "unknownCardHelp": "This card isn't registered. Ask the staff for help.",
+    "paymentMissing": "Payment missing",
+    "paymentMissingHelp": "Your membership payment hasn't arrived, so you can't check in. Ask the staff for help.",
     "failed": "The reader didn't answer. Try again."
   },
   "payments": {

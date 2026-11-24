@@ -57,6 +57,16 @@ internal static class TestAccounts
 
     /// <summary>Signup, confirmation and login: a member who is logged in on <paramref name="client"/>.</summary>
     /// <returns>The member's id.</returns>
+    /// <summary>
+    /// Pays one month through the simulated payments API (D-041): the current month when
+    /// <paramref name="periodFrom"/> is null. Check-in needs a payment (D-042, D-046).
+    /// </summary>
+    public static async Task PayAsync(HttpClient client, DateOnly? periodFrom = null)
+    {
+        using var response = await client.PostAsJsonAsync("/api/simulation/payments", new { periodFrom });
+        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode, await response.Content.ReadAsStringAsync());
+    }
+
     public static async Task<Guid> SignUpConfirmedAndLoggedInAsync(HttpClient client, string email)
     {
         var memberId = await SignUpAsync(client, email);

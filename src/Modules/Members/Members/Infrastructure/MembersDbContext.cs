@@ -18,6 +18,8 @@ internal sealed class MembersDbContext(DbContextOptions<MembersDbContext> option
 
     public DbSet<PaymentRecord> PaymentRecords => Set<PaymentRecord>();
 
+    public DbSet<PaymentReminder> PaymentReminders => Set<PaymentReminder>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -80,6 +82,17 @@ internal sealed class MembersDbContext(DbContextOptions<MembersDbContext> option
                 .HasConversion(money => money.Ore, ore => new Money(ore));
             payment.Property(p => p.CardLast4).HasMaxLength(4).IsFixedLength();
             payment.Ignore(p => p.Period);
+        });
+
+        modelBuilder.Entity<PaymentReminder>(reminder =>
+        {
+            reminder.ToTable("payment_reminders");
+            reminder.HasKey(r => r.Id);
+            reminder.Property(r => r.Id).HasConversion(id => id.Value, value => new PaymentReminderId(value));
+            reminder.Property(r => r.MemberId).HasConversion(id => id.Value, value => new MemberId(value));
+            reminder.HasOne<Member>().WithMany().HasForeignKey(r => r.MemberId).OnDelete(DeleteBehavior.Restrict);
+            // One reminder per missing payment (D-042); the reminder job claims it with this key.
+            reminder.HasIndex(r => new { r.MemberId, r.PaidUntil }).IsUnique();
         });
     }
 }

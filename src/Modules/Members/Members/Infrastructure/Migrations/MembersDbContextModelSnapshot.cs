@@ -125,6 +125,31 @@ namespace Members.Infrastructure.Migrations
                     b.ToTable("payment_records", "members");
                 });
 
+            modelBuilder.Entity("FitnessCenter.Modules.Members.Domain.PaymentReminder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Instant>("ClaimedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<LocalDate>("PaidUntil")
+                        .HasColumnType("date");
+
+                    b.Property<Instant?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId", "PaidUntil")
+                        .IsUnique();
+
+                    b.ToTable("payment_reminders", "members");
+                });
+
             modelBuilder.Entity("FitnessCenter.Modules.Members.Domain.Member", b =>
                 {
                     b.HasOne("FitnessCenter.Modules.Members.Domain.MembershipType", null)
@@ -173,6 +198,15 @@ namespace Members.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("FitnessCenter.Modules.Members.Domain.PaymentRecord", b =>
+                {
+                    b.HasOne("FitnessCenter.Modules.Members.Domain.Member", null)
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FitnessCenter.Modules.Members.Domain.PaymentReminder", b =>
                 {
                     b.HasOne("FitnessCenter.Modules.Members.Domain.Member", null)
                         .WithMany()

@@ -422,7 +422,7 @@ export interface components {
             hasGoogleLogin: boolean;
         };
         /** @enum {unknown} */
-        DoorOutcome: "welcome" | "unknown-card";
+        DoorOutcome: "welcome" | "unknown-card" | "payment-missing";
         GoogleSignupRequest: {
             firstName: string;
             lastName: string;

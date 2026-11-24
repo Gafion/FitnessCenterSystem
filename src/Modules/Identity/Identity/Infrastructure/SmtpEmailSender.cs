@@ -36,7 +36,10 @@ internal sealed class SmtpEmailSender(IConfiguration configuration) : IEmailSend
     public Task SendPasswordResetCodeAsync(Account user, string email, string resetCode) =>
         throw new NotSupportedException("Password reset isn't built yet.");
 
-    private async Task SendAsync(string to, string subject, string body)
+    private Task SendAsync(string to, string subject, string body) => SendAsync(to, subject, body, CancellationToken.None);
+
+    /// <summary>Sends a plain-text email. Other modules' emails come here through <c>IAccountService.SendEmailAsync</c>.</summary>
+    public async Task SendAsync(string to, string subject, string body, CancellationToken cancellationToken)
     {
         var host = configuration["Email:Smtp:Host"];
         if (string.IsNullOrEmpty(host))
@@ -55,8 +58,8 @@ internal sealed class SmtpEmailSender(IConfiguration configuration) : IEmailSend
 
         using var client = new SmtpClient();
         // Mailpit speaks plain SMTP on localhost. A real provider will need TLS and a login.
-        await client.ConnectAsync(host, port, SecureSocketOptions.None);
-        await client.SendAsync(message);
-        await client.DisconnectAsync(quit: true);
+        await client.ConnectAsync(host, port, SecureSocketOptions.None, cancellationToken);
+        await client.SendAsync(message, cancellationToken);
+        await client.DisconnectAsync(quit: true, cancellationToken);
     }
 }

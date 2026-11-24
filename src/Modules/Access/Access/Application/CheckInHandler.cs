@@ -13,6 +13,12 @@ internal enum CheckInOutcome
 
     /// <summary>No card has this UID. Nothing is recorded.</summary>
     UnknownCard,
+
+    /// <summary>
+    /// The card's member has a missing payment (D-020, D-042) or has never paid (D-046). Check-in
+    /// is refused and nothing is recorded: an attendance is an accepted swipe (data-model.md ATTENDANCE).
+    /// </summary>
+    PaymentMissing,
 }
 
 /// <param name="FirstName">The member's first name, for the door screen. Only set on <see cref="CheckInOutcome.Welcome"/>.</param>
@@ -33,10 +39,16 @@ internal sealed class CheckInHandler(AccessDbContext db, IMemberDirectory member
             return new CheckInResult(CheckInOutcome.UnknownCard, null, now);
         }
 
-        var member = await members.FindAsync(card.MemberId, cancellationToken)
+        var member = await members.FindAsync(card.MemberId, now, cancellationToken)
             ?? throw new InvalidOperationException($"Card {card.Id.Value} belongs to a member that doesn't exist.");
 
-        // FIT-45: refuse here when the member has a missing payment (D-020), before anything is recorded.
+        // D-020, D-042: a missing payment refuses check-in, before anything is recorded. D-046: so
+        // does never having paid. No name is returned: the door screen is public, and the warning
+        // shouldn't say who is behind.
+        if (member.Payment is EntrancePayment.Missing or EntrancePayment.NeverPaid)
+        {
+            return new CheckInResult(CheckInOutcome.PaymentMissing, null, now);
+        }
 
         db.Attendances.Add(card.Swipe(now));
         await db.SaveChangesAsync(cancellationToken);
