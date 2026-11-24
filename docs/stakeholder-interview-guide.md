@@ -1,5 +1,7 @@
 # Stakeholder Interview Guide
 
+> **On hold (D-047, 2026-11-24).** We no longer wait for the meeting with the center; the owner decides these questions instead ("Owner decides" in [open-questions.md](open-questions.md)). The guide is kept in case a center conversation happens later.
+
 For the owner's conversation(s) with the fitness center's management and staff (decision [D-004](decisions.md)).
 Each question carries the ID from [open-questions.md](open-questions.md), so answers can be copied straight back into it.
 

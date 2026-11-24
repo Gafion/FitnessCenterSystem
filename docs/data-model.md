@@ -1,6 +1,6 @@
 # Data Model (draft)
 
-> **Status:** Draft v0.1 (2026-11-13). A **starting sketch** built from the owner's idea of the tables (identities, members, classes, staff). It is **not final**: the full model needs the center meeting ([D-004](decisions.md)).
+> **Status:** Draft v0.1 (2026-11-13). A **starting sketch** built from the owner's idea of the tables (identities, members, classes, staff). It is **not final**: the full model needs the owner's answers to the open questions ([D-047](decisions.md)).
 > Background: [research/database-schemas.md](research/database-schemas.md) and [research/domain-modeling.md](research/domain-modeling.md).
 
 ---
@@ -124,9 +124,9 @@ erDiagram
 
 Notes:
 - **One person, several roles.** `IDENTITY` holds the person; `MEMBER` and `STAFF` say what they are. A trainer who also trains as a member has one identity and both rows. This matches the owner's idea of a separate identities table. Login data (password hash, Google link, MFA) would sit next to identity in the Identity module (D-011, D-013).
-- **Payment reminders** (FIT-45, D-042): one row per missing payment, keyed by member and the paid-until date that passed. The reminder job saves the row before it sends the email, so the email never goes out twice, even after a restart. A later missing payment has a later paid-until date and gets its own row. Placeholder until the center answers D11.
-- **Attendance** comes from RFID swipes (D-003); in the MVP from a simulated reader (D-021). It optionally links to a class session; how a swipe gets that link is open (meeting). Only accepted swipes are stored: a swipe refused for a missing payment (D-020), for a member who has never paid (D-046) or for an unknown card leaves no row.
-- **Deliberately left out for now:** memberships over time, prices, PT appointments, shifts and time registration, certifications, health data. Payments themselves stay in the later Payments service (D-006); the core keeps only a copy of each payment record (`PAYMENT_RECORD`, D-020). These are all questions for the meeting. See [research/domain-modeling.md](research/domain-modeling.md) for what they could look like later.
+- **Payment reminders** (FIT-45, D-042): one row per missing payment, keyed by member and the paid-until date that passed. The reminder job saves the row before it sends the email, so the email never goes out twice, even after a restart. A later missing payment has a later paid-until date and gets its own row. Placeholder until the owner decides D11 (D-047).
+- **Attendance** comes from RFID swipes (D-003); in the MVP from a simulated reader (D-021). It optionally links to a class session; how a swipe gets that link is open (owner, D-047). Only accepted swipes are stored: a swipe refused for a missing payment (D-020), for a member who has never paid (D-046) or for an unknown card leaves no row.
+- **Deliberately left out for now:** memberships over time, prices, PT appointments, shifts and time registration, certifications, health data. Payments themselves stay in the later Payments service (D-006); the core keeps only a copy of each payment record (`PAYMENT_RECORD`, D-020). These are all questions for the owner (D-047). See [research/domain-modeling.md](research/domain-modeling.md) for what they could look like later.
 
 ---
 
@@ -235,7 +235,7 @@ Source: [database-schemas.md](research/database-schemas.md) §5, §9.
 |---|---|
 | DB1 | ✅ Decided: Option 2 ([D-014](decisions.md)) |
 | DB2 | ✅ Decided: shared transactions allowed ([D-015](decisions.md)) |
-| — | Everything listed under "deliberately left out", to be filled in after the meeting |
+| — | Everything listed under "deliberately left out", to be filled in as the owner decides them (D-047) |
 
 > **Built so far (FIT-47 signup slice, 2026-11-19):** the `identity` schema has ASP.NET Core Identity's tables. Its account (`AspNetUsers`) holds first name, last name and email. The `members` schema has `members`, `membership_types` (one seeded placeholder) and `consents`. `members.AccountId` has a foreign key to `identity.AspNetUsers` for integrity only (D-014). Column names follow EF Core's defaults (PascalCase).
 >

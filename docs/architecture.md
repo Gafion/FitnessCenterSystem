@@ -1,7 +1,7 @@
 # Architecture
 
 > **Status:** Draft v0.1 (2026-11-13). Built from accepted decisions [D-006 … D-011](decisions.md).
-> Anything not covered by a decision is marked **🟡 OPEN** or **CANDIDATE**, and links to the open question or research it depends on. Module names and boundaries are **candidates** until the PRD is written after the center meeting ([D-004](decisions.md)).
+> Anything not covered by a decision is marked **🟡 OPEN** or **CANDIDATE**, and links to the open question or research it depends on. Module names and boundaries are **candidates** until the owner settles the PRD ([D-047](decisions.md), which supersedes D-004).
 
 **Legend used in diagrams**
 
@@ -100,7 +100,7 @@ flowchart TB
 
   SYS <--> IDP["Identity providers<br/>(Google, Facebook, GitHub, …)"]
   SYS --> MAIL["Email provider<br/>🟡 OPEN: vendor"]:::open
-  RFID["RFID reader / door controller<br/>🟡 OPEN: hardware (meeting)"]:::open --> SYS
+  RFID["RFID reader / door controller<br/>🟡 OPEN: hardware (owner, D-047)"]:::open --> SYS
   SYS -.-> ACC["Accounting / payroll export<br/>🟡 OPEN: e-conomic, Danløn, …"]:::open
   SYS -.-> PAY["Payment service → PSP<br/>later (D-006)"]:::later
 
@@ -108,7 +108,7 @@ flowchart TB
   classDef later stroke-dasharray: 5 5,opacity:0.7
 ```
 
-The personas come from [research/fitness-domain-operations.md](research/fitness-domain-operations.md) (candidate personas). The final list is pending the interview ([stakeholder-interview-guide.md](stakeholder-interview-guide.md)).
+The personas come from [research/fitness-domain-operations.md](research/fitness-domain-operations.md) (candidate personas). The final list is for the owner to decide ([D-047](decisions.md)).
 
 ---
 
@@ -341,7 +341,7 @@ sequenceDiagram
   E-->>R: open door / show red
 ```
 
-🟡 **Open, to be answered in the meeting / RFID research** ([D-003](decisions.md), SA3):
+🟡 **Open, for the owner (D-047) and the RFID research** ([D-003](decisions.md), SA3):
 - Does the reader talk to us directly, or through a controller or on-site component?
 - Does our system decide whether the door opens, or only log attendance?
 - How is a swipe attributed to a class or PT session versus gym entry? The diagram shows one candidate: matching against bookings around the swipe time.
@@ -531,7 +531,7 @@ Stage order and tool candidates come from [research/tech-stack.md](research/tech
 
 ---
 
-## 12. Deployment (🟡 open: SA4, expected from the meeting)
+## 12. Deployment (🟡 open: SA4, owner decides, D-047)
 
 ```mermaid
 flowchart LR
@@ -584,9 +584,9 @@ This is not built now ([D-006](decisions.md)). It is shown so that the core's ev
 |---|---|---|
 | DB details | DB2–DB8 (layout decided in D-014) | §7, §5 |
 | Auth implementation | AU1–AU8 → research/authentication.md | §8 |
-| Hosting | SA4 (meeting) | §12 |
-| RFID hardware and offline behaviour | D-003, SA3 (meeting, then RFID research) | §3, §6.2 |
-| Final module list | PRD after meeting (D-004) | §4 |
+| Hosting | SA4 (owner, D-047) | §12 |
+| RFID hardware and offline behaviour | D-003, SA3 (owner, D-047, then RFID research) | §3, §6.2 |
+| Final module list | PRD, owner decides (D-047) | §4 |
 | Test framework and policies | S11, Q2–Q7 | §11 |
 | Minimal APIs vs controllers | S2 (research recommends Minimal APIs) | §3 |
 | Projects per module | Ceremony vs compile-time strength | §9 |

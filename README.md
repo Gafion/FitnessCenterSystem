@@ -134,7 +134,7 @@ More commands (migrations, regenerating the API client) are in [CLAUDE.md](CLAUD
 | Architecture | [docs/architecture.md](docs/architecture.md) |
 | Data model draft | [docs/data-model.md](docs/data-model.md) |
 | Research | [docs/research/README.md](docs/research/README.md) |
-| Interview guide for the center | [docs/stakeholder-interview-guide.md](docs/stakeholder-interview-guide.md) |
+| Interview guide for the center (on hold, D-047) | [docs/stakeholder-interview-guide.md](docs/stakeholder-interview-guide.md) |
 | Instructions for coding agents | [CLAUDE.md](CLAUDE.md) |
 
 Tasks are tracked in Linear (team FitnessCenter, key FIT).

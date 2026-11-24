@@ -32,7 +32,7 @@ Answers will be recorded here and, where they settle a medium/large decision, in
 | AU5 | Own login: ASP.NET Core Identity, data in our PostgreSQL, Google as external provider. EU residency of an external store no longer applies. | D-026 |
 | B3 | No amounts owed in the core. Payments are 6 subscription types plus one-time payments for PT appointments; the payment service sends payment confirmations to the core. | D-019 |
 | SA6 / DB1 | Schema per module, foreign keys allowed between modules (data-model.md Option 2). | D-014 |
-| SA4 / S8 | Expected to be answered in the center meeting. | — |
+| SA4 / S8 | Was expected from the center meeting; now the owner decides (see "Owner decides" below). | D-047 |
 | AU1 | Yes, a native app. First delivery is for staff (checking appointments). | D-012 |
 | AU2 | No Facebook login. | D-013 |
 | AU8 | MFA mandatory for staff; optional for members. | D-013 |
@@ -41,8 +41,58 @@ Answers will be recorded here and, where they settle a medium/large decision, in
 | W17 (orchestrator part) | The orchestrator only orchestrates; every task goes to a briefed sub-agent. The scaffolding half of W17 stays open. | D-040 |
 | D-021 open point (FIT-55) | Simulated pages: any logged-in account, only when `Simulation:Enabled`, with a "Simulation" banner. | D-041 |
 | Q6 (partly) | A few full-stack E2E flows run in CI (signup → confirm → login → book; check-in); mocked tests stay. Per-feature E2E as Definition of Done stays open (W15). | D-043 |
+| F1 (revisited) | We build our own product for a single-site Danish center; questions that waited on the center go to the owner. | D-047 |
+| F6 (revisited) | The MVP is six pages: landing, login/signup, classes, account, simulated payment, simulated check-in. PT comes after the MVP. | D-022, D-025 |
+| D19 | Denmark, DKK and Europe/Copenhagen only. | D-001, D-047 |
+| P1, P2, D3, Q8 | For now: no payment methods, provider or billing schedule. Payments are a later separate service, simulated in the MVP. They return when the Payments service is built. | D-006, D-021 |
+| A1, S12 | For now: no door hardware. A simulated reader sends card UIDs to the real check-in logic. They return when real hardware is chosen. | D-021 |
+| U4 (MVP part) | No waitlist in the MVP. The rule after the MVP is under "Owner decides". | D-022, D-039 |
+| B2, S9 | No longer apply: there is no center whose existing tools or Microsoft 365 use we must match. | D-047 |
 
-Unanswered questions about the center's operations are collected in [stakeholder-interview-guide.md](stakeholder-interview-guide.md).
+The [stakeholder interview guide](stakeholder-interview-guide.md) is on hold (D-047).
+
+---
+
+## Owner decides (D-047)
+
+These questions waited on the center (D-004). Under D-047 the owner decides each one. Every row has a **recommended default**, a one-line reason and a source. These are recommendations only; nothing here is decided until it is recorded in [decisions.md](decisions.md). The full question text stays in the tier tables below.
+
+Ordered by what blocks building next: rows 1–10 affect the next features after the MVP (D-022), and later rows come with staff, payments and hardware.
+
+```mermaid
+flowchart LR
+  N["Next features<br/>1–10"] --> S["Staff and operations<br/>11–20"] --> L["Payments, hardware, later<br/>21–27"]
+```
+
+| # | Question (IDs) | Recommended default | Reason | Source |
+|---|---|---|---|---|
+| 1 | Which membership types (M1; D-019 says six) | Start with monthly rolling memberships, no binding; name the six types one at a time as features need them. Until then keep "General membership" (D-032). | Rolling monthly avoids binding rules that Danish law limits to about 5 months plus 1 month's notice. | [compliance-legal-security.md §6.2](research/compliance-legal-security.md); [fitness-domain-operations.md §3.3](research/fitness-domain-operations.md) |
+| 2 | Binding, notice and cancellation (M2, D8, U2) | No binding; 1 month's notice to the end of a month; self-service cancellation online; access lasts until the effective date; no "save" step. | Danish law: 1 month's notice to month-end, cancel on the same medium the contract was made on; a retention step before cancelling is legally risky. | [compliance-legal-security.md §6.2](research/compliance-legal-security.md); [ux-patterns.md §3.4](research/ux-patterns.md) |
+| 3 | Staff roles and permissions (D13, E1) | Role-based access with four roles: admin, manager, front desk, instructor. Instructors see only their own classes. | RBAC is the baseline in the compliance checklist; single site, so no site scopes are needed. | [domain-modeling.md §3.1](research/domain-modeling.md); [compliance-legal-security.md §10.2](research/compliance-legal-security.md) |
+| 4 | Real email provider (AU9) | A short research ticket comparing Amazon SES, Postmark and Resend on EU hosting and price; Mailpit stays for local dev (D-038). | EU region availability and prices are unverified, and sources conflict. | [integrations-and-architecture.md §2.1 row 8](research/integrations-and-architecture.md) (**UNVERIFIED** prices) |
+| 5 | Hosting (SA4, S8, T2, T3) | One EU VPS with Docker Compose, PostgreSQL with backups; EU data residency. | Cheapest option and the candidate in architecture.md §12; an EU region is likely needed for member data. | [integrations-and-architecture.md §3.5](research/integrations-and-architecture.md) (**UNVERIFIED** prices); [architecture.md §12](architecture.md) |
+| 6 | Booking window and cancel deadline (fitness-domain-operations questions 35–36) | Keep D-039: 14-day window, cancel until 12 hours before start, no penalties. | Common late-cancel windows are 4–24 hours, so 12 hours sits inside the usual range. | [domain-modeling.md §4.3](research/domain-modeling.md); D-039 |
+| 7 | Waitlist and no-shows after the MVP (U4, D10) | Waitlist with "offer with expiry": a freed spot is held for the next person for a set time; no no-show penalties yet. | Auto-promotion is common but causes unwanted no-shows; an offer with expiry avoids that. | [domain-modeling.md §4.3](research/domain-modeling.md) |
+| 8 | Grace period and reminders (D11) | Keep D-042 and D-046: no grace period, one reminder, never-paid members refused. Add repeat reminders and late fees only with real payments. | Payments are simulated until the Payments service exists (D-006, D-021). | [domain-modeling.md §2.10](research/domain-modeling.md); D-042, D-046 |
+| 9 | Minors (M4) | Members must be 18 or older for now; collect date of birth at signup. | Danish consent age is 15, minors' contract capacity is unresearched, and classes for under-15s may need a børneattest. | [compliance-legal-security.md §8](research/compliance-legal-security.md) |
+| 10 | Health data (M5) | Collect none: no health declaration, injury records or trainer notes. | Health data is special-category data; the research says to ask whether it is needed at all. | [compliance-legal-security.md §3.2](research/compliance-legal-security.md) |
+| 11 | Product name and brand (U10) | The owner picks a product name; keep D-044's marked placeholders and no logo until then. | No center brand to reuse any more. | D-044 |
+| 12 | Legal form and VAT (F7, D1, D2) | Design for a commercial operator (ApS): VAT on access, and on instruction for members aged 30+. Ask an accountant the D2 questions before invoices are built. | Since 1 Jan 2026 instruction VAT depends on the member's age and the operator's status. | [domain-modeling.md §1, §2.12](research/domain-modeling.md) |
+| 13 | Sales channels and front desk (M3, U1, U6) | Online signup (built, D-032) plus front desk acting for a member on signup, booking and check-in. | Front-desk tools in the market look up members and flag unpaid memberships at the door. | [ux-patterns.md §4](research/ux-patterns.md) |
+| 14 | Languages (U5) | Danish first, English second; Danish formats (24-hour time, Monday-first weeks). | Danish conventions and legally required cancel and withdrawal wording are Danish. | [ux-patterns.md §2.3](research/ux-patterns.md) |
+| 15 | Management KPIs (U9) | Member count, sign-ups and cancellations per month, attendance, class fill rate. | These are standard club KPIs and need only data the system already has. | [fitness-domain-operations.md §10](research/fitness-domain-operations.md) |
+| 16 | Staffed hours (F5) | Staffed opening hours only; no unstaffed 24/7 access. | Unstaffed hours need preconditions (security, safety, revoking cancelled cards) and real door hardware, which is simulated for now (D-021). | [fitness-domain-operations.md §4](research/fitness-domain-operations.md) |
+| 17 | Working-time registration and rota (U8, E5) | Staff clock in and out per day in the app, no biometrics; records kept 5 years; employees see their own records. Rota later. | Mandatory in Denmark since 1 July 2024; Datatilsynet finds fingerprint time clocks non-compliant. | [compliance-legal-security.md §4](research/compliance-legal-security.md) (Errata item 3); [ux-patterns.md §7](research/ux-patterns.md) |
+| 18 | Pay and payroll (E2, E3, D14) | Hourly pay only; export hours to an external payroll provider; the system runs no payroll. | "Payroll-ready" products usually only export; no public Danløn API was found. | [fitness-domain-operations.md §7.2](research/fitness-domain-operations.md); [integrations-and-architecture.md §2.1 row 6](research/integrations-and-architecture.md) |
+| 19 | Certifications (E4, D15) | Track first aid and PT certificates with expiry; warn only, don't block scheduling. | Warnings keep the schedule working; børneattest matters only with under-15s (row 9). | [domain-modeling.md §3.4](research/domain-modeling.md); [compliance-legal-security.md §8](research/compliance-legal-security.md) |
+| 20 | Freezes (D7) | No freezes at first; if added, store each freeze as a dated record (from, to, reason). | A dated record keeps history; freeze rules vary widely between gyms. | [domain-modeling.md §2.5](research/domain-modeling.md) |
+| 21 | Bookkeeping (P3, D12) | Export to a registered bookkeeping system (e-conomic, Dinero or Billy); the system keeps no books itself. | A custom bookkeeping system carries heavy legal duties (BEK 205: backups, e-invoices, SAF-T). | [compliance-legal-security.md §7](research/compliance-legal-security.md) |
+| 22 | Billing date (D4) | Fixed 1st of the month, prorated first period. | Betalingsservice deadlines favour a fixed 1st-of-month anchor. | [domain-modeling.md §2.3](research/domain-modeling.md) |
+| 23 | Price increases (D5) | Prices are versioned; a new price applies to new members, and existing members move only after written notice. | Immutable price versions are standard; Danish rules on unilateral price increases are unresearched (**UNVERIFIED**). | [domain-modeling.md §2.2](research/domain-modeling.md); [compliance-legal-security.md §6.2](research/compliance-legal-security.md) |
+| 24 | Offline check-in and door behaviour (A2, SA3) | Decide with the real hardware; the leading option is a local cache of valid members with a time limit. | Needs the hardware choice first (D-021 simulates it). | [integrations-and-architecture.md §3.8](research/integrations-and-architecture.md) |
+| 25 | One center or many (F1 multi-tenancy, S7) | Single-tenant: one center, one deployment. | Simplest model; selling a system with bookkeeping to others needs registration. | [integrations-and-architecture.md §3.2](research/integrations-and-architecture.md); [compliance-legal-security.md §7](research/compliance-legal-security.md) |
+| 26 | Retail/POS and aggregators (P4, M7) | Neither for now. | Both add integrations (POS hardware, Wellhub/USC APIs) outside the MVP. | [integrations-and-architecture.md §2.1 row 12](research/integrations-and-architecture.md); [similar-projects.md §3.1](research/similar-projects.md) |
+| 27 | CCTV (A4) | Out of scope; never link footage to check-ins. | Linking CCTV to check-ins raises the risk significantly; Danish law limits retention to 30 days. | [compliance-legal-security.md §3.3](research/compliance-legal-security.md) |
 
 ---
 
@@ -128,7 +178,7 @@ Unanswered questions about the center's operations are collected in [stakeholder
 | S8 | Hosting budget; own backups and patching (Hetzner ~€12/mo) or managed Postgres (Render/Fly/Azure)? (Relates to T2.) | tech-stack |
 | S9 | Do you or the center already use Microsoft 365/Azure? | tech-stack |
 | S10 | Member app: PWA acceptable (iOS push caveats), or native required? (Relates to M6.) | tech-stack |
-| S12 | Will RFID/door integration need software running on-site at the gym? If so, .NET worker on Linux/Windows hardware? (Depends on meeting; D-003.) | tech-stack |
+| S12 | Will RFID/door integration need software running on-site at the gym? If so, .NET worker on Linux/Windows hardware? (For now simulated, D-021; real hardware is for the owner, D-047; D-003.) | tech-stack |
 
 ## Tier 3c — Service architecture (from wave 3: service-architecture; feeds D-008)
 
@@ -275,4 +325,4 @@ The full list of 65 domain questions (incl. finer-grained ones not repeated here
 
 ## Deferred research
 
-- **RFID access hardware** (card types such as MIFARE Classic vs DESFire, readers and controllers sold in Denmark, linking a swipe to a class or PT session) — on hold until after the owner's meeting with the center (owner instruction, 2026-11-12).
+- **RFID access hardware** (card types such as MIFARE Classic vs DESFire, readers and controllers sold in Denmark, linking a swipe to a class or PT session) — on hold until the owner chooses real hardware ("Owner decides" row 24, D-047). Originally on hold until the center meeting (owner instruction, 2026-11-12).
