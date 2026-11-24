@@ -69,7 +69,7 @@ export function SignupForm({ terms, google, onSubmit }: Props) {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
-      <div>
+      <div className="rounded-md bg-muted px-4 py-3">
         <p className="font-medium">{terms.membershipName}</p>
         <p className="text-sm text-muted-foreground">
           {t('signup.price', { price: formatOre(terms.monthlyPriceOre) })}
@@ -79,7 +79,7 @@ export function SignupForm({ terms, google, onSubmit }: Props) {
       <FieldError id="signup-errors" messages={otherErrors} />
 
       {google && (
-        <p className="text-sm">
+        <p className="text-sm text-muted-foreground">
           {t('signup.googleEmail', { email: google.email })}
         </p>
       )}
@@ -113,9 +113,9 @@ export function SignupForm({ terms, google, onSubmit }: Props) {
         </div>
       ))}
 
-      <section className="flex flex-col gap-3 rounded-md border p-4">
-        <p className="whitespace-pre-line text-sm">{terms.termsText}</p>
-        <div className="flex items-center gap-2">
+      <section className="flex flex-col gap-3 rounded-md border border-border p-4">
+        <p className="whitespace-pre-line text-sm text-muted-foreground">{terms.termsText}</p>
+        <div className="flex min-h-11 items-center gap-3">
           <Checkbox
             id="acceptTerms"
             checked={acceptTerms}
@@ -130,9 +130,9 @@ export function SignupForm({ terms, google, onSubmit }: Props) {
         <FieldError id="acceptTerms-error" messages={errors.acceptTerms} />
       </section>
 
-      <section className="flex flex-col gap-3 rounded-md border p-4">
-        <p className="whitespace-pre-line text-sm">{terms.earlyStartText}</p>
-        <div className="flex items-center gap-2">
+      <section className="flex flex-col gap-3 rounded-md border border-border p-4">
+        <p className="whitespace-pre-line text-sm text-muted-foreground">{terms.earlyStartText}</p>
+        <div className="flex min-h-11 items-center gap-3">
           <Checkbox
             id="startNow"
             checked={startNow}
@@ -142,7 +142,7 @@ export function SignupForm({ terms, google, onSubmit }: Props) {
         </div>
       </section>
 
-      <Button type="submit" disabled={submitting}>
+      <Button type="submit" className="w-full" disabled={submitting}>
         {t('signup.submit')}
       </Button>
     </form>

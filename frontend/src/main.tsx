@@ -3,9 +3,14 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './i18n';
 import './index.css';
+import { PageError, PageLoading } from './components/shell/page';
 import { routeTree } from './routeTree.gen';
 
-const router = createRouter({ routeTree });
+const router = createRouter({
+  routeTree,
+  defaultPendingComponent: PageLoading,
+  defaultErrorComponent: PageError,
+});
 
 declare module '@tanstack/react-router' {
   interface Register {
