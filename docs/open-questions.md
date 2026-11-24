@@ -58,6 +58,7 @@ Answers will be recorded here and, where they settle a medium/large decision, in
 | M4 (former row 9) | Members must be 18 or older for now; date of birth collected at signup. | D-052 |
 | M5 (former row 10) | Collect no health data. | D-053 |
 | D8 (revocation part), D-048 open points | A member may undo a pending cancellation; cancelling sends a confirmation email; a member with a pending cancellation can't book classes after the effective date. Existing bookings after the effective date are still open (FIT-71). | D-055 |
+| U5 (former "Owner decides" row 6) | Danish by default, English available; Danish formats (24-hour time, Monday-first weeks, `dd.mm.yyyy`, `kr.`). Backend texts and emails stay English for now. | D-065 |
 | DB8 | Spike done as a verification (FIT-36). Schema per module, history table per schema, schema-qualified SQL and a non-escalating shared transaction across module DbContexts are proven by `tests/FitnessCenter.IntegrationTests/ModuleSchemaTests.cs`. Default privileges and REFERENCES are confirmed from the PostgreSQL docs but unused while there is one database role (D-015). Details: database-schemas.md, Verification (FIT-36). | D-014, D-015 |
 
 The [stakeholder interview guide](stakeholder-interview-guide.md) is on hold (D-047).
@@ -68,7 +69,7 @@ The [stakeholder interview guide](stakeholder-interview-guide.md) is on hold (D-
 
 These questions waited on the center (D-004). Under D-047 the owner decides each one. Every row has a **recommended default**, a one-line reason and a source. These are recommendations only; nothing here is decided until it is recorded in [decisions.md](decisions.md). The full question text stays in the tier tables below.
 
-Rows 1–10 of the first version were answered on 2026-11-24 (D-048–D-053; see Answered above). The rows below are renumbered. Rows 1–2 follow from those answers, and later rows come with staff, payments and hardware.
+Rows 1–10 of the first version were answered on 2026-11-24 (D-048–D-053; see Answered above). The rows below are renumbered. Row 6 (languages) was answered later the same day (D-065); the other rows keep their numbers. Rows 1–2 follow from those answers, and later rows come with staff, payments and hardware.
 
 ```mermaid
 flowchart LR
@@ -82,7 +83,6 @@ flowchart LR
 | 3 | Product name and brand (U10) | The owner picks a product name; keep D-044's marked placeholders and no logo until then. | No center brand to reuse any more. | D-044 |
 | 4 | Legal form and VAT (F7, D1, D2) | Design for a commercial operator (ApS): VAT on access, and on instruction for members aged 30+. Ask an accountant the D2 questions before invoices are built. | Since 1 Jan 2026 instruction VAT depends on the member's age and the operator's status. | [domain-modeling.md §1, §2.12](research/domain-modeling.md) |
 | 5 | Sales channels and front desk (M3, U1, U6) | Online signup (built, D-032) plus front desk acting for a member on signup, booking and check-in. | Front-desk tools in the market look up members and flag unpaid memberships at the door. | [ux-patterns.md §4](research/ux-patterns.md) |
-| 6 | Languages (U5) | Danish first, English second; Danish formats (24-hour time, Monday-first weeks). | Danish conventions and legally required cancel and withdrawal wording are Danish. | [ux-patterns.md §2.3](research/ux-patterns.md) |
 | 7 | Management KPIs (U9) | Member count, sign-ups and cancellations per month, attendance, class fill rate. | These are standard club KPIs and need only data the system already has. | [fitness-domain-operations.md §10](research/fitness-domain-operations.md) |
 | 8 | Staffed hours (F5) | Staffed opening hours only; no unstaffed 24/7 access. | Unstaffed hours need preconditions (security, safety, revoking cancelled cards) and real door hardware, which is simulated for now (D-021). | [fitness-domain-operations.md §4](research/fitness-domain-operations.md) |
 | 9 | Working-time registration and rota (U8, E5) | Staff clock in and out per day in the app, no biometrics; records kept 5 years; employees see their own records. Rota later. | Mandatory in Denmark since 1 July 2024; Datatilsynet finds fingerprint time clocks non-compliant. | [compliance-legal-security.md §4](research/compliance-legal-security.md) (Errata item 3); [ux-patterns.md §7](research/ux-patterns.md) |
@@ -277,7 +277,7 @@ New questions only; overlaps folded into F2, M6, A1, M5, E5, T5.
 | U2 | Cancel flow: any "save"/retention step, or pause offered only elsewhere? Lawyer review of the flow? | ux-patterns |
 | U3 | Check-in credential: wallet pass, rotating in-app QR, or both? Does planned door hardware support rotating QR? | ux-patterns |
 | U4 | Waitlist: auto-promote or first-to-claim? Lock window before class? | ux-patterns |
-| U5 | Languages: Danish + English on every surface? Who owns legally required button wording? | ux-patterns |
+| U5 | Languages: Danish + English on every surface? Who owns legally required button wording? (Answered: Danish by default, English available, D-065. The owner checks the UNVERIFIED Danish legal wording; backend texts stay English for now.) | ux-patterns |
 | U6 | Can front desk perform every member action on the member's behalf? | ux-patterns |
 | U7 | Front-desk hardware? Self check-in kiosk? Device management (MDM)? | ux-patterns |
 | U8 | Staff time-clock method (app, kiosk, PIN)? Biometrics excluded (Datatilsynet says fingerprint clocks unlawful)? | ux-patterns |

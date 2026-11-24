@@ -1,10 +1,17 @@
 import { Link } from '@tanstack/react-router';
-import { Menu, MenuContent, MenuItem, MenuTrigger } from '@ui-sdk/react/menu';
+import {
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuSeparator,
+  MenuTrigger,
+} from '@ui-sdk/react/menu';
 import { cn } from 'cn';
 import { MenuIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, buttonVariants, focusRing } from '@/components/ui/button';
+import { LanguageMenuGroup, LanguageSwitch } from './language-switch';
 import { Logo } from './logo';
 
 const navLinks = [
@@ -17,7 +24,8 @@ const menuItem =
 
 /**
  * The frame around every page (D-056): a sticky header with the placeholder
- * logo, the main links and the sign-up action, a menu on phones, and a footer.
+ * logo, the main links, the language switch (D-065) and the sign-up action, a
+ * menu on phones, and a footer.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
@@ -60,6 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </ul>
           </nav>
           <div className="ml-auto hidden items-center gap-2 md:flex">
+            <LanguageSwitch />
             <Button variant="ghost" render={<Link to="/login" />}>
               {t('login.title')}
             </Button>
@@ -101,6 +110,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 >
                   {t('landing.membership.join')}
                 </MenuItem>
+                <MenuSeparator className="my-1 h-px bg-border" />
+                <LanguageMenuGroup />
               </MenuContent>
             </Menu>
           </div>
