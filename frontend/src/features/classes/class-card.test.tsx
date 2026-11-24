@@ -65,10 +65,32 @@ test('a full class says so and cannot be booked', () => {
   expect(screen.getByRole('button', { name: 'Book' })).toBeDisabled();
 });
 
+test('a class after the membership ends says why and cannot be booked', () => {
+  render(
+    <ClassCard
+      entry={classEntry({ afterMyMembershipEnds: true })}
+      now={beforeCutOff}
+      onBook={noop}
+      onCancel={noop}
+    />,
+  );
+
+  expect(
+    screen.getByText(
+      "Your membership ends before this class, so you can't book it.",
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Book' })).toBeDisabled();
+});
+
 test.each([
   ['class-full', 'This class is full.'],
   ['class-started', 'This class has already started.'],
   ['booking-not-open', 'Booking opens 14 days before the class.'],
+  [
+    'after-membership-ends',
+    "Your membership ends before this class, so you can't book it.",
+  ],
   ['already-booked', 'You have already booked this class.'],
   ['something-new', 'Something went wrong. Please try again.'],
 ])('a refused booking (%s) shows why', async (type, message) => {

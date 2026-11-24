@@ -68,6 +68,12 @@ export function ClassCard({ entry, now, onBook, onCancel }: Props) {
         {!entry.bookedByMe && entry.spotsLeft === 0 && (
           <p className="text-muted-foreground">{t('classes.full')}</p>
         )}
+        {/* D-055: a cancelled membership can't book classes after its last day. */}
+        {!entry.bookedByMe && entry.afterMyMembershipEnds && (
+          <p className="text-muted-foreground">
+            {t('classes.afterMembershipEnds')}
+          </p>
+        )}
         {error && (
           <p role="alert" className="text-destructive">
             {t(`classes.errors.${error}`, {
@@ -89,7 +95,9 @@ export function ClassCard({ entry, now, onBook, onCancel }: Props) {
           )
         ) : (
           <Button
-            disabled={busy || entry.spotsLeft === 0}
+            disabled={
+              busy || entry.spotsLeft === 0 || entry.afterMyMembershipEnds
+            }
             onClick={() => run(onBook)}
           >
             {t('classes.book')}
