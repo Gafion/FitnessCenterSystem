@@ -1833,3 +1833,51 @@ Owner decision. Option B for (a) was rejected because the member would hold a sp
 ### Amendment (owner, 2026-11-24, FIT-95)
 - **(b) and (c) together:** undoing a cancellation also sends a confirmation email saying the membership continues. Both emails are sent after the change is saved; a failed send does not reverse the cancellation or the undo. Source: Linear FIT-95, "Email on undo (owner, 2026-11-24)".
 - As built in FIT-95: undo is allowed up to and including the effective date (Copenhagen). Undoing clears the member's cancellation fields, and the cancellation stays in a history table (`members.cancellations`) with the instant it was undone. Undoing with nothing pending changes nothing.
+
+### Amendment (owner, 2026-11-24, FIT-97)
+- **Bookings after the effective date:** when a member cancels, their class bookings in classes that start on a Copenhagen day after the effective date are cancelled, so the spots go to other members. Bookings on or before the effective date stay. This closes the open point in (a). The 12-hour cut-off (D-039) does not apply: it limits what members do themselves, and here the system frees the spots.
+- **Same transaction (option A):** Members calls `Booking.Contracts.IMemberBookings` inside the cancellation's transaction (D-015, [D-057](#d-057-module-to-module-side-effects-use-direct-contract-calls-in-the-same-transaction)). If either part fails, both roll back. Booking locks the affected class rows with `FOR UPDATE`, as when booking (D-039).
+- **Undo** does not restore cancelled bookings; the member books again. The account page says so next to the undo button.
+- **Email:** the cancellation email states how many bookings were cancelled and lists them (class name, Copenhagen date and time). With none cancelled, the email doesn't mention bookings.
+- As built: today the booking window (14 days, D-039) is shorter than the notice (at least one month, D-048), so a member can't hold a booking after the effective date when they cancel. The rule takes effect if the window or the notice changes; the integration tests put such bookings in directly.
+- Source: Linear FIT-97, "Owner decision (2026-11-24): option A, same transaction", and the options comment on FIT-97.
+
+## D-057: Module-to-module side effects use direct contract calls in the same transaction
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-24 (FIT-97)
+- **Relates to:** D-008, D-015, D-055, architecture.md §4.2 (rule 4) and §6.3
+
+### Problem statement
+Cancelling a membership must cancel the member's bookings after the effective date (D-055 amendment). The two live in different modules. architecture.md §6.3 sketches in-process integration events with an outbox for such side effects, but left the v1 choice open, and no event mechanism exists in the code.
+
+### Options considered
+1. **A: direct contract call in the same transaction.** Members calls an interface in `Booking.Contracts` inside its own transaction over the shared connection (D-015), as signup already calls `Access.Contracts.IAccessCards`. Pros: smallest change; atomic, so a crash can't leave bookings behind; the caller gets a result back (the email's booking count). Cons: Members knows Booking exists; every caller waits for the side effect.
+2. **B: in-process integration events, no outbox.** A small event and handler pair in the shared kernel, dispatched after commit. Pros: follows rule 4 and the §6.3 shape; more subscribers later. Cons: a new building block in the shared kernel (rule 5); a side effect is lost if the process dies after commit; the handler's result doesn't flow back to the publisher.
+3. **C: events with a transactional outbox and a background relay.** Pros: reliable at-least-once delivery; the shape the payment service will need (D-006). Cons: the largest option (table, migration, worker, idempotent handlers); eventually consistent; no result at send time.
+
+### Decision
+**Option A.** Module-to-module side effects use direct calls to the other module's Contracts, inside the caller's transaction, until a real need for events appears (for example a second subscriber to the same fact, or the payment service as a separate deployable, D-006). Rule 1 still holds: only `*.Contracts` are referenced.
+
+```mermaid
+sequenceDiagram
+  participant MEM as Members (MembershipHandler)
+  participant BK as Booking (IMemberBookings)
+  participant DB as PostgreSQL (shared connection)
+
+  MEM->>DB: begin TransactionScope
+  MEM->>DB: save cancellation (members schema)
+  MEM->>BK: CancelBookingsAfterAsync(account, last day, now)
+  BK->>DB: lock class rows FOR UPDATE, cancel bookings (booking schema)
+  BK-->>MEM: cancelled bookings
+  MEM->>DB: commit (or roll back both on any failure)
+  MEM-->>MEM: after commit: confirmation email with the bookings
+```
+
+### Reasoning
+Owner decision on FIT-97's options comment. A is atomic, has a precedent in signup, and gives the email its count. B and C stay available; the event shape in architecture.md §6.3 is kept as the target when events are needed.
+
+### Sources
+- Linear FIT-97: options comment (A, B, C) and "Owner decision (2026-11-24): option A, same transaction"
+- [D-015](#d-015-transactions-may-span-modules) and architecture.md §4.2 — one transaction may span modules; Contracts only
+- [research/service-architecture.md](research/service-architecture.md) §5 — event shape for the later payment service (cited in architecture.md §6.3)

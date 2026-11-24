@@ -135,6 +135,52 @@ public sealed class ClassSessionTests
         Assert.IsFalse(session.StartsAfter(null));
     }
 
+    [TestMethod]
+    public void Ending_a_membership_cancels_a_booking_the_day_after_the_last_day_and_frees_the_spot()
+    {
+        // Start is 18:00 on 12 January in Copenhagen; the last day of access is the day before.
+        var session = Session(capacity: 1);
+        session.Book(Ann, Start - Duration.FromDays(1));
+
+        Assert.IsTrue(session.CancelBecauseMembershipEnds(Ann, new LocalDate(2027, 1, 11), Start - Duration.FromDays(1)));
+        Assert.IsFalse(session.IsBookedBy(Ann));
+        Assert.AreEqual(1, session.SpotsLeft);
+        Assert.AreEqual(BookOutcome.Booked, session.Book(Ben, Start - Duration.FromDays(1)), "the freed spot can be booked");
+    }
+
+    [TestMethod]
+    public void Ending_a_membership_keeps_a_booking_on_the_last_day()
+    {
+        var session = Session(capacity: 5);
+        session.Book(Ann, Start - Duration.FromDays(1));
+
+        Assert.IsFalse(session.CancelBecauseMembershipEnds(Ann, new LocalDate(2027, 1, 12), Start - Duration.FromDays(1)));
+        Assert.IsTrue(session.IsBookedBy(Ann));
+    }
+
+    [TestMethod]
+    public void Ending_a_membership_leaves_other_members_bookings_alone()
+    {
+        var session = Session(capacity: 5);
+        session.Book(Ben, Start - Duration.FromDays(1));
+
+        Assert.IsFalse(session.CancelBecauseMembershipEnds(Ann, new LocalDate(2027, 1, 11), Start - Duration.FromDays(1)));
+        Assert.IsTrue(session.IsBookedBy(Ben));
+        Assert.AreEqual(4, session.SpotsLeft);
+    }
+
+    [TestMethod]
+    public void Ending_a_membership_cancels_even_after_the_12_hour_cut_off()
+    {
+        var session = Session(capacity: 5);
+        session.Book(Ann, Start - Duration.FromDays(1));
+        var afterCutOff = Start - Duration.FromHours(1);
+
+        Assert.AreEqual(CancelOutcome.CancellationClosed, session.Cancel(Ann, afterCutOff), "the member can't cancel now");
+        Assert.IsTrue(session.CancelBecauseMembershipEnds(Ann, new LocalDate(2027, 1, 11), afterCutOff));
+        Assert.IsFalse(session.IsBookedBy(Ann));
+    }
+
     private static ClassSession Session(int capacity) =>
         ClassSession.Schedule(ClassType.Spinning, "Test Instructor", Start, Duration.FromMinutes(50), capacity);
 }

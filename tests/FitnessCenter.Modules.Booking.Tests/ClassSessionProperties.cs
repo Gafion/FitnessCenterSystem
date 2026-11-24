@@ -87,6 +87,27 @@ public sealed class ClassSessionProperties
         });
     }
 
+    /// <summary>
+    /// Ending a membership cancels the booking exactly when the class starts on a Copenhagen
+    /// day after the last day of access (D-055 amendment), at any moment, cut-off or not.
+    /// </summary>
+    [TestMethod]
+    public void Ending_a_membership_cancels_exactly_the_classes_after_the_last_day()
+    {
+        var lastDays = Gen.Int[-3, 3].Select(days => new LocalDate(2027, 1, 12).PlusDays(days));
+        Gen.Select(lastDays, AroundStart).Sample((lastDay, now) =>
+        {
+            var session = Session(capacity: 1);
+            var account = Guid.NewGuid();
+            session.Book(account, Start - BookingPolicy.BookingWindow);
+            // Start is 18:00 on 12 January in Copenhagen.
+            var expected = lastDay < new LocalDate(2027, 1, 12);
+
+            var cancelled = session.CancelBecauseMembershipEnds(account, lastDay, now);
+            return cancelled == expected && session.IsBookedBy(account) == !expected;
+        });
+    }
+
     private static ClassSession Session(int capacity) =>
         ClassSession.Schedule(ClassType.Spinning, "Test Instructor", Start, Duration.FromMinutes(50), capacity);
 }
