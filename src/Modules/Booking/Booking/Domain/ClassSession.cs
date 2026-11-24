@@ -144,6 +144,24 @@ internal sealed class ClassSession
         return CancelOutcome.Cancelled;
     }
 
+    /// <summary>
+    /// Cancels the account's booking because their membership ends before this class: the
+    /// class starts on a Copenhagen day after <paramref name="lastDayOfAccess"/> (D-055
+    /// amendment, FIT-97). The 12-hour cut-off (D-039) doesn't apply; it limits what members
+    /// do themselves, and here the system frees the spot.
+    /// </summary>
+    /// <returns>True when a booking was cancelled.</returns>
+    public bool CancelBecauseMembershipEnds(Guid accountId, LocalDate lastDayOfAccess, Instant now)
+    {
+        if (!StartsAfter(lastDayOfAccess) || ActiveBookingOf(accountId) is not { } booking)
+        {
+            return false;
+        }
+
+        booking.Cancel(now);
+        return true;
+    }
+
     private ClassBooking? ActiveBookingOf(Guid accountId) =>
         _bookings.SingleOrDefault(booking => booking.IsActive && booking.AccountId == accountId);
 }
