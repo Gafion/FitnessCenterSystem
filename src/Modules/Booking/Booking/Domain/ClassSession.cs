@@ -1,3 +1,4 @@
+using FitnessCenter.SharedKernel;
 using NodaTime;
 
 namespace FitnessCenter.Modules.Booking.Domain;
@@ -9,6 +10,12 @@ internal enum BookOutcome
     Full,
     Started,
     NotOpenYet,
+
+    /// <summary>
+    /// The class starts after the last day of the member's access: their cancellation takes
+    /// effect before it (D-048, D-055 option A).
+    /// </summary>
+    AfterMembershipEnds,
 }
 
 internal enum CancelOutcome
@@ -79,7 +86,10 @@ internal sealed class ClassSession
 
     public bool IsBookedBy(Guid accountId) => ActiveBookingOf(accountId) is not null;
 
-    public BookOutcome Book(Guid accountId, Instant now)
+    /// <param name="lastDayOfAccess">
+    /// The member's last day of access (Copenhagen) when they have cancelled, else null (D-048).
+    /// </param>
+    public BookOutcome Book(Guid accountId, Instant now, LocalDate? lastDayOfAccess = null)
     {
         if (now >= StartsAt)
         {
@@ -96,6 +106,11 @@ internal sealed class ClassSession
             return BookOutcome.AlreadyBooked;
         }
 
+        if (StartsAfter(lastDayOfAccess))
+        {
+            return BookOutcome.AfterMembershipEnds;
+        }
+
         if (SpotsLeft <= 0)
         {
             return BookOutcome.Full;
@@ -104,6 +119,13 @@ internal sealed class ClassSession
         _bookings.Add(ClassBooking.Create(Id, accountId, now));
         return BookOutcome.Booked;
     }
+
+    /// <summary>
+    /// Whether the class starts on a Copenhagen day after <paramref name="lastDayOfAccess"/>
+    /// (D-055 option A). A class on the last day itself is still within the membership.
+    /// </summary>
+    public bool StartsAfter(LocalDate? lastDayOfAccess) =>
+        lastDayOfAccess is { } lastDay && StartsAt.InZone(CenterTime.Zone).Date > lastDay;
 
     public CancelOutcome Cancel(Guid accountId, Instant now)
     {

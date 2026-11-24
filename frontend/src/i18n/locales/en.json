@@ -109,10 +109,12 @@
     "cancelUntil": "You can cancel until {{time}}.",
     "cancelClosed": "Cancelling closed at {{time}}.",
     "full": "This class is full.",
+    "afterMembershipEnds": "Your membership ends before this class, so you can't book it.",
     "errors": {
       "class-full": "This class is full.",
       "class-started": "This class has already started.",
       "booking-not-open": "Booking opens 14 days before the class.",
+      "after-membership-ends": "Your membership ends before this class, so you can't book it.",
       "already-booked": "You have already booked this class.",
       "cancellation-closed": "Cancelling closes 12 hours before the class starts."
     }
@@ -134,6 +136,8 @@
     "unknownCardHelp": "This card isn't registered. Ask the staff for help.",
     "paymentMissing": "Payment missing",
     "paymentMissingHelp": "Your membership payment hasn't arrived, so you can't check in. Ask the staff for help.",
+    "membershipEnded": "Membership ended",
+    "membershipEndedHelp": "This membership was cancelled and has ended, so you can't check in. Ask the staff for help.",
     "failed": "The reader didn't answer. Try again."
   },
   "payments": {

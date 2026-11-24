@@ -8,6 +8,11 @@ const refusals = {
   'unknown-card': ['checkIn.unknownCard', 'checkIn.unknownCardHelp'],
   // D-020, D-042. No name: the screen is public, so it doesn't say who is behind on payments.
   'payment-missing': ['checkIn.paymentMissing', 'checkIn.paymentMissingHelp'],
+  // D-048, D-055: access ends when the cancellation takes effect.
+  'membership-ended': [
+    'checkIn.membershipEnded',
+    'checkIn.membershipEndedHelp',
+  ],
 } as const satisfies Record<
   Exclude<SwipeResponse['outcome'], 'welcome'>,
   readonly [string, string]

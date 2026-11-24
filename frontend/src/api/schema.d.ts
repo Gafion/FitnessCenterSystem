@@ -438,7 +438,7 @@ export interface components {
             hasGoogleLogin: boolean;
         };
         /** @enum {unknown} */
-        DoorOutcome: "welcome" | "unknown-card" | "payment-missing";
+        DoorOutcome: "welcome" | "unknown-card" | "payment-missing" | "membership-ended";
         GoogleSignupRequest: {
             firstName: string;
             lastName: string;
@@ -547,6 +547,7 @@ export interface components {
             bookedByMe: boolean;
             /** Format: date-time */
             cancelUntil: string;
+            afterMyMembershipEnds: boolean;
         };
         SignupRequest: {
             firstName: string;
