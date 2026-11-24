@@ -7,7 +7,7 @@ namespace FitnessCenter.Modules.Identity.Infrastructure;
 /// <summary>
 /// One synthetic staff account per role (D-049), to click through locally. Development only,
 /// never real people (CLAUDE.md). The password comes from development configuration
-/// (user-secrets), so none is committed. How real staff accounts are created is open (FIT-75).
+/// (user-secrets), so none is committed. Real staff accounts come from an admin's invite (D-058).
 /// </summary>
 internal static class DevelopmentStaff
 {

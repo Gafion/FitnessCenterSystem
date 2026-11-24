@@ -26,7 +26,7 @@ public static class IdentityModule
         // The shared, request-scoped connection lets one transaction span modules (D-015).
         services.AddDbContext<IdentityDbContext>((provider, options) =>
             options.UseNpgsql(provider.GetRequiredService<NpgsqlConnection>(), npgsql =>
-                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", IdentityDbContext.Schema)));
+                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", IdentityDbContext.Schema).UseNodaTime()));
 
         var authentication = services.AddAuthentication(IdentityConstants.ApplicationScheme);
         authentication.AddIdentityCookies();
@@ -75,6 +75,7 @@ public static class IdentityModule
         });
 
         services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<StaffInvites>();
         services.AddSingleton<SmtpEmailSender>();
         services.AddSingleton<IEmailSender<Account>>(provider => provider.GetRequiredService<SmtpEmailSender>());
         services.AddHealthChecks().AddDbContextCheck<IdentityDbContext>("identity-db");
@@ -84,7 +85,7 @@ public static class IdentityModule
 
     public static IEndpointRouteBuilder MapIdentityEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        return endpoints.MapAccountEndpoints().MapExternalLoginEndpoints();
+        return endpoints.MapAccountEndpoints().MapExternalLoginEndpoints().MapStaffInviteEndpoints();
     }
 
     /// <summary>One policy per staff role, plus one for any staff role (D-049). Members match none.</summary>

@@ -424,7 +424,7 @@ Decided ([D-011](decisions.md)): social login **and** local email/password.
 
 - The roles are rows in `identity.AspNetRoles`, created by the `StaffRoles` migration, and go into the login cookie as role claims.
 - Endpoints in any module require a policy from `StaffPolicies` in `Identity.Contracts`: one per role, plus `AnyStaff`. A role's policy admits that role only; D-049 defines no hierarchy between the roles.
-- How staff accounts are created and given a role is open (FIT-75). For local development, the API seeds one synthetic account per role (`dev-admin@example.com`, `dev-manager@example.com`, `dev-frontdesk@example.com`, `dev-instructor@example.com`) when `Identity:DevelopmentStaffPassword` is set in user-secrets.
+- Staff accounts come from an admin's invite by email ([D-058](decisions.md)): `POST /api/identity/staff-invites` (Admin policy) stores the invite in `identity.StaffInvites` and emails a one-time link that expires after 7 days; `POST /api/identity/staff-invites/accept` (the `/accept-invite` page) sets the name and password and creates the account with the role. For local development, the API seeds one synthetic account per role (`dev-admin@example.com`, `dev-manager@example.com`, `dev-frontdesk@example.com`, `dev-instructor@example.com`) when `Identity:DevelopmentStaffPassword` is set in user-secrets.
 
 ```mermaid
 flowchart LR
