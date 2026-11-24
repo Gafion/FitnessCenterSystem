@@ -531,6 +531,8 @@ export interface components {
             lastName: string;
             email: string;
             password: string;
+            /** Format: date */
+            dateOfBirth: null | string;
             acceptTerms: boolean;
             termsVersion: string;
             startNow: boolean;

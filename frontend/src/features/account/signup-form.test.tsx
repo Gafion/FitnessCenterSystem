@@ -33,6 +33,7 @@ test('sends the fields, the consents and the text versions shown', async () => {
 
   fill(/first name/i, 'Test');
   fill(/last name/i, 'Person');
+  fill(/date of birth/i, '1990-01-01');
   fill(/^email/i, 'test.person@example.com');
   fill(/^password/i, 'correct-horse');
   fireEvent.click(screen.getByLabelText('I accept the terms'));
@@ -44,6 +45,7 @@ test('sends the fields, the consents and the text versions shown', async () => {
     lastName: 'Person',
     email: 'test.person@example.com',
     password: 'correct-horse',
+    dateOfBirth: '1990-01-01',
     acceptTerms: true,
     termsVersion: 'terms-v1',
     startNow: false,
@@ -73,6 +75,46 @@ test('shows the errors the API returns next to their fields', async () => {
   expect(screen.getByText('Something else went wrong.')).toBeInTheDocument();
 });
 
+// D-052: members must be 18 or older.
+test('says members must be 18 and shows the under-18 error next to the date of birth', async () => {
+  const onSubmit = vi.fn().mockResolvedValue({
+    dateOfBirth: ['You must be 18 or older to become a member.'],
+  });
+  render(<SignupForm terms={terms} onSubmit={onSubmit} />);
+
+  const dateOfBirth = screen.getByLabelText(/date of birth/i);
+  expect(dateOfBirth).toHaveAttribute('type', 'date');
+  expect(dateOfBirth).toHaveAccessibleDescription(
+    'You must be 18 or older to become a member.',
+  );
+
+  fill(/date of birth/i, '2010-06-15');
+  fireEvent.click(screen.getByRole('button', { name: 'Sign up' }));
+
+  await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+  expect(onSubmit).toHaveBeenCalledWith(
+    expect.objectContaining({ dateOfBirth: '2010-06-15' }),
+  );
+  expect(dateOfBirth).toHaveAttribute('aria-invalid', 'true');
+  expect(
+    await screen.findByText('You must be 18 or older to become a member.', {
+      selector: '#dateOfBirth-error',
+    }),
+  ).toBeInTheDocument();
+});
+
+test('sends no date of birth when it is left empty', async () => {
+  const onSubmit = vi.fn().mockResolvedValue(null);
+  render(<SignupForm terms={terms} onSubmit={onSubmit} />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Sign up' }));
+
+  await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+  expect(onSubmit).toHaveBeenCalledWith(
+    expect.objectContaining({ dateOfBirth: null }),
+  );
+});
+
 test('with Google, shows the Google email, prefills the names and asks for no password', async () => {
   const onSubmit = vi.fn().mockResolvedValue(null);
   render(
@@ -92,6 +134,7 @@ test('with Google, shows the Google email, prefills the names and asks for no pa
   ).toBeInTheDocument();
   expect(screen.queryByLabelText(/^password/i)).not.toBeInTheDocument();
   expect(screen.queryByLabelText(/^email/i)).not.toBeInTheDocument();
+  expect(screen.queryByLabelText(/date of birth/i)).not.toBeInTheDocument();
   expect(screen.getByLabelText(/first name/i)).toHaveValue('Test');
 
   fill(/last name/i, 'Googler');

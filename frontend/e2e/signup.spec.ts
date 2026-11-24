@@ -51,6 +51,7 @@ test('a new member signs up and is asked to confirm their email', async ({
   await page.getByRole('link', { name: 'Sign up' }).click();
   await page.getByLabel('First name').fill('Test');
   await page.getByLabel('Last name').fill('Person');
+  await page.getByLabel('Date of birth').fill('1990-01-01');
   await page.getByLabel('Email').fill('test.person@example.com');
   await page.getByLabel(/^Password/).fill('correct-horse');
   await page.getByLabel('I accept the terms').check();
@@ -65,6 +66,7 @@ test('a new member signs up and is asked to confirm their email', async ({
     }),
   ).toBeVisible();
   expect(sent).toMatchObject({
+    dateOfBirth: '1990-01-01',
     acceptTerms: true,
     termsVersion: 'terms-v1',
     startNow: false,

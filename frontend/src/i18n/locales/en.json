@@ -31,9 +31,11 @@
     "fields": {
       "firstName": "First name",
       "lastName": "Last name",
+      "dateOfBirth": "Date of birth",
       "email": "Email",
       "password": "Password (at least 8 characters)"
     },
+    "dateOfBirthHint": "You must be 18 or older to become a member.",
     "acceptTerms": "I accept the terms",
     "startNow": "Start my membership now",
     "submit": "Sign up",

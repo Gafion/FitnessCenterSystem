@@ -24,6 +24,8 @@ function GoogleSignupPage() {
   async function signUp({
     email: _email,
     password: _password,
+    // Google signups give no date of birth yet (FIT-68).
+    dateOfBirth: _dateOfBirth,
     ...request
   }: Schemas['SignupRequest']): Promise<FieldErrors | null> {
     const { response, error } = await api.POST('/api/members/signup/google', {
