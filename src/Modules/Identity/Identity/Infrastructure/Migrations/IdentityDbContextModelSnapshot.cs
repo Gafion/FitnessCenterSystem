@@ -123,6 +123,36 @@ namespace Identity.Infrastructure.Migrations
                         .HasDatabaseName("RoleNameIndex");
 
                     b.ToTable("AspNetRoles", "identity");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("0b9c1a52-3a0e-4d8e-9f0c-2a5e6c1d7a01"),
+                            ConcurrencyStamp = "0b9c1a52-3a0e-4d8e-9f0c-2a5e6c1d7a01",
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = new Guid("0b9c1a52-3a0e-4d8e-9f0c-2a5e6c1d7a02"),
+                            ConcurrencyStamp = "0b9c1a52-3a0e-4d8e-9f0c-2a5e6c1d7a02",
+                            Name = "Manager",
+                            NormalizedName = "MANAGER"
+                        },
+                        new
+                        {
+                            Id = new Guid("0b9c1a52-3a0e-4d8e-9f0c-2a5e6c1d7a03"),
+                            ConcurrencyStamp = "0b9c1a52-3a0e-4d8e-9f0c-2a5e6c1d7a03",
+                            Name = "FrontDesk",
+                            NormalizedName = "FRONTDESK"
+                        },
+                        new
+                        {
+                            Id = new Guid("0b9c1a52-3a0e-4d8e-9f0c-2a5e6c1d7a04"),
+                            ConcurrencyStamp = "0b9c1a52-3a0e-4d8e-9f0c-2a5e6c1d7a04",
+                            Name = "Instructor",
+                            NormalizedName = "INSTRUCTOR"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

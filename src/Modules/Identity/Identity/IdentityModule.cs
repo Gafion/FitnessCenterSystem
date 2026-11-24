@@ -3,12 +3,14 @@ using FitnessCenter.Modules.Identity.Contracts;
 using FitnessCenter.Modules.Identity.Endpoints;
 using FitnessCenter.Modules.Identity.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 
 namespace FitnessCenter.Modules.Identity;
@@ -29,7 +31,7 @@ public static class IdentityModule
         var authentication = services.AddAuthentication(IdentityConstants.ApplicationScheme);
         authentication.AddIdentityCookies();
         AddGoogle(authentication, configuration.GetSection("Authentication:Google"));
-        services.AddAuthorization();
+        services.AddAuthorization(AddStaffPolicies);
 
         services.AddIdentityCore<Account>(options =>
             {
@@ -46,6 +48,8 @@ public static class IdentityModule
                 // confirmed, because Google verified the address.
                 options.SignIn.RequireConfirmedEmail = true;
             })
+            // Roles go into the login cookie as role claims, which the staff policies check (D-049).
+            .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<IdentityDbContext>()
             .AddSignInManager()
             .AddDefaultTokenProviders();
@@ -83,6 +87,16 @@ public static class IdentityModule
         return endpoints.MapAccountEndpoints().MapExternalLoginEndpoints();
     }
 
+    /// <summary>One policy per staff role, plus one for any staff role (D-049). Members match none.</summary>
+    private static void AddStaffPolicies(AuthorizationOptions options)
+    {
+        options.AddPolicy(StaffPolicies.Admin, policy => policy.RequireRole(StaffRoles.Admin));
+        options.AddPolicy(StaffPolicies.Manager, policy => policy.RequireRole(StaffRoles.Manager));
+        options.AddPolicy(StaffPolicies.FrontDesk, policy => policy.RequireRole(StaffRoles.FrontDesk));
+        options.AddPolicy(StaffPolicies.Instructor, policy => policy.RequireRole(StaffRoles.Instructor));
+        options.AddPolicy(StaffPolicies.AnyStaff, policy => policy.RequireRole(StaffRoles.All));
+    }
+
     /// <summary>
     /// Google login (D-011), only when a client is configured: locally from user-secrets
     /// (FIT-51). Without one, the API runs with email/password login only, as in CI.
@@ -107,6 +121,22 @@ public static class IdentityModule
             options.CallbackPath = "/api/identity/signin-google";
             options.ClaimActions.MapJsonKey(ExternalLogins.EmailVerifiedClaim, "email_verified");
         });
+    }
+
+    /// <summary>
+    /// One synthetic staff account per role, for local development only (D-049). Needs a
+    /// password in <c>Identity:DevelopmentStaffPassword</c> (user-secrets); without one it logs
+    /// how to set it and seeds nothing.
+    /// </summary>
+    public static async Task SeedDevelopmentStaffAsync(this IServiceProvider services, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await using var scope = services.CreateAsyncScope();
+        var provider = scope.ServiceProvider;
+        await DevelopmentStaff.EnsureAsync(
+            provider.GetRequiredService<UserManager<Account>>(),
+            provider.GetRequiredService<IConfiguration>()[DevelopmentStaff.PasswordKey],
+            provider.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(DevelopmentStaff)));
     }
 
     /// <summary>Applies this module's migrations. The host calls it at startup in Development.</summary>

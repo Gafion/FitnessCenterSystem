@@ -28,6 +28,10 @@ public sealed class ApiFactory(
         // would only add noise and read the clock at startup, which some tests make fail.
         builder.UseSetting("Booking:SeedDevelopmentSchedule", "false");
 
+        // Development staff (D-049) come from the developer's user-secrets; StaffRoleTests
+        // turn them on with their own synthetic password.
+        builder.UseSetting("Identity:SeedDevelopmentStaff", "false");
+
         // The payment reminder job (D-042) would email every test's members on its own timer.
         // MissingPaymentTests run the reminders themselves, with a fixed clock.
         builder.UseSetting("Members:PaymentReminders:Enabled", "false");
