@@ -363,7 +363,7 @@ sequenceDiagram
   BUS->>BK: cancel future bookings
 ```
 
-The outbox/in-process choice for v1 is 🟡 open. Using the same event shape now makes the later payment service a configuration change rather than a redesign ([research/service-architecture.md](research/service-architecture.md) §5, Shape B).
+For v1 there are no integration events: [D-057](decisions.md) decided that module-to-module side effects use direct calls to the other module's Contracts inside the caller's transaction, until a real need for events appears. Cancelling a membership already works this way: Members calls `Booking.Contracts.IMemberBookings` in the same transaction (D-055 amendment, FIT-97). The diagram above stays the target shape for when events are needed; the outbox/in-process choice is made then. Using the same event shape now makes the later payment service a configuration change rather than a redesign ([research/service-architecture.md](research/service-architecture.md) §5, Shape B).
 
 ---
 
