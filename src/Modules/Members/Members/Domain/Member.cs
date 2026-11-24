@@ -132,12 +132,6 @@ internal sealed class Member
         MissingPayment.StandingAt(PaidUntil, now, businessZone);
 
     /// <summary>
-    /// Moves paid-until to the end of a confirmed payment's period. The first payment may
-    /// cover any period, also one in the past; later ones must follow on without a gap or
-    /// an overlap, because those cases are not decided yet. The first payment activates
-    /// the membership.
-    /// </summary>
-    /// <summary>
     /// Cancels the membership with one month's notice to the end of a month (D-048). There is
     /// no retention step. A second cancellation changes nothing; undoing one is not decided.
     /// <paramref name="now"/> comes from the injected clock, never the system clock (rule 2).
@@ -154,6 +148,12 @@ internal sealed class Member
         return CancellationOutcome.Cancelled;
     }
 
+    /// <summary>
+    /// Moves paid-until to the end of a confirmed payment's period. The first payment may
+    /// cover any period, also one in the past; later ones must follow on without a gap or
+    /// an overlap, because those cases are not decided yet. The first payment activates
+    /// the membership.
+    /// </summary>
     public PaymentOutcome ApplyPayment(PaymentPeriod period)
     {
         if (PaidUntil is { } paidUntil && period.From != paidUntil.PlusDays(1))
