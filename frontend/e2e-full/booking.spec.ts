@@ -24,8 +24,9 @@ test('a member books a class, sees it on the account page and cancels it', async
 
   // The latest class that still has a spot: it is the furthest from its
   // cancellation cut-off, so cancelling is still open.
+  // Each class is an <article> named by its title (class-card.tsx).
   const cards = page
-    .locator('[data-slot="card"]')
+    .getByRole('article')
     .filter({ has: page.getByRole('button', { name: 'Book', exact: true }) })
     .filter({ hasNot: page.getByText('This class is full.') });
   await expect(cards.first()).toBeVisible();
