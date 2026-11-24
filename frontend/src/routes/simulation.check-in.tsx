@@ -1,5 +1,6 @@
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { Page, PageHeader } from '@/components/shell/page';
 import { CardReader } from '@/features/access/card-reader';
 import { SimulationBanner } from '@/features/simulation/simulation-banner';
 import { api } from '@/lib/api';
@@ -29,10 +30,9 @@ function CheckInPage() {
   const { cardUid } = Route.useLoaderData();
 
   return (
-    <section className="mx-auto flex max-w-md flex-col gap-6 p-8">
+    <Page width="narrow" className="gap-6">
       <SimulationBanner />
-      <h1 className="text-3xl font-semibold">{t('checkIn.title')}</h1>
-      <p className="text-muted-foreground">{t('checkIn.intro')}</p>
+      <PageHeader title={t('checkIn.title')} description={t('checkIn.intro')} />
       <CardReader
         cardUid={cardUid}
         onSwipeMyCard={async () =>
@@ -46,6 +46,6 @@ function CheckInPage() {
           ).data
         }
       />
-    </section>
+    </Page>
   );
 }

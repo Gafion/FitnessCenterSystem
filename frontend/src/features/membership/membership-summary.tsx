@@ -54,11 +54,14 @@ export function MembershipSummary({
     );
   }
   return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+    <dl className="flex flex-col divide-y divide-border">
       {rows.map(([term, value]) => (
-        <div key={term} className="contents">
+        <div
+          key={term}
+          className="flex items-baseline justify-between gap-4 py-2 first:pt-0"
+        >
           <dt className="text-muted-foreground">{term}</dt>
-          <dd>{value}</dd>
+          <dd className="text-right font-medium">{value}</dd>
         </div>
       ))}
     </dl>

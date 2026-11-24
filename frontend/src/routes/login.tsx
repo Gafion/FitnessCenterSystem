@@ -1,8 +1,10 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { AuthLayout, OrDivider } from '@/features/account/auth-layout';
 import { ErrorMessage } from '@/features/account/error-message';
 import { GoogleButton } from '@/features/account/google-button';
 import { LoginForm, type LoginOutcome } from '@/features/account/login-form';
+import { TextLink } from '@/features/account/text-link';
 import {
   api,
   errorSearch,
@@ -37,19 +39,23 @@ function LoginPage() {
   }
 
   return (
-    <section className="mx-auto flex max-w-md flex-col gap-6 p-8">
-      <h1 className="text-3xl font-semibold">{t('login.title')}</h1>
+    <AuthLayout
+      title={t('login.title')}
+      footer={
+        <p>
+          {t('login.noAccount')}{' '}
+          <TextLink to="/signup">{t('signup.title')}</TextLink>
+        </p>
+      }
+    >
       <ErrorMessage code={error} />
       {options.google && (
-        <GoogleButton href={googleLoginUrl} label="login.google" />
+        <>
+          <GoogleButton href={googleLoginUrl} label="login.google" />
+          <OrDivider />
+        </>
       )}
       <LoginForm onSubmit={logIn} />
-      <p className="text-sm">
-        {t('login.noAccount')}{' '}
-        <Link to="/signup" className="underline">
-          {t('signup.title')}
-        </Link>
-      </p>
-    </section>
+    </AuthLayout>
   );
 }

@@ -1,3 +1,5 @@
+import { cn } from 'cn';
+import { CircleCheckIcon, CircleXIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Schemas } from '@/lib/api';
 
@@ -26,10 +28,16 @@ export function DoorScreen({ result }: { result: SwipeResponse }) {
   return (
     <output
       aria-live="polite"
-      className={`flex min-h-32 flex-col items-center justify-center rounded-xl p-6 text-center text-white ${
-        refusal ? 'bg-red-700' : 'bg-green-700'
-      }`}
+      className={cn(
+        'flex min-h-40 flex-col items-center justify-center gap-2 rounded-xl p-6 text-center text-background',
+        refusal ? 'bg-destructive' : 'bg-success',
+      )}
     >
+      {refusal ? (
+        <CircleXIcon aria-hidden="true" className="size-10" />
+      ) : (
+        <CircleCheckIcon aria-hidden="true" className="size-10" />
+      )}
       <span className="text-2xl font-semibold">
         {refusal
           ? t(refusal[0])

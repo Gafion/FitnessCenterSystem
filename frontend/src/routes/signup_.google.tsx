@@ -1,5 +1,6 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { AuthLayout } from '@/features/account/auth-layout';
 import { SignupForm } from '@/features/account/signup-form';
 import { api, type FieldErrors, getSignupTerms, type Schemas } from '@/lib/api';
 
@@ -37,9 +38,8 @@ function GoogleSignupPage() {
   }
 
   return (
-    <section className="mx-auto flex max-w-md flex-col gap-6 p-8">
-      <h1 className="text-3xl font-semibold">{t('signup.googleTitle')}</h1>
+    <AuthLayout title={t('signup.googleTitle')}>
       <SignupForm terms={terms} google={google} onSubmit={signUp} />
-    </section>
+    </AuthLayout>
   );
 }

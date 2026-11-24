@@ -1,11 +1,13 @@
 import {
   createFileRoute,
-  Link,
   notFound,
   redirect,
   useRouter,
 } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { Page, PageHeader } from '@/components/shell/page';
+import { Card } from '@/components/ui/card';
+import { TextLink } from '@/features/account/text-link';
 import { PaymentHistory } from '@/features/payments/payment-history';
 import {
   type PaymentResult,
@@ -52,14 +54,16 @@ function SimulatedPaymentsPage() {
   }
 
   return (
-    <section className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+    <Page className="gap-6">
       <SimulationBanner />
-      <h1 className="text-3xl font-semibold">{t('simulatedPayments.title')}</h1>
-      <SimulatedPayments payments={payments} onPay={pay} />
-      <PaymentHistory payments={payments} />
-      <Link to="/account" className="underline">
+      <TextLink to="/account" className="self-start text-sm">
         {t('simulatedPayments.back')}
-      </Link>
-    </section>
+      </TextLink>
+      <PageHeader title={t('simulatedPayments.title')} />
+      <SimulatedPayments payments={payments} onPay={pay} />
+      <Card className="p-5 text-base sm:p-6">
+        <PaymentHistory payments={payments} />
+      </Card>
+    </Page>
   );
 }

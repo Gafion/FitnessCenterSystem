@@ -13,7 +13,8 @@
       "all": "See all classes"
     },
     "membership": {
-      "join": "Become a member"
+      "join": "Become a member",
+      "title": "Membership"
     },
     "visit": {
       "title": "Visit us",
@@ -23,7 +24,8 @@
       "addressPlaceholder": "PLACEHOLDER: address",
       "contact": "Contact",
       "contactPlaceholder": "PLACEHOLDER: phone and email"
-    }
+    },
+    "eyebrow": "Fitness center · PLACEHOLDER city"
   },
   "signup": {
     "title": "Sign up",
@@ -218,5 +220,14 @@
       "account": "My account"
     },
     "footer": "PLACEHOLDER: the name and logo are placeholders until the product is named."
+  },
+  "states": {
+    "loading": "Loading…",
+    "errorTitle": "This page could not be loaded",
+    "errorBody": "Check your connection and try again.",
+    "retry": "Try again"
+  },
+  "auth": {
+    "or": "or"
   }
 }

@@ -1,14 +1,8 @@
+import { BanIcon, CheckIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import type { Schemas } from '@/lib/api';
 import { formatDateTime, formatTime } from './class-time';
 
@@ -39,71 +33,88 @@ export function ClassCard({ entry, now, onBook, onCancel }: Props) {
     setBusy(false);
   }
 
+  const full = entry.spotsLeft === 0;
+  const bookable = !full && !entry.afterMyMembershipEnds;
+
   return (
-    <Card aria-labelledby={titleId}>
-      <CardHeader>
-        <CardTitle id={titleId}>{entry.className}</CardTitle>
-        <CardDescription>
+    <article
+      aria-labelledby={titleId}
+      className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:gap-6 sm:p-5"
+    >
+      <p className="text-lg font-semibold tabular-nums sm:w-32 sm:shrink-0 sm:pt-0.5">
+        {t('classes.time', {
+          start: formatTime(entry.startsAt),
+          end: formatTime(entry.endsAt),
+        })}
+      </p>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 id={titleId} className="text-base font-semibold">
+            {entry.className}
+          </h3>
+          <Badge variant={full ? 'danger' : 'neutral'}>
+            {t('classes.spotsLeft', { count: entry.spotsLeft })}
+          </Badge>
+        </div>
+        <p className="text-sm text-muted-foreground">
           {t('classes.instructor', { name: entry.instructorName })}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-1 text-sm">
-        <p>
-          {t('classes.time', {
-            start: formatTime(entry.startsAt),
-            end: formatTime(entry.endsAt),
-          })}
         </p>
-        <p>{t('classes.spotsLeft', { count: entry.spotsLeft })}</p>
         {entry.bookedByMe && (
-          <>
-            <p className="font-medium">{t('classes.booked')}</p>
-            <p className="text-muted-foreground">
+          <div className="flex flex-col items-start gap-1">
+            <Badge variant="success">
+              <CheckIcon aria-hidden="true" className="size-3.5" />
+              {t('classes.booked')}
+            </Badge>
+            <p className="text-sm text-subtle">
               {t(canCancel ? 'classes.cancelUntil' : 'classes.cancelClosed', {
                 time: formatDateTime(entry.cancelUntil),
               })}
             </p>
-          </>
+          </div>
         )}
-        {!entry.bookedByMe && entry.spotsLeft === 0 && (
-          <p className="text-muted-foreground">{t('classes.full')}</p>
+        {!entry.bookedByMe && full && (
+          <p className="text-sm text-muted-foreground">{t('classes.full')}</p>
         )}
         {/* D-055: a cancelled membership can't book classes after its last day. */}
         {!entry.bookedByMe && entry.afterMyMembershipEnds && (
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {t('classes.afterMembershipEnds')}
           </p>
         )}
         {error && (
-          <p role="alert" className="text-destructive">
+          <p
+            role="alert"
+            className="flex gap-1.5 text-sm font-medium text-destructive"
+          >
             {t(`classes.errors.${error}`, {
               defaultValue: t('errors.unexpected'),
             })}
           </p>
         )}
-      </CardContent>
-      <CardFooter>
-        {entry.bookedByMe ? (
-          canCancel && (
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={() => run(onCancel)}
-            >
-              {t('classes.cancel')}
-            </Button>
-          )
-        ) : (
+      </div>
+      {entry.bookedByMe ? (
+        canCancel && (
           <Button
-            disabled={
-              busy || entry.spotsLeft === 0 || entry.afterMyMembershipEnds
-            }
-            onClick={() => run(onBook)}
+            variant="outline"
+            className="w-full sm:w-36"
+            disabled={busy}
+            onClick={() => run(onCancel)}
           >
-            {t('classes.book')}
+            {t('classes.cancel')}
           </Button>
-        )}
-      </CardFooter>
-    </Card>
+        )
+      ) : (
+        <Button
+          // A class that can't be booked gets a dashed, flat button with a
+          // "no" sign, so it never reads as a working Book button.
+          className="w-full data-disabled:border-dashed data-disabled:border-border-strong sm:w-36"
+          disabled={busy || !bookable}
+          onClick={() => run(onBook)}
+        >
+          {!bookable && <BanIcon aria-hidden="true" />}
+          {t('classes.book')}
+        </Button>
+      )}
+    </article>
   );
 }

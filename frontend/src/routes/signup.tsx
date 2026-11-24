@@ -1,7 +1,9 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { AuthLayout, OrDivider } from '@/features/account/auth-layout';
 import { GoogleButton } from '@/features/account/google-button';
 import { SignupForm } from '@/features/account/signup-form';
+import { TextLink } from '@/features/account/text-link';
 import {
   api,
   type FieldErrors,
@@ -45,18 +47,22 @@ function SignupPage() {
   }
 
   return (
-    <section className="mx-auto flex max-w-md flex-col gap-6 p-8">
-      <h1 className="text-3xl font-semibold">{t('signup.title')}</h1>
+    <AuthLayout
+      title={t('signup.title')}
+      footer={
+        <p>
+          {t('signup.haveAccount')}{' '}
+          <TextLink to="/login">{t('login.title')}</TextLink>
+        </p>
+      }
+    >
       {options.google && (
-        <GoogleButton href={googleLoginUrl} label="signup.google" />
+        <>
+          <GoogleButton href={googleLoginUrl} label="signup.google" />
+          <OrDivider />
+        </>
       )}
       <SignupForm terms={terms} onSubmit={signUp} />
-      <p className="text-sm">
-        {t('signup.haveAccount')}{' '}
-        <Link to="/login" className="underline">
-          {t('login.title')}
-        </Link>
-      </p>
-    </section>
+    </AuthLayout>
   );
 }

@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Schemas } from '@/lib/api';
@@ -45,23 +46,30 @@ export function CardReader({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
+      <Card className="gap-4 p-5 text-base sm:p-6">
         {cardUid ? (
-          <p>
-            {t('checkIn.yourCard')} <code className="font-mono">{cardUid}</code>
+          <p className="flex flex-wrap items-center gap-2">
+            {t('checkIn.yourCard')}{' '}
+            <code className="rounded-sm bg-muted px-2 py-1 font-mono text-sm">
+              {cardUid}
+            </code>
           </p>
         ) : (
-          <p>{t('checkIn.noCard')}</p>
+          <p className="text-muted-foreground">{t('checkIn.noCard')}</p>
         )}
         <Button
-          className="self-start"
+          size="lg"
+          className="w-full sm:w-auto sm:self-start"
           disabled={!cardUid || busy}
           onClick={() => void swipe(onSwipeMyCard)}
         >
           {t('checkIn.swipeMyCard')}
         </Button>
-      </div>
-      <form onSubmit={swipeTyped} className="flex flex-col gap-2">
+      </Card>
+      <form
+        onSubmit={swipeTyped}
+        className="flex flex-col gap-2 rounded-lg border border-border bg-card p-5 sm:p-6"
+      >
         <Label htmlFor="card-uid">{t('checkIn.uidLabel')}</Label>
         <div className="flex gap-2">
           <Input
@@ -78,7 +86,7 @@ export function CardReader({
         </div>
       </form>
       {result === 'failed' ? (
-        <p role="alert" className="text-destructive">
+        <p role="alert" className="font-medium text-destructive">
           {t('checkIn.failed')}
         </p>
       ) : (

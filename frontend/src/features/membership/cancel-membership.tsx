@@ -38,7 +38,7 @@ export function CancelMembership({
   if (membership.cancellationEffectiveOn) {
     return (
       <div className="flex flex-col gap-3">
-        <p role="status">
+        <p role="status" className="rounded-md bg-muted px-4 py-3">
           {t('membership.cancellation.pending', {
             date: formatDate(membership.cancellationEffectiveOn),
           })}
@@ -51,7 +51,7 @@ export function CancelMembership({
         {membership.canUndoCancellation && (
           <Button
             variant="outline"
-            className="self-start"
+            className="w-full sm:w-auto sm:self-start"
             disabled={busy}
             onClick={undo}
           >
@@ -77,9 +77,10 @@ export function CancelMembership({
 
   if (!confirming) {
     return (
+      // Quieter than the page's main actions (FIT-99): a plain text button.
       <Button
-        variant="outline"
-        className="self-start"
+        variant="ghost"
+        className="-ml-4 self-start text-muted-foreground hover:not-data-disabled:text-destructive"
         onClick={() => setConfirming(true)}
       >
         {t('membership.cancellation.cancel')}
@@ -88,10 +89,12 @@ export function CancelMembership({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-4">
       <p>{t('membership.cancellation.notice')}</p>
-      <p>{t('membership.cancellation.bookings')}</p>
-      <div className="flex flex-wrap gap-2">
+      <p className="text-sm text-muted-foreground">
+        {t('membership.cancellation.bookings')}
+      </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <Button variant="destructive" disabled={busy} onClick={confirm}>
           {t('membership.cancellation.confirm')}
         </Button>

@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
+import { CircleAlertIcon, CircleCheckIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { AuthLayout } from '@/features/account/auth-layout';
 import { api } from '@/lib/api';
 
 // The page the confirmation email links to (D-038). The link carries the account and a
@@ -30,16 +32,26 @@ function ConfirmEmailPage() {
   const { confirmed } = Route.useLoaderData();
 
   return (
-    <section className="mx-auto flex max-w-md flex-col gap-6 p-8">
-      <h1 className="text-3xl font-semibold">
-        {t(confirmed ? 'confirmEmail.done' : 'confirmEmail.failed')}
-      </h1>
+    <AuthLayout
+      title={t(confirmed ? 'confirmEmail.done' : 'confirmEmail.failed')}
+    >
+      {confirmed ? (
+        <CircleCheckIcon aria-hidden="true" className="size-8 text-success" />
+      ) : (
+        <CircleAlertIcon
+          aria-hidden="true"
+          className="size-8 text-destructive"
+        />
+      )}
       <p>
         {t(confirmed ? 'confirmEmail.doneBody' : 'confirmEmail.failedBody')}
       </p>
-      <Button className="self-start" render={<Link to="/login" />}>
+      <Button
+        className="w-full sm:w-auto sm:self-start"
+        render={<Link to="/login" />}
+      >
         {t('login.title')}
       </Button>
-    </section>
+    </AuthLayout>
   );
 }
