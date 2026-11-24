@@ -1922,3 +1922,59 @@ Owner decision on FIT-97's options comment. A is atomic, has a precedent in sign
 - Linear FIT-97: options comment (A, B, C) and "Owner decision (2026-11-24): option A, same transaction"
 - [D-015](#d-015-transactions-may-span-modules) and architecture.md §4.2 — one transaction may span modules; Contracts only
 - [research/service-architecture.md](research/service-architecture.md) §5 — event shape for the later payment service (cited in architecture.md §6.3)
+
+---
+
+## D-058: Staff accounts are created by an admin invite by email
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-24 (FIT-75)
+- **Relates to:** D-013, D-026, D-038, D-049. Open points: AU10, AU11.
+
+### Problem statement
+D-049 names the four staff roles, but not how a staff account comes to exist, nor who may give which role. Until now the only staff accounts are synthetic development seeds.
+
+### Options considered
+1. **Invite by email.** An admin enters an email and a role; the person follows a one-time link, gives their name and a password, and gets a staff account with that role. Pros: the person proves they own the address; staff never need a member account; the admin chooses the role up front. Cons: an invite table, an email and a link page to build; links must expire and be single-use.
+2. **Promote an existing account.** The person signs up (as a member today), and an admin gives the account a role. Pros: no new flow. Cons: staff need a member-style signup first, with its terms and date of birth; staff and member data mix in one account.
+
+### Decision
+**Option 1, invite by email.** Option 2 was rejected.
+
+- **Only an admin invites**, and picks one of the four roles. Whether managers may invite too is open (AU10).
+- The link is **random, one-time and expires after 7 days**. 7 days is a default, **UNVERIFIED** as the right length. Only a SHA-256 hash of the link's code is stored.
+- Accepting **sets the name and password** and creates the account with **its email confirmed**, because following the emailed link proves the address (as in D-038).
+- An email that already has an account (for example a member) **can't be invited**; the answer is 409 `account-exists`. Whether one person may be both member and staff is open (AU11).
+- Before the account can use any staff endpoint, it must also set up the authenticator app (D-013, FIT-74). That gate is built in FIT-74, not here.
+
+```mermaid
+sequenceDiagram
+  actor AD as Admin
+  participant API as API (Identity)
+  participant M as Mail (Mailpit locally)
+  actor P as Invited person
+  AD->>API: POST /api/identity/staff-invites {email, role}
+  Note over API: Admin policy only; 409 if the email has an account
+  API->>M: "You're invited" with /accept-invite?invite=…&code=…
+  M-->>P: email
+  P->>API: POST /api/identity/staff-invites/accept {invite, code, names, password}
+  alt code wrong
+    API-->>P: 400 invalid-invite
+  else already used
+    API-->>P: 409 invite-used
+  else 7 days passed
+    API-->>P: 410 invite-expired
+  else ok
+    API-->>P: 204, account with the role, email confirmed
+  end
+  P->>API: POST /api/identity/login
+```
+
+### Reasoning
+Owner decision on FIT-75. Invites keep staff accounts apart from member signup and let the admin choose the role before the account exists. OWASP ASVS 5.0 V6 asks for random, expiring initial secrets (6.4.1) and no default accounts (6.3.2), which a single-use, expiring link meets.
+
+### Sources
+- Linear FIT-75: "Owner decision (2026-11-24): invite by email" and "Brief"
+- [research/authentication.md](research/authentication.md) — §5, ASVS 5.0 V6 L1 (6.3.2, 6.4.1)
+- [D-013](#d-013-login-providers-and-mfa-policy) — MFA mandatory for staff
+- [D-049](#d-049-four-staff-roles-instructors-see-only-their-own-classes) — the four roles
