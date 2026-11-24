@@ -4,6 +4,7 @@ import {
   useRouter,
 } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { Page, PageHeader } from '@/components/shell/page';
 import type { BookingResult } from '@/features/classes/class-card';
 import { Schedule } from '@/features/classes/schedule';
 import { api, problemType } from '@/lib/api';
@@ -58,17 +59,17 @@ function ClassesPage() {
   }
 
   return (
-    <section className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
-      <h1 className="text-3xl font-semibold">{t('classes.title')}</h1>
-      <p className="text-muted-foreground">
-        {t(loggedIn ? 'classes.intro' : 'classes.introLoggedOut')}
-      </p>
+    <Page>
+      <PageHeader
+        title={t('classes.title')}
+        description={t(loggedIn ? 'classes.intro' : 'classes.introLoggedOut')}
+      />
       <Schedule
         entries={schedule}
         now={new Date()}
         onBook={book}
         onCancel={(classId) => change('DELETE', classId)}
       />
-    </section>
+    </Page>
   );
 }

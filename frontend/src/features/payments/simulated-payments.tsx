@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Schemas } from '@/lib/api';
@@ -42,17 +43,31 @@ export function SimulatedPayments({ payments, onPay }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <PaidUntil payments={payments} />
-      <p className="text-muted-foreground">
-        {t('simulatedPayments.price', {
-          price: formatOre(payments.monthlyPriceOre),
-        })}
-      </p>
-      <Button className="self-start" disabled={busy} onClick={() => void pay()}>
-        {t('simulatedPayments.payNext')}
-      </Button>
-      <form onSubmit={payChosen} className="flex flex-col gap-2">
+    <div className="flex flex-col gap-4">
+      <Card className="gap-4 p-5 text-base sm:p-6">
+        <div className="flex flex-col gap-1">
+          <div className="text-title font-semibold">
+            <PaidUntil payments={payments} />
+          </div>
+          <p className="text-muted-foreground">
+            {t('simulatedPayments.price', {
+              price: formatOre(payments.monthlyPriceOre),
+            })}
+          </p>
+        </div>
+        <Button
+          size="lg"
+          className="w-full sm:w-auto sm:self-start"
+          disabled={busy}
+          onClick={() => void pay()}
+        >
+          {t('simulatedPayments.payNext')}
+        </Button>
+      </Card>
+      <form
+        onSubmit={payChosen}
+        className="flex flex-col gap-2 rounded-lg border border-border bg-card p-5 sm:p-6"
+      >
         <Label htmlFor="period-from">{t('simulatedPayments.periodFrom')}</Label>
         <Input
           id="period-from"
@@ -67,14 +82,14 @@ export function SimulatedPayments({ payments, onPay }: Props) {
         <Button
           type="submit"
           variant="outline"
-          className="self-start"
+          className="mt-2 w-full sm:w-auto sm:self-start"
           disabled={busy}
         >
           {t('simulatedPayments.payChosen')}
         </Button>
       </form>
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm font-medium text-destructive">
           {t(`simulatedPayments.errors.${error}`, {
             defaultValue: t('errors.unexpected'),
           })}

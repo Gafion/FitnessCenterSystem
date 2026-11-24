@@ -12,16 +12,19 @@ export function MyBookings({
   return bookings.length === 0 ? (
     <p className="text-muted-foreground">{t('myBookings.none')}</p>
   ) : (
-    <ul className="flex flex-col gap-2">
+    <ul className="flex flex-col divide-y divide-border">
       {bookings.map((booking) => (
-        <li key={booking.classId} className="flex flex-col">
+        <li
+          key={booking.classId}
+          className="flex flex-col gap-0.5 py-3 first:pt-0"
+        >
           <span className="font-medium">{booking.className}</span>
-          <span>
+          <span className="text-sm text-muted-foreground">
             {t('myBookings.when', {
               start: formatDateTime(booking.startsAt),
               end: formatTime(booking.endsAt),
             })}{' '}
-            <span className="text-muted-foreground">
+            <span className="text-subtle">
               {t('classes.instructor', { name: booking.instructorName })}
             </span>
           </span>

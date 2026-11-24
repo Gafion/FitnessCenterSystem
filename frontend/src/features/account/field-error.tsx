@@ -1,3 +1,5 @@
+import { AlertCircleIcon } from 'lucide-react';
+
 export function FieldError({
   id,
   messages,
@@ -10,7 +12,8 @@ export function FieldError({
   }
 
   return (
-    <p id={id} className="text-sm text-destructive">
+    <p id={id} className="flex gap-1.5 text-sm text-destructive">
+      <AlertCircleIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
       {messages.join(' ')}
     </p>
   );

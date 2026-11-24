@@ -1,0 +1,263 @@
+{
+  "app": {
+    "name": "FitnessCenter"
+  },
+  "landing": {
+    "title": "Velkommen til FitnessCenter",
+    "tagline": "PLACEHOLDER: en kort tagline om centret.",
+    "classes": "Se holdene",
+    "upcoming": {
+      "title": "Næste hold",
+      "when": "{{day}} kl. {{time}}",
+      "none": "Der er ingen hold på programmet lige nu.",
+      "all": "Se alle hold"
+    },
+    "membership": {
+      "join": "Bliv medlem",
+      "title": "Medlemskab"
+    },
+    "visit": {
+      "title": "Besøg os",
+      "hours": "Åbningstider",
+      "hoursPlaceholder": "PLACEHOLDER: åbningstider",
+      "address": "Adresse",
+      "addressPlaceholder": "PLACEHOLDER: adresse",
+      "contact": "Kontakt",
+      "contactPlaceholder": "PLACEHOLDER: telefon og e-mail"
+    },
+    "eyebrow": "Fitnesscenter · PLACEHOLDER by"
+  },
+  "signup": {
+    "title": "Bliv medlem",
+    "price": "{{price}} om måneden",
+    "fields": {
+      "firstName": "Fornavn",
+      "lastName": "Efternavn",
+      "dateOfBirth": "Fødselsdato",
+      "email": "E-mail",
+      "password": "Adgangskode (mindst 8 tegn)"
+    },
+    "dateOfBirthHint": "Du skal være mindst 18 år for at blive medlem.",
+    "acceptTerms": "Jeg accepterer betingelserne",
+    "startNow": "Start mit medlemskab nu",
+    "submit": "Bliv medlem",
+    "haveAccount": "Allerede medlem?",
+    "google": "Bliv medlem med Google",
+    "googleTitle": "Gør din tilmelding færdig",
+    "googleEmail": "Din e-mail fra Google: {{email}}"
+  },
+  "login": {
+    "title": "Log ind",
+    "email": "E-mail",
+    "password": "Adgangskode",
+    "submit": "Log ind",
+    "failed": "E-mail eller adgangskode er forkert.",
+    "noAccount": "Ikke medlem endnu?",
+    "google": "Log ind med Google",
+    "unconfirmed": "Bekræft din e-mail først. Vi sendte dig et link, da du meldte dig ind."
+  },
+  "account": {
+    "welcome": "Velkommen, {{name}}",
+    "logout": "Log ud",
+    "connectGoogle": "Forbind Google",
+    "googleConnected": "Google er forbundet. Du kan logge ind med det.",
+    "classes": "Book et hold",
+    "card": "Dit adgangskort:",
+    "noCard": "Du har ikke noget adgangskort endnu.",
+    "checkIn": "Prøv kortlæseren",
+    "simulatedPayments": "Simulerede betalinger",
+    "sections": {
+      "profile": "Profil",
+      "membership": "Medlemskab",
+      "bookings": "Kommende hold",
+      "card": "Adgangskort"
+    },
+    "noMembership": "Du har ikke noget medlemskab.",
+    "membershipFailed": "Dit medlemskab kunne ikke hentes. Prøv igen senere.",
+    "bookingsFailed": "Dine bookinger kunne ikke hentes. Prøv igen senere."
+  },
+  "errors": {
+    "unexpected": "Noget gik galt. Prøv igen.",
+    "google-failed": "Login med Google virkede ikke. Prøv igen.",
+    "google-unverified": "Google har ikke bekræftet din e-mailadresse, så den kan ikke bruges til at melde dig ind.",
+    "google-email-taken": "Der findes allerede en konto med denne e-mail. Log ind med din adgangskode, og forbind derefter Google fra din kontoside.",
+    "google-in-use": "Den Google-konto er allerede forbundet til et andet medlem."
+  },
+  "checkEmail": {
+    "title": "Tjek din e-mail",
+    "body": "Vi har sendt et link til {{email}}. Åbn det for at bekræfte din e-mail, og log derefter ind.",
+    "noEmail": "Ingen e-mail? Tjek din spam-mappe, eller bed om et nyt link."
+  },
+  "confirmEmail": {
+    "resend": "Send et nyt link",
+    "resent": "Vi har sendt et nyt link til {{email}}.",
+    "done": "Din e-mail er bekræftet",
+    "doneBody": "Du kan logge ind nu.",
+    "failed": "Linket virker ikke",
+    "failedBody": "Det er måske for gammelt. Log ind med din e-mail og adgangskode for at bede om et nyt link."
+  },
+  "acceptInvite": {
+    "title": "Opret din personalekonto",
+    "intro": "Du er inviteret som medarbejder. Skriv dit navn, og vælg en adgangskode.",
+    "submit": "Opret personalekonto",
+    "done": "Din personalekonto er klar",
+    "doneBody": "Log ind med den e-mail, invitationen blev sendt til, og den adgangskode, du valgte.",
+    "missing": "Invitationslinket virker ikke",
+    "missingBody": "Tjek, at du brugte hele linket fra e-mailen.",
+    "invite-used": "Invitationen er allerede brugt. Log ind med den e-mail og adgangskode, du valgte.",
+    "invite-expired": "Invitationen er udløbet. Bed en administrator om at sende en ny.",
+    "invalid-invite": "Invitationslinket virker ikke. Tjek, at du brugte hele linket fra e-mailen.",
+    "account-exists": "Der findes allerede en konto med denne e-mail. Bed en administrator om at invitere en anden e-mail."
+  },
+  "classes": {
+    "title": "Hold",
+    "intro": "Hold de næste 14 dage. Tiderne er dansk tid.",
+    "introLoggedOut": "Hold de næste 14 dage. Tiderne er dansk tid. Log ind for at booke en plads.",
+    "empty": "Der er ingen hold de næste 14 dage.",
+    "instructor": "med {{name}}",
+    "time": "{{start}}–{{end}}",
+    "spotsLeft_one": "{{count}} plads tilbage",
+    "spotsLeft_other": "{{count}} pladser tilbage",
+    "book": "Book",
+    "cancel": "Afmeld booking",
+    "booked": "Du er booket.",
+    "cancelUntil": "Du kan afmelde indtil {{time}}.",
+    "cancelClosed": "Afmelding lukkede {{time}}.",
+    "full": "Holdet er fuldt.",
+    "afterMembershipEnds": "Dit medlemskab slutter før dette hold, så du kan ikke booke det.",
+    "errors": {
+      "class-full": "Holdet er fuldt.",
+      "class-started": "Holdet er allerede startet.",
+      "booking-not-open": "Booking åbner 14 dage før holdet.",
+      "after-membership-ends": "Dit medlemskab slutter før dette hold, så du kan ikke booke det.",
+      "already-booked": "Du har allerede booket dette hold.",
+      "cancellation-closed": "Afmelding lukker 12 timer før holdet starter."
+    }
+  },
+  "simulation": {
+    "label": "Simulering",
+    "text": "Denne side står i stedet for hardware eller en tjeneste, som centret endnu ikke har i systemet. Der bruges kun syntetiske data."
+  },
+  "checkIn": {
+    "title": "Kortlæser",
+    "intro": "Brug et kort, som om du stod ved indgangen.",
+    "yourCard": "Dit kort:",
+    "noCard": "Du har ikke noget adgangskort, så der er intet at bruge. Du kan stadig skrive et UID.",
+    "swipeMyCard": "Brug mit kort",
+    "uidLabel": "Kortets UID",
+    "swipe": "Brug kort",
+    "welcome": "Velkommen, {{name}}!",
+    "unknownCard": "Ukendt kort",
+    "unknownCardHelp": "Kortet er ikke registreret. Spørg personalet om hjælp.",
+    "paymentMissing": "Manglende betaling",
+    "paymentMissingHelp": "Betalingen for dit medlemskab er ikke kommet, så du kan ikke tjekke ind. Spørg personalet om hjælp.",
+    "membershipEnded": "Medlemskabet er slut",
+    "membershipEndedHelp": "Medlemskabet er opsagt og udløbet, så du kan ikke tjekke ind. Spørg personalet om hjælp.",
+    "failed": "Kortlæseren svarede ikke. Prøv igen."
+  },
+  "payments": {
+    "title": "Betalinger",
+    "paidUntil": "Betalt til og med {{date}}.",
+    "awaitingFirst": "Ingen betaling endnu. Dit medlemskab starter med den første betaling.",
+    "none": "Ingen betalinger endnu.",
+    "period": "Periode",
+    "amount": "Beløb",
+    "card": "Kort",
+    "periodRange": "{{from}} – {{to}}",
+    "cardEnding": "slutter på {{last4}}",
+    "failed": "Dine betalinger kunne ikke hentes. Prøv igen senere."
+  },
+  "simulatedPayments": {
+    "title": "Simulerede betalinger",
+    "price": "Hver betaling dækker én måned: {{price}}",
+    "payNext": "Betal næste måned",
+    "periodFrom": "Eller betal én måned med start den",
+    "periodHint": "Vælg en dato i fortiden for at prøve en manglende betaling. Senere betalinger skal starte dagen efter betalt-til-datoen.",
+    "payChosen": "Betal for denne måned",
+    "skip": "Vil du springe en betaling over, så lad bare være med at sende den.",
+    "back": "Tilbage til din konto",
+    "errors": {
+      "period-not-contiguous": "En betaling skal starte dagen efter betalt-til-datoen."
+    }
+  },
+  "membership": {
+    "type": "Type",
+    "price": "Pris",
+    "perMonth": "{{price}} om måneden",
+    "status": "Status",
+    "statuses": {
+      "AwaitingFirstPayment": "Afventer første betaling",
+      "Active": "Aktivt"
+    },
+    "memberSince": "Medlem siden",
+    "paidUntil": "Betalt til og med",
+    "cancelledOn": "Opsagt den",
+    "accessUntil": "Adgang til og med",
+    "cancellation": {
+      "pending": "Dit medlemskab er opsagt. Du har adgang til og med {{date}}, til dagen er slut.",
+      "cancel": "Opsig medlemskab",
+      "notice": "Du har én måneds opsigelse til udgangen af en måned. Du har adgang, indtil opsigelsen træder i kraft.",
+      "bookings": "Dine holdbookinger efter din sidste dag med adgang bliver afmeldt, så andre kan få pladserne.",
+      "confirm": "Ja, opsig mit medlemskab",
+      "back": "Gå tilbage",
+      "failed": "Dit medlemskab kunne ikke opsiges. Prøv igen.",
+      "undo": "Fortryd opsigelse",
+      "undoKeepsBookingsCancelled": "Hvis du fortryder, kommer afmeldte holdbookinger ikke tilbage. Du kan booke dem igen.",
+      "undoFailed": "Opsigelsen kunne ikke fortrydes. Prøv igen."
+    }
+  },
+  "myBookings": {
+    "none": "Du har ingen kommende hold.",
+    "when": "{{start}}–{{end}}, dansk tid"
+  },
+  "shell": {
+    "home": "FitnessCenter forside",
+    "skip": "Gå til indhold",
+    "menu": "Menu",
+    "language": "Sprog",
+    "nav": {
+      "label": "Hovedmenu",
+      "classes": "Hold",
+      "account": "Min konto"
+    },
+    "footer": "PLACEHOLDER: navn og logo er pladsholdere, indtil produktet har fået et navn."
+  },
+  "states": {
+    "loading": "Henter…",
+    "errorTitle": "Siden kunne ikke hentes",
+    "errorBody": "Tjek din forbindelse, og prøv igen.",
+    "retry": "Prøv igen"
+  },
+  "auth": {
+    "or": "eller"
+  },
+  "loginCode": {
+    "intro": "Åbn din autentificeringsapp, og skriv den 6-cifrede kode, den viser for FitnessCenter.",
+    "recoveryIntro": "Skriv en af de gendannelseskoder, du gemte, da du satte appen op. Hver kode virker én gang.",
+    "code": "Kode fra appen",
+    "recoveryCode": "Gendannelseskode",
+    "submit": "Fortsæt",
+    "failed": "Koden virkede ikke. Prøv den nyeste kode, eller log ind igen.",
+    "useRecovery": "Brug en gendannelseskode i stedet",
+    "useApp": "Brug appens kode i stedet"
+  },
+  "authenticator": {
+    "title": "Autentificeringsapp",
+    "required": "Personalekonti skal have en autentificeringsapp, før de kan bruge personalesiderne.",
+    "stepApp": "Åbn en autentificeringsapp, fx Google Authenticator, Microsoft Authenticator eller 1Password.",
+    "stepScan": "Scan denne QR-kode med appen.",
+    "qrAlt": "QR-kode til autentificeringsappen",
+    "keyIntro": "Kan du ikke scanne den? Tilføj kontoen manuelt med denne opsætningsnøgle:",
+    "stepCode": "Skriv den 6-cifrede kode, som appen nu viser.",
+    "code": "Kode fra appen",
+    "confirm": "Slå til",
+    "wrongCode": "Koden passer ikke. Tjek, at telefonens ur går rigtigt, og skriv den kode, appen viser nu.",
+    "done": "Autentificeringsappen er slået til. Fremover skal du skrive en kode fra den, når du logger ind.",
+    "recoveryIntro": "Gem disse gendannelseskoder et sikkert sted, fx i din adgangskodeadministrator. Hver kode logger dig ind én gang, hvis du mister din telefon. De vises kun nu.",
+    "recoveryCodes": "Gendannelseskoder",
+    "continue": "Jeg har gemt dem",
+    "alreadyOn": "Autentificeringsappen er allerede slået til for din konto.",
+    "on": "Autentificeringsapp: slået til.",
+    "setUp": "Sæt en autentificeringsapp op"
+  }
+}

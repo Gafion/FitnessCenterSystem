@@ -2037,3 +2037,45 @@ Owner decision on FIT-74. TOTP is the standard every authenticator app implement
 - https://github.com/google/google-authenticator/wiki/Key-Uri-Format — the `otpauth://TYPE/LABEL?PARAMETERS` format with `secret`, `issuer` and `digits` (an archived wiki page, not a formal spec, but the format apps read)
 - [research/authentication.md](research/authentication.md) — ASVS L2 table (6.3.3 MFA, 6.4.4 MFA-loss re-proofing, 6.5.x OTP/TOTP, 6.6.x SMS/OOB) and open question 8
 - [D-013](#d-013-login-providers-and-mfa-policy), [D-026](#d-026-own-login-with-aspnet-core-identity), [D-058](#d-058-staff-accounts-are-created-by-an-admin-invite-by-email)
+
+## D-065: Danish by default, English available
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-24 (FIT-83)
+- **Answers:** U5, "Owner decides" row 6 (D-047)
+
+### Problem statement
+The app was English only (D-018 left Danish open as U5). The center is in Denmark (D-047), Danish conventions for dates and times differ from English ones, and the research says legally required cancel and withdrawal wording is Danish. The owner had to choose the languages and the formats.
+
+### Options considered
+1. **Danish first, English second, Danish formats** (recommended default in "Owner decides" row 6). Fits Danish members and the Danish legal wording; English stays for members and staff who don't read Danish. Every text needs two versions.
+2. **English only.** No translation work, but Danish members read a foreign language, and cancellation wording would not be Danish.
+3. **Danish only.** One version of every text, but members and staff who don't read Danish are left out.
+
+### Decision
+**Option 1.** Danish is the default language and English is available.
+- **Formats in Danish:** 24-hour time, Monday-first weeks, `dd.mm.yyyy` dates and `kr.` amounts. The app formats through `Intl` with the `da-DK` locale in Europe/Copenhagen, which writes times as `18.00` and dates as `23.11.2026`.
+- **Formats in English:** British English (`en-GB`): 24-hour time and the day before the month (`23 Nov 2026`). Amounts stay `299,00 kr.` in both languages.
+- **Switch:** a DA/EN switch in the header and in the phone menu (UI SDK SegmentedControl and Menu radio items, D-056). The choice is kept in the browser's localStorage; a first visit is Danish.
+- **Legal-ish texts:** the Danish terms, early-start consent and cancellation texts are **UNVERIFIED** translations for the owner to check (`frontend/src/i18n/locales/README.md`; real terms wording is FIT-53).
+- **Out of scope for now:** emails and other texts that come from the backend (terms text, membership type name) stay English.
+
+```mermaid
+flowchart LR
+  V[First visit] --> DA[Danish]
+  S["DA/EN switch<br/>header or phone menu"] --> LS[(localStorage 'language')]
+  LS --> L{Stored choice}
+  L -- da or none --> DA
+  L -- en --> EN[English]
+  DA --> F1["da-DK: 18.00, 23.11.2026, 299,00 kr."]
+  EN --> F2["en-GB: 18:00, 23 Nov 2026, 299,00 kr."]
+```
+
+### Reasoning
+Owner decision on the recommended default. Danish dates are traditionally DD.MM.YYYY, written time is almost always 24-hour, and weeks start on Monday (ux-patterns.md §2.3). Cancel and withdrawal buttons need exact Danish wording, which is why those translations are marked for the owner to check. Keeping `kr.` in English too shows one currency format for one Danish currency.
+
+### Sources
+- [research/ux-patterns.md](research/ux-patterns.md) — §2.3 Danish/English localisation
+- [open-questions.md](open-questions.md) — "Owner decides" row 6 (U5)
+- Linear FIT-83 — "Owner decision (2026-11-24)" and "Brief"
+- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat — locale-aware date and time formatting

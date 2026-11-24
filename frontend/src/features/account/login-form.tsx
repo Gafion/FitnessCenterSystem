@@ -68,7 +68,7 @@ export function LoginForm({ onSubmit }: Props) {
           required
         />
       </div>
-      <Button type="submit" disabled={submitting}>
+      <Button type="submit" className="w-full" disabled={submitting}>
         {t('login.submit')}
       </Button>
     </form>

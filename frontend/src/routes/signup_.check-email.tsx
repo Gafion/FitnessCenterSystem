@@ -1,6 +1,9 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
+import { MailIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { AuthLayout } from '@/features/account/auth-layout';
 import { ResendConfirmation } from '@/features/account/resend-confirmation';
+import { TextLink } from '@/features/account/text-link';
 
 // After a password signup (D-038): the member confirms their email before logging in.
 export const Route = createFileRoute('/signup_/check-email')({
@@ -15,14 +18,14 @@ function CheckEmailPage() {
   const { email } = Route.useSearch();
 
   return (
-    <section className="mx-auto flex max-w-md flex-col gap-6 p-8">
-      <h1 className="text-3xl font-semibold">{t('checkEmail.title')}</h1>
+    <AuthLayout
+      title={t('checkEmail.title')}
+      footer={<TextLink to="/login">{t('login.title')}</TextLink>}
+    >
+      <MailIcon aria-hidden="true" className="size-8 text-primary" />
       <p>{t('checkEmail.body', { email })}</p>
       <p className="text-sm text-muted-foreground">{t('checkEmail.noEmail')}</p>
       {email && <ResendConfirmation email={email} />}
-      <Link to="/login" className="text-sm underline">
-        {t('login.title')}
-      </Link>
-    </section>
+    </AuthLayout>
   );
 }
