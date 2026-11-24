@@ -18,6 +18,8 @@ internal static class AccountEndpoints
         // UnauthorizedHttpResult doesn't describe itself in OpenAPI, so the 401s are declared here.
         group.MapPost("/login", LoginAsync).WithName("Login").Produces(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden);
+        group.MapPost("/login/two-factor", LogInWithCodeAsync).WithName("LoginWithCode")
+            .Produces(StatusCodes.Status401Unauthorized);
         group.MapPost("/confirm-email", ConfirmEmailAsync).WithName("ConfirmEmail");
         group.MapPost("/confirm-email/resend", ResendEmailConfirmationAsync).WithName("ResendEmailConfirmation");
         group.MapPost("/logout", LogoutAsync).WithName("Logout").RequireAuthorization();
@@ -29,11 +31,19 @@ internal static class AccountEndpoints
 
     internal sealed record LoginRequest(string Email, string Password);
 
+    /// <param name="Code">A code from the authenticator app, or a recovery code.</param>
+    /// <param name="IsRecoveryCode">True when <paramref name="Code"/> is a recovery code.</param>
+    internal sealed record LoginWithCodeRequest(string Code, bool IsRecoveryCode);
+
     internal sealed record ConfirmEmailRequest(Guid AccountId, string Code);
 
     internal sealed record ResendEmailConfirmationRequest(string Email);
 
-    internal sealed record CurrentAccount(Guid AccountId, string Email, string FirstName, string LastName, bool HasGoogleLogin);
+    /// <param name="TwoFactorEnabled">The authenticator app is set up (D-059).</param>
+    /// <param name="MustSetUpAuthenticator">A staff account without the authenticator: staff endpoints refuse it until it is set up (D-013).</param>
+    internal sealed record CurrentAccount(
+        Guid AccountId, string Email, string FirstName, string LastName, bool HasGoogleLogin,
+        bool TwoFactorEnabled, bool MustSetUpAuthenticator);
 
     private static async Task<Results<NoContent, UnauthorizedHttpResult, ProblemHttpResult>> LoginAsync(
         LoginRequest request, SignInManager<Account> signIn, UserManager<Account> users)
@@ -43,6 +53,16 @@ internal static class AccountEndpoints
         if (result.Succeeded)
         {
             return TypedResults.NoContent();
+        }
+
+        // The password was right and the account has the authenticator on (D-059). Identity has
+        // set a short-lived cookie that remembers who is logging in; the code comes next.
+        if (result.RequiresTwoFactor)
+        {
+            return TypedResults.Problem(
+                title: "Enter the code from your authenticator app.",
+                statusCode: StatusCodes.Status403Forbidden,
+                type: "two-factor-required");
         }
 
         // Identity refuses an unconfirmed account before it checks the password (or counts a
@@ -67,6 +87,20 @@ internal static class AccountEndpoints
         }
 
         return TypedResults.Unauthorized();
+    }
+
+    /// <summary>
+    /// The second login step (D-059). Needs the cookie the password step set. Wrong codes count
+    /// towards lockout, as wrong passwords do. A recovery code works once.
+    /// </summary>
+    private static async Task<Results<NoContent, UnauthorizedHttpResult>> LogInWithCodeAsync(
+        LoginWithCodeRequest request, SignInManager<Account> signIn)
+    {
+        var result = request.IsRecoveryCode
+            ? await signIn.TwoFactorRecoveryCodeSignInAsync(Authenticator.NormalizeRecoveryCode(request.Code))
+            : await signIn.TwoFactorAuthenticatorSignInAsync(
+                Authenticator.NormalizeAppCode(request.Code), isPersistent: true, rememberClient: false);
+        return result.Succeeded ? TypedResults.NoContent() : TypedResults.Unauthorized();
     }
 
     private static async Task<Results<NoContent, ProblemHttpResult>> ConfirmEmailAsync(
@@ -129,6 +163,8 @@ internal static class AccountEndpoints
         var logins = await users.GetLoginsAsync(account);
         return TypedResults.Ok(new CurrentAccount(
             account.Id, account.Email!, account.FirstName, account.LastName,
-            logins.Any(login => login.LoginProvider == ExternalLogins.Google)));
+            logins.Any(login => login.LoginProvider == ExternalLogins.Google),
+            account.TwoFactorEnabled,
+            !account.TwoFactorEnabled && await Authenticator.IsStaffAsync(users, account)));
     }
 }

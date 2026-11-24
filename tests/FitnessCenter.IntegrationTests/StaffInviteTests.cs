@@ -63,6 +63,27 @@ public sealed partial class StaffInviteTests
     }
 
     [TestMethod]
+    public async Task Invited_staff_must_set_up_the_authenticator_before_using_staff_endpoints()
+    {
+        using var admin = await LoggedInStaffAsync(Factory, StaffRoles.Admin);
+        var email = SyntheticStaffEmail();
+        using var invite = await InviteAsync(admin, email, StaffRoles.Admin);
+        Assert.AreEqual(HttpStatusCode.Created, invite.StatusCode, await invite.Content.ReadAsStringAsync());
+        using var browser = Factory.CreateClient();
+        using var accept = await AcceptAsync(browser, await InviteLinkForAsync(email));
+        Assert.AreEqual(HttpStatusCode.NoContent, accept.StatusCode, await accept.Content.ReadAsStringAsync());
+        using var login = await TestAccounts.LogInAsync(browser, email, NewStaffPassword);
+        Assert.AreEqual(HttpStatusCode.NoContent, login.StatusCode, await login.Content.ReadAsStringAsync());
+
+        using var before = await InviteAsync(browser, SyntheticStaffEmail(), StaffRoles.FrontDesk);
+        Assert.AreEqual(HttpStatusCode.Forbidden, before.StatusCode, "no authenticator yet");
+
+        await TestAuthenticator.SetUpAsync(browser);
+        using var after = await InviteAsync(browser, SyntheticStaffEmail(), StaffRoles.FrontDesk);
+        Assert.AreEqual(HttpStatusCode.Created, after.StatusCode, await after.Content.ReadAsStringAsync());
+    }
+
+    [TestMethod]
     public async Task Expired_link_is_refused()
     {
         var clock = new MovableClock(Instant.FromUtc(2026, 11, 24, 12, 0));
@@ -249,6 +270,9 @@ public sealed partial class StaffInviteTests
         var client = factory.CreateClient();
         using var login = await TestAccounts.LogInAsync(client, email, StaffPassword);
         Assert.AreEqual(HttpStatusCode.NoContent, login.StatusCode, await login.Content.ReadAsStringAsync());
+
+        // Staff endpoints need the authenticator app set up first (D-013, D-059).
+        await TestAuthenticator.SetUpAsync(client);
         return client;
     }
 

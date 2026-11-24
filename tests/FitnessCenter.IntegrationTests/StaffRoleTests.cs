@@ -22,6 +22,8 @@ public sealed class StaffRoleTests
     private static ApiFactory? _factory;
     private static string _memberEmail = "";
 
+    private static readonly Dictionary<string, string> StaffKeys = [];
+
     private static ApiFactory Factory => _factory ?? throw new InvalidOperationException("Not initialized.");
 
     public static IEnumerable<object[]> Staff =>
@@ -45,6 +47,16 @@ public sealed class StaffRoleTests
                 ["Identity:SeedDevelopmentStaff"] = "true",
                 ["Identity:DevelopmentStaffPassword"] = StaffPassword,
             });
+
+        // Staff endpoints need the authenticator app (D-013, D-059): set it up once per seeded
+        // account; every login below then gives a code.
+        foreach (var email in Staff.Select(s => (string)s[1]))
+        {
+            using var staff = _factory.CreateClient();
+            using var login = await TestAccounts.LogInAsync(staff, email, StaffPassword);
+            Assert.AreEqual(HttpStatusCode.NoContent, login.StatusCode, await login.Content.ReadAsStringAsync());
+            StaffKeys[email] = (await TestAuthenticator.SetUpAsync(staff)).Key;
+        }
 
         using var client = _factory.CreateClient();
         _memberEmail = TestAccounts.SyntheticEmail();
@@ -129,6 +141,12 @@ public sealed class StaffRoleTests
     private static async Task<HttpClient> LogInAsync(string email, string password)
     {
         var client = Factory.CreateClient();
+        if (StaffKeys.TryGetValue(email, out var key))
+        {
+            await TestAuthenticator.LogInAsync(client, email, password, key);
+            return client;
+        }
+
         using var login = await TestAccounts.LogInAsync(client, email, password);
         Assert.AreEqual(HttpStatusCode.NoContent, login.StatusCode, $"{email}: {await login.Content.ReadAsStringAsync()}");
         return client;

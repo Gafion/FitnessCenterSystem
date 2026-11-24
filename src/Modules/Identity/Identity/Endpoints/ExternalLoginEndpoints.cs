@@ -73,6 +73,13 @@ internal static class ExternalLoginEndpoints
             return Redirect("/account");
         }
 
+        // The account has the authenticator on (D-059): the login page asks for the code.
+        if (result.RequiresTwoFactor)
+        {
+            await signIn.Context.SignOutAsync(IdentityConstants.ExternalScheme);
+            return Redirect("/login?step=code");
+        }
+
         var email = ExternalLogins.Email(login);
         if (result.IsLockedOut || result.IsNotAllowed || email is null)
         {

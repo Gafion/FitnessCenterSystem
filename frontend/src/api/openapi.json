@@ -41,6 +41,32 @@
         }
       }
     },
+    "/api/identity/login/two-factor": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "LoginWithCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginWithCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/api/identity/confirm-email": {
       "post": {
         "tags": [
@@ -293,6 +319,60 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/identity/authenticator": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "GetAuthenticatorSetup",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticatorSetup"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "EnableAuthenticator",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnableAuthenticatorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryCodes"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
           }
         }
       }
@@ -800,6 +880,31 @@
           }
         }
       },
+      "AuthenticatorSetup": {
+        "required": [
+          "enabled",
+          "sharedKey",
+          "authenticatorUri"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "sharedKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "authenticatorUri": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "ConfirmEmailRequest": {
         "required": [
           "accountId",
@@ -822,7 +927,9 @@
           "email",
           "firstName",
           "lastName",
-          "hasGoogleLogin"
+          "hasGoogleLogin",
+          "twoFactorEnabled",
+          "mustSetUpAuthenticator"
         ],
         "type": "object",
         "properties": {
@@ -841,6 +948,12 @@
           },
           "hasGoogleLogin": {
             "type": "boolean"
+          },
+          "twoFactorEnabled": {
+            "type": "boolean"
+          },
+          "mustSetUpAuthenticator": {
+            "type": "boolean"
           }
         }
       },
@@ -851,6 +964,17 @@
           "payment-missing",
           "membership-ended"
         ]
+      },
+      "EnableAuthenticatorRequest": {
+        "required": [
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        }
       },
       "GoogleSignupRequest": {
         "required": [
@@ -974,6 +1098,21 @@
           },
           "password": {
             "type": "string"
+          }
+        }
+      },
+      "LoginWithCodeRequest": {
+        "required": [
+          "code",
+          "isRecoveryCode"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "isRecoveryCode": {
+            "type": "boolean"
           }
         }
       },
@@ -1196,6 +1335,20 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "RecoveryCodes": {
+        "required": [
+          "codes"
+        ],
+        "type": "object",
+        "properties": {
+          "codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
