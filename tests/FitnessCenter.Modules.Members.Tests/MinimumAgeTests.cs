@@ -25,7 +25,8 @@ public sealed class MinimumAgeTests
         Assert.AreEqual(expected, MinimumAge.IsMetOn(Date(born), Date(today)));
     }
 
-    // UNVERIFIED (FIT-67): no official Danish source found for 29 February; the stricter rule
+    // UNVERIFIED (FIT-67): a search of Danish official sources found no age rule for 29 February
+    // (see MinimumAge.EighteenthBirthday); the stricter rule
     // applies. 18 years after a leap year is never a leap year, so someone born on 29 February
     // always turns 18 on 1 March and is refused on 28 February.
     [TestMethod]

@@ -10,8 +10,12 @@ internal static class MinimumAge
     /// <summary>
     /// The first day on which a person born on <paramref name="dateOfBirth"/> is 18.
     /// Someone born on 29 February turns 18 on 1 March when the 18th year has no 29 February.
-    /// UNVERIFIED: no official Danish source for the 29 February case was found; this is the
-    /// stricter of the two readings (FIT-67).
+    /// UNVERIFIED: a search of Danish official sources (retsinformation.dk, borger.dk) on
+    /// 2026-11-24 found no rule on when a person born on 29 February becomes a year older.
+    /// The nearest rule found is about limitation periods, not age: a one-year deadline that
+    /// starts on 29 February ends on 28 February (forældelsesloven § 27, Den Juridiske
+    /// Vejledning A.A.9.4.4). 1 March is the stricter reading and is used until the owner
+    /// decides (FIT-67).
     /// </summary>
     public static LocalDate EighteenthBirthday(LocalDate dateOfBirth)
     {
