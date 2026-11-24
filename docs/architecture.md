@@ -123,7 +123,7 @@ flowchart LR
     SPA["React SPA<br/>Vite · TypeScript<br/>generated API client"]
   end
 
-  subgraph Server["Server (🟡 OPEN: hosting — SA4)"]
+  subgraph Server["Server (no paid hosting; owner's laptop during development, D-050)"]
     CORE["Core API (one process)<br/>ASP.NET Core Minimal APIs<br/>all modules in-process"]
     DB[("PostgreSQL<br/>schema per module (D-014)")]
     PAY["Payment service<br/>own DB · PSP secrets"]:::later
