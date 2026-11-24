@@ -29,8 +29,15 @@ internal sealed class MemberDirectory(MembersDbContext db, IAccountService accou
             PaymentStanding.NeverPaid => EntrancePayment.NeverPaid,
             var other => throw new InvalidOperationException($"Unknown payment standing {other}."),
         };
-        return new MemberAtEntrance(memberId, firstName, payment);
+        var membershipEnded = !member.HasAccessOn(at.InZone(CenterTime.Zone).Date);
+        return new MemberAtEntrance(memberId, firstName, payment, membershipEnded);
     }
+
+    public async Task<LocalDate?> FindLastDayOfAccessAsync(Guid accountId, CancellationToken cancellationToken) =>
+        await db.Members
+            .Where(m => m.AccountId == accountId)
+            .Select(m => m.CancellationEffectiveOn)
+            .SingleOrDefaultAsync(cancellationToken);
 
     public async Task<Guid?> FindMemberIdAsync(Guid accountId, CancellationToken cancellationToken) =>
         await db.Members

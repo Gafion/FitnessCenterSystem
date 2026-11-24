@@ -54,6 +54,10 @@ internal static class AccessEndpoints
         /// <summary>The member's payment is missing; check-in is refused (D-020, D-042).</summary>
         [JsonStringEnumMemberName("payment-missing")]
         PaymentMissing,
+
+        /// <summary>The member's cancellation has taken effect; check-in is refused (D-048, D-055).</summary>
+        [JsonStringEnumMemberName("membership-ended")]
+        MembershipEnded,
     }
 
     /// <summary>What the door screen shows.</summary>
@@ -92,6 +96,7 @@ internal static class AccessEndpoints
             CheckInOutcome.Welcome => DoorOutcome.Welcome,
             CheckInOutcome.UnknownCard => DoorOutcome.UnknownCard,
             CheckInOutcome.PaymentMissing => DoorOutcome.PaymentMissing,
+            CheckInOutcome.MembershipEnded => DoorOutcome.MembershipEnded,
             _ => throw new InvalidOperationException($"Unknown outcome {result.Outcome}."),
         },
         result.FirstName,

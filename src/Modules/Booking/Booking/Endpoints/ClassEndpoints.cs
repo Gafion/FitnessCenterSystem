@@ -26,6 +26,10 @@ internal static class ClassEndpoints
     }
 
     /// <param name="CancelUntil">After this moment the booking can't be cancelled (D-039).</param>
+    /// <param name="AfterMyMembershipEnds">
+    /// The logged-in member has cancelled and the class starts after their last day of access,
+    /// so it can't be booked (D-055). Always false when logged out.
+    /// </param>
     internal sealed record ScheduleEntry(
         Guid ClassId,
         string ClassName,
@@ -35,7 +39,8 @@ internal static class ClassEndpoints
         int Capacity,
         int SpotsLeft,
         bool BookedByMe,
-        DateTimeOffset CancelUntil);
+        DateTimeOffset CancelUntil,
+        bool AfterMyMembershipEnds);
 
     /// <param name="CancelUntil">After this moment the booking can't be cancelled (D-039).</param>
     internal sealed record MyBooking(
@@ -77,7 +82,8 @@ internal static class ClassEndpoints
                 c.Capacity,
                 c.SpotsLeft,
                 c.BookedByMe,
-                c.CancelUntil.ToDateTimeOffset()))
+                c.CancelUntil.ToDateTimeOffset(),
+                c.AfterMyMembershipEnds))
             .ToArray());
     }
 
@@ -93,6 +99,8 @@ internal static class ClassEndpoints
             BookOutcome.Full => Conflict("class-full", "This class is full."),
             BookOutcome.Started => Conflict("class-started", "This class has already started."),
             BookOutcome.NotOpenYet => Conflict("booking-not-open", "Booking opens 14 days before the class."),
+            BookOutcome.AfterMembershipEnds => Conflict(
+                "after-membership-ends", "Your membership ends before this class, so you can't book it."),
             _ => throw new InvalidOperationException($"Unknown outcome {outcome}."),
         };
     }
