@@ -1,0 +1,78 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import { formatDate } from '@/features/payments/payment-date';
+import type { Schemas } from '@/lib/api';
+
+export type CancelResult = 'ok' | 'failed';
+
+/**
+ * Cancels the membership after one confirmation (D-048). There is no "save" or retention
+ * step: the confirmation states the notice rule and nothing else. With a pending
+ * cancellation it shows the last day of access instead.
+ */
+export function CancelMembership({
+  membership,
+  onCancel,
+}: {
+  membership: Schemas['MyMembership'];
+  onCancel: () => Promise<CancelResult>;
+}) {
+  const { t } = useTranslation();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  if (membership.cancellationEffectiveOn) {
+    return (
+      <p role="status">
+        {t('membership.cancellation.pending', {
+          date: formatDate(membership.cancellationEffectiveOn),
+        })}
+      </p>
+    );
+  }
+
+  async function confirm() {
+    setBusy(true);
+    setFailed(false);
+    const result = await onCancel();
+    setBusy(false);
+    setFailed(result === 'failed');
+  }
+
+  if (!confirming) {
+    return (
+      <Button
+        variant="outline"
+        className="self-start"
+        onClick={() => setConfirming(true)}
+      >
+        {t('membership.cancellation.cancel')}
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p>{t('membership.cancellation.notice')}</p>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="destructive" disabled={busy} onClick={confirm}>
+          {t('membership.cancellation.confirm')}
+        </Button>
+        <Button
+          variant="outline"
+          disabled={busy}
+          onClick={() => setConfirming(false)}
+        >
+          {t('membership.cancellation.back')}
+        </Button>
+      </div>
+      {failed && (
+        <p role="alert" className="text-sm text-destructive">
+          {t('membership.cancellation.failed')}
+        </p>
+      )}
+    </div>
+  );
+}

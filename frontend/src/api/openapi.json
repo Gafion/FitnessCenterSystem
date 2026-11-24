@@ -344,6 +344,32 @@
         }
       }
     },
+    "/api/members/me/cancellation": {
+      "post": {
+        "tags": [
+          "Members"
+        ],
+        "operationId": "CancelMyMembership",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyMembership"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/api/members/me/payments": {
       "get": {
         "tags": [
@@ -856,7 +882,9 @@
           "monthlyPriceOre",
           "status",
           "memberSince",
-          "paidUntil"
+          "paidUntil",
+          "cancelledAt",
+          "cancellationEffectiveOn"
         ],
         "type": "object",
         "properties": {
@@ -875,6 +903,20 @@
             "format": "date"
           },
           "paidUntil": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "cancelledAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "cancellationEffectiveOn": {
             "type": [
               "null",
               "string"

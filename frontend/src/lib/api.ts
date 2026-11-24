@@ -94,6 +94,26 @@ export async function getMyMembership(): Promise<
   return data;
 }
 
+/**
+ * Cancels the logged-in account's membership with one month's notice to the end of a
+ * month (D-048). "already-cancelled" when an earlier cancellation stands; it is kept.
+ */
+export async function cancelMyMembership(): Promise<
+  Schemas['MyMembership'] | 'already-cancelled' | 'logged-out'
+> {
+  const { data, response } = await api.POST('/api/members/me/cancellation');
+  if (response.status === 401) {
+    return 'logged-out';
+  }
+  if (response.status === 409) {
+    return 'already-cancelled';
+  }
+  if (!data) {
+    throw new Error('Could not cancel the membership.');
+  }
+  return data;
+}
+
 /** The logged-in account's booked classes that haven't started, soonest first (D-022). */
 export async function getMyBookings(): Promise<Schemas['MyBooking'][]> {
   const { data } = await api.GET('/api/booking/my-bookings');

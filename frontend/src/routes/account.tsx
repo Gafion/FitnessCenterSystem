@@ -3,6 +3,7 @@ import {
   Link,
   redirect,
   useNavigate,
+  useRouter,
 } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,10 +12,15 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ErrorMessage } from '@/features/account/error-message';
 import { GoogleButton } from '@/features/account/google-button';
 import { MyBookings } from '@/features/classes/my-bookings';
+import {
+  CancelMembership,
+  type CancelResult,
+} from '@/features/membership/cancel-membership';
 import { MembershipSummary } from '@/features/membership/membership-summary';
 import { PaymentHistory } from '@/features/payments/payment-history';
 import {
   api,
+  cancelMyMembership,
   errorSearch,
   getLoginOptions,
   getMyBookings,
@@ -97,6 +103,21 @@ function AccountPage() {
   } = Route.useLoaderData();
   const { error } = Route.useSearch();
   const navigate = useNavigate();
+  const router = useRouter();
+
+  async function cancelMembership(): Promise<CancelResult> {
+    const result = await cancelMyMembership().catch(() => 'failed' as const);
+    if (result === 'failed') {
+      return 'failed';
+    }
+    if (result === 'logged-out') {
+      await navigate({ to: '/login', search: {} });
+      return 'ok';
+    }
+    // Reload after "already-cancelled" too: the page was out of date.
+    await router.invalidate();
+    return 'ok';
+  }
 
   async function logOut() {
     await api.POST('/api/identity/logout');
@@ -139,7 +160,13 @@ function AccountPage() {
               {t('account.membershipFailed')}
             </p>
           ) : membership ? (
-            <MembershipSummary membership={membership} />
+            <>
+              <MembershipSummary membership={membership} />
+              <CancelMembership
+                membership={membership}
+                onCancel={cancelMembership}
+              />
+            </>
           ) : (
             <p className="text-muted-foreground">{t('account.noMembership')}</p>
           )}

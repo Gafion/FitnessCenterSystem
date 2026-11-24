@@ -3,7 +3,22 @@ import { formatDate } from '@/features/payments/payment-date';
 import type { Schemas } from '@/lib/api';
 import { formatOre } from '@/lib/money';
 
-/** The member's membership type, price, status and dates (D-020, D-022). */
+// The day the member cancelled, as a date in Denmark (the center's business zone).
+const copenhagenDate = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/Copenhagen',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+
+function formatInstantDate(instant: string): string {
+  return copenhagenDate.format(new Date(instant));
+}
+
+/**
+ * The member's membership type, price, status and dates (D-020, D-022), and a pending
+ * cancellation with its last day of access (D-048).
+ */
 export function MembershipSummary({
   membership,
 }: {
@@ -28,6 +43,15 @@ export function MembershipSummary({
   ];
   if (membership.paidUntil) {
     rows.push([t('membership.paidUntil'), formatDate(membership.paidUntil)]);
+  }
+  if (membership.cancelledAt && membership.cancellationEffectiveOn) {
+    rows.push(
+      [t('membership.cancelledOn'), formatInstantDate(membership.cancelledAt)],
+      [
+        t('membership.accessUntil'),
+        formatDate(membership.cancellationEffectiveOn),
+      ],
+    );
   }
   return (
     <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">

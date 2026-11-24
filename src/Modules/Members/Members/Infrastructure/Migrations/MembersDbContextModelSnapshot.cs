@@ -32,6 +32,12 @@ namespace Members.Infrastructure.Migrations
                     b.Property<Guid>("AccountId")
                         .HasColumnType("uuid");
 
+                    b.Property<LocalDate?>("CancellationEffectiveOn")
+                        .HasColumnType("date");
+
+                    b.Property<Instant?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<LocalDate?>("DateOfBirth")
                         .HasColumnType("date");
 

@@ -25,6 +25,14 @@ internal enum PaymentOutcome
     NotContiguous,
 }
 
+internal enum CancellationOutcome
+{
+    Cancelled,
+
+    /// <summary>The membership was already cancelled; the first cancellation stands (FIT-70).</summary>
+    AlreadyCancelled,
+}
+
 /// <summary>
 /// A person's membership at the center. Name and email live on the Identity account
 /// (data-model.md); the member links to it by account id.
@@ -62,6 +70,15 @@ internal sealed class Member
 
     /// <summary>Last day covered by a payment confirmation (D-020). Null until the first one.</summary>
     public LocalDate? PaidUntil { get; private set; }
+
+    /// <summary>When the member cancelled (UTC). Null while the membership is not cancelled (D-048).</summary>
+    public Instant? CancelledAt { get; private set; }
+
+    /// <summary>
+    /// The last day of access (Copenhagen); the cancellation takes effect at its end (D-048).
+    /// Null while the membership is not cancelled.
+    /// </summary>
+    public LocalDate? CancellationEffectiveOn { get; private set; }
 
     public IReadOnlyList<Consent> Consents => _consents;
 
@@ -113,6 +130,23 @@ internal sealed class Member
     /// <summary>Whether a payment is missing at <paramref name="now"/> (D-020, D-042).</summary>
     public PaymentStanding PaymentStandingAt(Instant now, DateTimeZone businessZone) =>
         MissingPayment.StandingAt(PaidUntil, now, businessZone);
+
+    /// <summary>
+    /// Cancels the membership with one month's notice to the end of a month (D-048). There is
+    /// no retention step. A second cancellation changes nothing; undoing one is not decided.
+    /// <paramref name="now"/> comes from the injected clock, never the system clock (rule 2).
+    /// </summary>
+    public CancellationOutcome Cancel(Instant now, DateTimeZone businessZone)
+    {
+        if (CancelledAt is not null)
+        {
+            return CancellationOutcome.AlreadyCancelled;
+        }
+
+        CancelledAt = now;
+        CancellationEffectiveOn = CancellationNotice.EffectiveDate(now, businessZone);
+        return CancellationOutcome.Cancelled;
+    }
 
     /// <summary>
     /// Moves paid-until to the end of a confirmed payment's period. The first payment may
