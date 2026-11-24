@@ -57,6 +57,7 @@ Answers will be recorded here and, where they settle a medium/large decision, in
 | D11 (former row 8) | Keep D-042 and D-046. Repeat reminders and late fees come only with real payments. | D-042, D-046 |
 | M4 (former row 9) | Members must be 18 or older for now; date of birth collected at signup. | D-052 |
 | M5 (former row 10) | Collect no health data. | D-053 |
+| DB8 | Spike done as a verification (FIT-36). Schema per module, history table per schema, schema-qualified SQL and a non-escalating shared transaction across module DbContexts are proven by `tests/FitnessCenter.IntegrationTests/ModuleSchemaTests.cs`. Default privileges and REFERENCES are confirmed from the PostgreSQL docs but unused while there is one database role (D-015). Details: database-schemas.md, Verification (FIT-36). | D-014, D-015 |
 
 The [stakeholder interview guide](stakeholder-interview-guide.md) is on hold (D-047).
 
@@ -204,7 +205,6 @@ flowchart LR
 | DB5 | Reporting: SQL views in a `reporting` schema, or an event-fed read model? | database-schemas |
 | DB6 | Is whole-database point-in-time restore enough, or must one module be restorable on its own? | database-schemas |
 | DB7 | Should the future payment service get its own database from day one, regardless of SA6? | database-schemas |
-| DB8 | Run small spikes to remove the UNVERIFIED EF/Npgsql items (schema-qualified SQL, MigrationsHistoryTable overload, default privileges)? | database-schemas |
 
 ## Tier 3e — Authentication (from wave 3: authentication; feeds D-011)
 
