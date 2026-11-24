@@ -1,11 +1,15 @@
 import { defineConfig, devices } from '@playwright/test';
+import { englishChosen } from './e2e/english';
+
+const baseURL = 'http://localhost:4173';
 
 export default defineConfig({
   testDir: './e2e',
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL,
+    storageState: englishChosen(baseURL),
     trace: 'on-first-retry',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
