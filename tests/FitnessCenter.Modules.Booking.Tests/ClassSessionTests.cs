@@ -98,6 +98,43 @@ public sealed class ClassSessionTests
         Assert.AreEqual(new LocalDateTime(2026, 3, 28, 20, 0), cancelUntil);
     }
 
+    // D-055 option A: Start is 18:00 on 12 January 2027 in Copenhagen.
+    [TestMethod]
+    [DataRow(2027, 1, 13, "Booked", DisplayName = "the class is the day before the last day of access")]
+    [DataRow(2027, 1, 12, "Booked", DisplayName = "the class is on the last day of access")]
+    [DataRow(2027, 1, 11, "AfterMembershipEnds", DisplayName = "the class is the day after the last day of access")]
+    public void A_cancelled_member_books_only_classes_up_to_the_last_day_of_access(
+        int year, int month, int day, string expected)
+    {
+        var session = Session(capacity: 5);
+
+        var outcome = session.Book(Ann, Start - Duration.FromDays(1), new LocalDate(year, month, day));
+
+        Assert.AreEqual(expected, outcome.ToString());
+        Assert.AreEqual(expected == "Booked", session.IsBookedBy(Ann));
+    }
+
+    [TestMethod]
+    public void A_refused_booking_after_the_membership_ends_takes_no_spot()
+    {
+        var session = Session(capacity: 1);
+
+        Assert.AreEqual(BookOutcome.AfterMembershipEnds, session.Book(Ann, Start - Duration.FromDays(1), new LocalDate(2027, 1, 11)));
+        Assert.AreEqual(1, session.SpotsLeft);
+    }
+
+    [TestMethod]
+    public void The_last_day_of_access_is_a_Copenhagen_date()
+    {
+        // 23:30 UTC on 12 January is 00:30 on 13 January in Copenhagen (UTC+1).
+        var lateStart = Instant.FromUtc(2027, 1, 12, 23, 30);
+        var session = ClassSession.Schedule(ClassType.Spinning, "Test Instructor", lateStart, Duration.FromMinutes(50), 5);
+
+        Assert.IsTrue(session.StartsAfter(new LocalDate(2027, 1, 12)));
+        Assert.IsFalse(session.StartsAfter(new LocalDate(2027, 1, 13)));
+        Assert.IsFalse(session.StartsAfter(null));
+    }
+
     private static ClassSession Session(int capacity) =>
         ClassSession.Schedule(ClassType.Spinning, "Test Instructor", Start, Duration.FromMinutes(50), capacity);
 }
