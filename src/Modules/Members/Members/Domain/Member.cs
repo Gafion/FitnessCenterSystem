@@ -5,8 +5,8 @@ namespace FitnessCenter.Modules.Members.Domain;
 internal enum MemberStatus
 {
     /// <summary>
-    /// Signed up; no payment confirmation yet (D-032). Whether check-in is allowed is not
-    /// decided (FIT-45); see <see cref="PaymentStanding.NeverPaid"/>.
+    /// Signed up; no payment confirmation yet (D-032). Check-in is refused until the first
+    /// payment (D-046); see <see cref="PaymentStanding.NeverPaid"/>.
     /// </summary>
     AwaitingFirstPayment,
 

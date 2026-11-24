@@ -1456,3 +1456,36 @@ Owner decision. Option A keeps one source of truth for the required job names. `
 - https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/troubleshooting-required-status-checks#handling-skipped-but-required-checks (path filtering leaves required checks pending; skipped-by-conditional jobs report success)
 - https://docs.github.com/en/actions/using-jobs/using-conditions-to-control-job-execution
 - FIT-62 (implementation and the docs-only PR test)
+
+## D-046: A member who has never paid is refused at check-in
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-020, D-032, D-042, FIT-45. Partly answers D11.
+
+### Problem statement
+D-020 and D-042 refuse check-in when a payment is missing, meaning the paid-until date has passed. They don't say what happens to a member who signed up but has never paid (`AwaitingFirstPayment`, D-032), who has no paid-until date at all. FIT-45 left this as a marked seam that let them in.
+
+### Options considered
+1. **Let them in until the first payment.** Nothing changes for new members, but anyone can sign up and use the center without paying.
+2. **Refuse them like a missing payment.** The door shows the same "Payment missing" warning until the first payment arrives.
+
+### Decision
+**Option 2.** A member who has never paid is refused at check-in with the same `payment-missing` outcome and warning as a missing payment, and nothing is recorded.
+
+```mermaid
+flowchart LR
+  S[Swipe] --> Q{Paid for today?}
+  Q -->|yes| W[Welcome, attendance recorded]
+  Q -->|"paid-until passed (D-042)"| R["Payment missing, nothing recorded"]
+  Q -->|"never paid (D-046)"| R
+```
+
+**Still open:** whether a member who has never paid gets a reminder email. For now they get none; the reminder job (D-042) covers only a paid-until date that passed. D11 (grace period and reminders) stays open.
+
+### Reasoning
+Owner decision. Access to the center follows payment, so a sign-up alone doesn't open the door. Reusing the missing-payment outcome keeps one warning on the door screen and no new wording.
+
+### Sources
+- D-020, D-032, D-042; D11 in [open-questions.md](open-questions.md)
+- FIT-45 (orchestrator review of PR #26, 2026-11-24)

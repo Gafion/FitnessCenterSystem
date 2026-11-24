@@ -15,8 +15,8 @@ internal enum CheckInOutcome
     UnknownCard,
 
     /// <summary>
-    /// The card's member has a missing payment (D-020, D-042). Check-in is refused and nothing
-    /// is recorded: an attendance is an accepted swipe (data-model.md ATTENDANCE).
+    /// The card's member has a missing payment (D-020, D-042) or has never paid (D-046). Check-in
+    /// is refused and nothing is recorded: an attendance is an accepted swipe (data-model.md ATTENDANCE).
     /// </summary>
     PaymentMissing,
 }
@@ -42,16 +42,13 @@ internal sealed class CheckInHandler(AccessDbContext db, IMemberDirectory member
         var member = await members.FindAsync(card.MemberId, now, cancellationToken)
             ?? throw new InvalidOperationException($"Card {card.Id.Value} belongs to a member that doesn't exist.");
 
-        // D-020, D-042: a missing payment refuses check-in, before anything is recorded. No name
-        // is returned: the door screen is public, and the warning shouldn't say who is behind.
-        if (member.Payment == EntrancePayment.Missing)
+        // D-020, D-042: a missing payment refuses check-in, before anything is recorded. D-046: so
+        // does never having paid. No name is returned: the door screen is public, and the warning
+        // shouldn't say who is behind.
+        if (member.Payment is EntrancePayment.Missing or EntrancePayment.NeverPaid)
         {
             return new CheckInResult(CheckInOutcome.PaymentMissing, null, now);
         }
-
-        // DECISION NEEDED (FIT-45): a member who has never paid (EntrancePayment.NeverPaid,
-        // AwaitingFirstPayment) is let in for now, as before FIT-45. D-020 and D-042 don't say
-        // whether they may check in. When the owner decides, refuse them here if needed.
 
         db.Attendances.Add(card.Swipe(now));
         await db.SaveChangesAsync(cancellationToken);

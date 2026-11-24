@@ -58,20 +58,19 @@ public sealed class MissingPaymentTests
         Assert.AreEqual(1, await AttendancesAsync(factory, memberId));
     }
 
-    /// <summary>
-    /// DECISION NEEDED (FIT-45): D-020 and D-042 don't say whether a member who never paid may
-    /// check in. Until the owner decides, they are let in as before; this test pins that seam.
-    /// </summary>
+    /// <summary>D-046: a member who has never paid is refused like a missing payment, and nothing is recorded.</summary>
     [TestMethod]
-    public async Task A_member_who_never_paid_is_let_in_until_the_owner_decides()
+    public async Task A_member_who_never_paid_is_refused_and_nothing_is_recorded()
     {
         await using var factory = Factory();
         using var client = factory.CreateClient();
-        await SignUpConfirmedAndLoggedInAsync(client, SyntheticEmail());
+        var memberId = await SignUpConfirmedAndLoggedInAsync(client, SyntheticEmail());
 
         var result = await SwipeMyCardAsync(client);
 
-        Assert.AreEqual("welcome", result.Outcome);
+        Assert.AreEqual("payment-missing", result.Outcome);
+        Assert.IsNull(result.FirstName, "the door screen is public, so a refusal doesn't name the member");
+        Assert.AreEqual(0, await AttendancesAsync(factory, memberId));
     }
 
     /// <summary>No grace period: the last second of the paid-until day in Copenhagen is fine, the next is not (D-042).</summary>
@@ -198,12 +197,6 @@ public sealed class MissingPaymentTests
         await PayAsync(client, new DateOnly(2026, 11, 1));
 
         StringAssert.Contains(await TestMailbox.TextToAsync(email, PaymentReminders.Subject), "after 30 November 2026");
-    }
-
-    private static async Task PayAsync(HttpClient client, DateOnly? periodFrom)
-    {
-        using var response = await client.PostAsJsonAsync("/api/simulation/payments", new { periodFrom });
-        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode, await response.Content.ReadAsStringAsync());
     }
 
     private static async Task<SwipeResult> SwipeMyCardAsync(HttpClient client)

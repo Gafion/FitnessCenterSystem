@@ -64,6 +64,7 @@ flowchart LR
 | [D-043](decisions.md) | A few full-stack Playwright flows in CI against the real API, PostgreSQL and Mailpit; mocked E2E tests stay |
 | [D-044](decisions.md) | Landing page built now with marked placeholder content, no logo |
 | [D-045](decisions.md) | CI skips the backend and frontend jobs when a PR changes only `.md` files; pushes to main run everything |
+| [D-046](decisions.md) | A member who has never paid is refused at check-in like a missing payment; no reminder email for them yet |
 | [D-030](decisions.md) | ArchUnitNET for architecture tests |
 | [D-031](decisions.md) | Two projects per module: Contracts + one project with layer folders |
 | [D-032](decisions.md) | Signup slice: name/email/password, email + Google login, one placeholder membership awaiting payment, consent records |

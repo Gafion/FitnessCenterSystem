@@ -29,8 +29,8 @@ public enum EntrancePayment
     Missing,
 
     /// <summary>
-    /// The member has never paid (AwaitingFirstPayment). D-020 and D-042 don't say whether they
-    /// may check in; that is a decision for the owner (FIT-45).
+    /// The member has never paid (AwaitingFirstPayment). Check-in is refused like a missing
+    /// payment (D-046), but no reminder email is sent (D-046 leaves that open).
     /// </summary>
     NeverPaid,
 }
