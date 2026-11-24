@@ -140,7 +140,7 @@ internal sealed class Member
 
     /// <summary>
     /// Cancels the membership with one month's notice to the end of a month (D-048). There is
-    /// no retention step. A second cancellation changes nothing; undoing one is not decided.
+    /// no retention step. A second cancellation changes nothing. Undoing one is allowed (D-055) and built in FIT-95.
     /// <paramref name="now"/> comes from the injected clock, never the system clock (rule 2).
     /// </summary>
     public CancellationOutcome Cancel(Instant now, DateTimeZone businessZone)

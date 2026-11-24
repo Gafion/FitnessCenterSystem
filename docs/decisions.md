@@ -1769,3 +1769,63 @@ Owner decision. B was rejected because an under-18 could use the system in the m
 - [D-052](#d-052-members-must-be-18-or-older-date-of-birth-collected-at-signup) — 18+ and date of birth at signup
 - [D-037](#d-037-google-never-links-to-an-existing-account-by-email) — the Google signup flow
 - Linear FIT-68 — "Owner decision (2026-11-24): option A"
+
+---
+
+## D-055: After a cancellation: no booking past the effective date; undo allowed; confirmation email
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-24
+- **Relates to:** D-020, D-039, D-048, FIT-71, FIT-95. Answers the revocation part of D8.
+
+### Problem statement
+D-048 says a member keeps access until the cancellation takes effect. It left three things open:
+(a) may a member with a pending cancellation book classes that start after the effective date,
+(b) may a member undo a pending cancellation (D8: "may a member revoke it?"), and
+(c) does cancelling send a confirmation email?
+
+### Options considered
+**(a) Booking after the effective date**
+1. **A: no booking.** Booking refuses a class that starts on a Copenhagen day after the effective date, with a clear reason, and the classes page shows why. Pros: the member is never booked into a class they can't get into; spots stay free for others. Cons: Booking must ask Members for the effective date.
+2. **B: booking allowed, refused at the door.** Pros: nothing to build in Booking. Cons: the member holds a spot they can't use, and learns only at the door.
+
+**(b) Undo**
+1. **Undo allowed** while the cancellation is pending. Pros: a member who changes their mind keeps their membership without signing up again. Cons: one more flow to build.
+2. **No undo.** Pros: nothing to build. Cons: the member must sign up again after the effective date.
+
+**(c) Email**
+1. **Confirmation email** when the member cancels. Pros: the member has a record with the effective date. Cons: one more email template. Whether Danish law requires it is **UNVERIFIED**.
+2. **No email.** Pros: nothing to build. Cons: the member has only the account page as a record.
+
+### Decision
+- **(a) Option A.** A member with a pending cancellation can't book classes that start after the effective date. A class on the effective date itself can still be booked. Check-in is refused from the Copenhagen day after the effective date. Existing bookings after the effective date are not changed by FIT-71; what happens to them is an open point.
+- **(b)** A member can undo a pending cancellation.
+- **(c)** Cancelling sends a confirmation email.
+
+(a) is built in FIT-71. (b) and (c) are built in FIT-95.
+
+```mermaid
+timeline
+  title Cancellation on 10 March 2027 (D-048's example)
+  10 March : Member cancels : Confirmation email (c) : Undo possible until 30 April (b)
+  30 April : Effective date : Check-in works : Classes on this day can be booked
+  1 May : Check-in refused : Classes from this day can't be booked (a)
+```
+
+```mermaid
+flowchart TD
+  B[Member books a class] --> P{Pending cancellation?}
+  P -- no --> OK[Normal booking rules, D-039]
+  P -- yes --> D{"Class starts after the effective date? (Copenhagen day)"}
+  D -- no --> OK
+  D -- yes --> R["Refused: after-membership-ends"]
+```
+
+### Reasoning
+Owner decision. Option B for (a) was rejected because the member would hold a spot they can't use and would find out only at the door. Booking asks Members through `Members.Contracts` (`IMemberDirectory`), as Access does (D-020), so neither module reads the other's tables (architecture.md §4.2).
+
+### Sources
+- [D-048](#d-048-monthly-rolling-membership-with-no-binding-one-months-notice-to-month-end) — access until the effective date
+- [D-020](#d-020-payment-records-in-the-core-a-missing-payment-blocks-check-in-and-emails-the-member) and [architecture.md](architecture.md) §4.2 — cross-module reads through Contracts
+- [open-questions.md](open-questions.md) — D8 (revocation part moved to Answered)
+- Linear FIT-71 — "Owner decision (2026-11-24, option A)" and "Orchestrator notes (2026-11-24)"
