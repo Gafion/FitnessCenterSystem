@@ -14,6 +14,7 @@ export function classEntry(
     spotsLeft: 5,
     bookedByMe: false,
     cancelUntil: '2026-11-24T05:00:00Z',
+    afterMyMembershipEnds: false,
     ...overrides,
   };
 }

@@ -62,6 +62,27 @@ test('a missing payment shows a warning without the name', async () => {
   expect(screen.queryByText(/Welcome/)).not.toBeInTheDocument();
 });
 
+test('an ended membership shows a warning without the name', async () => {
+  const onSwipeMyCard = vi.fn().mockResolvedValue({
+    outcome: 'membership-ended' as const,
+    firstName: null,
+    at,
+  });
+  render(
+    <CardReader
+      cardUid={myCard}
+      onSwipeMyCard={onSwipeMyCard}
+      onSwipe={vi.fn()}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Swipe my card' }));
+
+  expect(await screen.findByText('Membership ended')).toBeInTheDocument();
+  expect(screen.getByText(/can't check in/)).toBeInTheDocument();
+  expect(screen.queryByText(/Welcome/)).not.toBeInTheDocument();
+});
+
 test('without a card, only a typed UID can be swiped', () => {
   render(
     <CardReader cardUid={null} onSwipeMyCard={vi.fn()} onSwipe={vi.fn()} />,

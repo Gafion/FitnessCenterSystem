@@ -57,6 +57,7 @@ Answers will be recorded here and, where they settle a medium/large decision, in
 | D11 (former row 8) | Keep D-042 and D-046. Repeat reminders and late fees come only with real payments. | D-042, D-046 |
 | M4 (former row 9) | Members must be 18 or older for now; date of birth collected at signup. | D-052 |
 | M5 (former row 10) | Collect no health data. | D-053 |
+| D8 (revocation part), D-048 open points | A member may undo a pending cancellation; cancelling sends a confirmation email; a member with a pending cancellation can't book classes after the effective date. Existing bookings after the effective date are still open (FIT-71). | D-055 |
 | DB8 | Spike done as a verification (FIT-36). Schema per module, history table per schema, schema-qualified SQL and a non-escalating shared transaction across module DbContexts are proven by `tests/FitnessCenter.IntegrationTests/ModuleSchemaTests.cs`. Default privileges and REFERENCES are confirmed from the PostgreSQL docs but unused while there is one database role (D-015). Details: database-schemas.md, Verification (FIT-36). | D-014, D-015 |
 
 The [stakeholder interview guide](stakeholder-interview-guide.md) is on hold (D-047).
@@ -294,7 +295,7 @@ Overlaps folded into F7, M1, M5, E2, E3, E4, E5, U4. New questions:
 | D5 | Price increases for existing members: grandfather or migrate with notice? How much notice? Lawyer-reviewed clause? | domain-modeling |
 | D6 | Upgrades/downgrades mid-period? Prorated? Does it restart the binding period? | domain-modeling |
 | D7 | Freezes: free/paid; min/max length; how many per year; medical evidence; extends binding?; allowed during notice?; any access during freeze? | domain-modeling |
-| D8 | Cancellation: may a member revoke it? On mid-period cancel, does access end immediately or at effective date? | domain-modeling |
+| D8 | Cancellation: may a member revoke it? On mid-period cancel, does access end immediately or at effective date? (Answered: access until the effective date, D-048; revocation allowed, D-055.) | domain-modeling |
 | D9 | Family/household memberships: needed? Who can be on one? Is the payer always a member? | domain-modeling |
 | D10 | Punch cards: expiry? Do late cancels/no-shows consume a clip? Refundable? | domain-modeling |
 | D11 | Dunning: retries and period; when is door access blocked; late fees; collections agency or write-off; different for card vs direct debit? (Partly answered, D-020: a missing payment emails the member and blocks check-in. Partly answered, D-042: placeholder of no grace period and one reminder email on the first Copenhagen day after paid-until. Partly answered, D-046: a member who has never paid is refused at check-in. The center's real grace period, repeat reminders (including whether a never-paid member gets one) and late fees still open.) | domain-modeling |

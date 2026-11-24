@@ -19,6 +19,12 @@ internal enum CheckInOutcome
     /// is refused and nothing is recorded: an attendance is an accepted swipe (data-model.md ATTENDANCE).
     /// </summary>
     PaymentMissing,
+
+    /// <summary>
+    /// The member cancelled and the cancellation has taken effect (D-048, D-055). Check-in is
+    /// refused and nothing is recorded.
+    /// </summary>
+    MembershipEnded,
 }
 
 /// <param name="FirstName">The member's first name, for the door screen. Only set on <see cref="CheckInOutcome.Welcome"/>.</param>
@@ -41,6 +47,13 @@ internal sealed class CheckInHandler(AccessDbContext db, IMemberDirectory member
 
         var member = await members.FindAsync(card.MemberId, now, cancellationToken)
             ?? throw new InvalidOperationException($"Card {card.Id.Value} belongs to a member that doesn't exist.");
+
+        // D-048, D-055: access lasts until the cancellation takes effect, and not after. Checked
+        // first: once the membership has ended, a payment can't fix it. No name, as below.
+        if (member.MembershipEnded)
+        {
+            return new CheckInResult(CheckInOutcome.MembershipEnded, null, now);
+        }
 
         // D-020, D-042: a missing payment refuses check-in, before anything is recorded. D-046: so
         // does never having paid. No name is returned: the door screen is public, and the warning

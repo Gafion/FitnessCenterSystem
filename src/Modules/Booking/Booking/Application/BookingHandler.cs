@@ -1,11 +1,16 @@
 using FitnessCenter.Modules.Booking.Domain;
 using FitnessCenter.Modules.Booking.Infrastructure;
+using FitnessCenter.Modules.Members.Contracts;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
 
 namespace FitnessCenter.Modules.Booking.Application;
 
 /// <summary>A class in the schedule, as one account sees it.</summary>
+/// <param name="AfterMyMembershipEnds">
+/// The account's member has cancelled and the class starts after the last day of access, so
+/// they can't book it (D-055 option A).
+/// </param>
 internal sealed record ScheduledClass(
     ClassSessionId Id,
     string ClassName,
@@ -15,14 +20,18 @@ internal sealed record ScheduledClass(
     int Capacity,
     int SpotsLeft,
     bool BookedByMe,
-    Instant CancelUntil);
+    Instant CancelUntil,
+    bool AfterMyMembershipEnds);
 
 /// <summary>A class the account has booked.</summary>
 internal sealed record BookedClass(
     ClassSessionId Id, string ClassName, string InstructorName, Instant StartsAt, Instant EndsAt, Instant CancelUntil);
 
-/// <summary>Booking and cancelling class spots (D-022, D-039).</summary>
-internal sealed class BookingHandler(BookingDbContext db, IClock clock)
+/// <summary>
+/// Booking and cancelling class spots (D-022, D-039). A member who has cancelled can't book
+/// classes after their last day of access (D-055); Members answers that through its Contracts (rule 1).
+/// </summary>
+internal sealed class BookingHandler(BookingDbContext db, IMemberDirectory members, IClock clock)
 {
     /// <summary>The classes that start within the booking window, soonest first.</summary>
     public async Task<IReadOnlyList<ScheduledClass>> GetScheduleAsync(Guid? accountId, CancellationToken cancellationToken)
@@ -35,6 +44,9 @@ internal sealed class BookingHandler(BookingDbContext db, IClock clock)
             .OrderBy(s => s.StartsAt)
             .ToListAsync(cancellationToken);
         var names = ClassType.All.ToDictionary(t => t.Id, t => t.Name);
+        var lastDayOfAccess = accountId is { } account
+            ? await members.FindLastDayOfAccessAsync(account, cancellationToken)
+            : null;
 
         return sessions
             .Select(s => new ScheduledClass(
@@ -46,7 +58,8 @@ internal sealed class BookingHandler(BookingDbContext db, IClock clock)
                 s.Capacity,
                 s.SpotsLeft,
                 accountId is { } id && s.IsBookedBy(id),
-                s.CancelUntil))
+                s.CancelUntil,
+                s.StartsAfter(lastDayOfAccess)))
             .ToList();
     }
 
@@ -68,8 +81,15 @@ internal sealed class BookingHandler(BookingDbContext db, IClock clock)
     }
 
     /// <returns>The outcome, or null when there is no such class.</returns>
-    public Task<BookOutcome?> BookAsync(ClassSessionId sessionId, Guid accountId, CancellationToken cancellationToken) =>
-        ChangeAsync(sessionId, session => session.Book(accountId, clock.GetCurrentInstant()), BookOutcome.Booked, cancellationToken);
+    public async Task<BookOutcome?> BookAsync(ClassSessionId sessionId, Guid accountId, CancellationToken cancellationToken)
+    {
+        var lastDayOfAccess = await members.FindLastDayOfAccessAsync(accountId, cancellationToken);
+        return await ChangeAsync(
+            sessionId,
+            session => session.Book(accountId, clock.GetCurrentInstant(), lastDayOfAccess),
+            BookOutcome.Booked,
+            cancellationToken);
+    }
 
     /// <returns>The outcome, or null when there is no such class.</returns>
     public Task<CancelOutcome?> CancelAsync(ClassSessionId sessionId, Guid accountId, CancellationToken cancellationToken) =>

@@ -717,7 +717,8 @@
         "enum": [
           "welcome",
           "unknown-card",
-          "payment-missing"
+          "payment-missing",
+          "membership-ended"
         ]
       },
       "GoogleSignupRequest": {
@@ -1069,7 +1070,8 @@
           "capacity",
           "spotsLeft",
           "bookedByMe",
-          "cancelUntil"
+          "cancelUntil",
+          "afterMyMembershipEnds"
         ],
         "type": "object",
         "properties": {
@@ -1105,6 +1107,9 @@
           "cancelUntil": {
             "type": "string",
             "format": "date-time"
+          },
+          "afterMyMembershipEnds": {
+            "type": "boolean"
           }
         }
       },
