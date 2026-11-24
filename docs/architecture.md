@@ -65,6 +65,7 @@ flowchart LR
 | [D-044](decisions.md) | Landing page built now with marked placeholder content, no logo |
 | [D-045](decisions.md) | CI skips the backend and frontend jobs when a PR changes only `.md` files; pushes to main run everything |
 | [D-046](decisions.md) | A member who has never paid is refused at check-in like a missing payment; no reminder email for them yet |
+| [D-050](decisions.md) | No paid hosting; during development the owner's laptop may run the system if hosting is needed; reaching it from outside is open |
 | [D-030](decisions.md) | ArchUnitNET for architecture tests |
 | [D-031](decisions.md) | Two projects per module: Contracts + one project with layer folders |
 | [D-032](decisions.md) | Signup slice: name/email/password, email + Google login, one placeholder membership awaiting payment, consent records |
@@ -531,29 +532,30 @@ Stage order and tool candidates come from [research/tech-stack.md](research/tech
 
 ---
 
-## 12. Deployment (🟡 open: SA4, owner decides, D-047)
+## 12. Deployment (decided for development: D-050)
+
+**Decided (D-050):** no paid hosting. There is no paid VPS and no PaaS. While development is ongoing, the owner **may** run the system on a laptop in their own apartment, if hosting is needed at all. Otherwise everything runs locally with `aspire run` (D-009).
+
+🟡 **Open, owner decides** ([open-questions.md](open-questions.md), "Owner decides" row 1): how the laptop is reached from outside. Recommended default: local network only until someone outside needs it, then Cloudflare Tunnel rather than a port on the router.
 
 ```mermaid
 flowchart LR
-  subgraph CandidateVPS["Candidate: one EU VPS (e.g. Hetzner)"]
-    RP["Reverse proxy<br/>TLS"] --> APIC["Core API<br/>container"]
-    APIC --> PGV[("PostgreSQL")]
-    RP --> STATIC["SPA static files"]
+  subgraph Laptop["Owner's laptop (D-050)"]
+    APIC["Core API"] --> PGV[("PostgreSQL")]
+    STATIC["SPA static files"]
   end
-  subgraph CandidatePaaS["Candidate: PaaS (e.g. Render / Azure)"]
-    WEB["Web service: Core API"] --> MPG[("Managed PostgreSQL")]
-    STAT["Static site: SPA"]
-  end
+  LAN["Local network"] --> Laptop
+  TUN["🟡 Free tunnel<br/>(e.g. Cloudflare Tunnel)"] -.-> Laptop
+  PORT["🟡 Port on the router"] -.-> Laptop
 ```
 
-| Option | Monthly price snapshot | Ops burden | Source |
+| Way in from outside | Cost | Notes | Source |
 |---|---|---|---|
-| Hetzner VPS + Compose (Aspire can generate it) | ≈ €11–13 + backups | Highest: you patch, back up, monitor | research/tech-stack.md §5.1; research/service-architecture.md §2.8 |
-| Render | ≈ $13–15 | Low | research/tech-stack.md §5.1 |
-| Fly.io | ≈ $46 | Low–medium | research/tech-stack.md §5.1 |
-| Azure | **UNVERIFIED** for EU | Low | research/tech-stack.md §5.1 |
+| Local network only | None | Only devices on the apartment's network | — |
+| Cloudflare Tunnel | "Available on all plans"; free-plan limits **UNVERIFIED** | Outbound-only connection, no inbound port; whether a domain on Cloudflare is needed is **UNVERIFIED** | https://developers.cloudflare.com/tunnel/ |
+| Port on the router | None | Opens an inbound port to the laptop | — |
 
-Requirement from compliance research: EU/EEA hosting and processors with DPAs (🟡 T3).
+Production hosting for real members is not decided. The earlier candidates (Hetzner VPS ≈ €11–13 + backups, Render, Fly.io, Azure; research/tech-stack.md §5.1, **UNVERIFIED** prices) were set aside because the owner will not pay for hosting (D-050). The compliance requirement of EU/EEA hosting and processors with DPAs (🟡 T3) applies once real member data is stored.
 
 ---
 
@@ -584,7 +586,7 @@ This is not built now ([D-006](decisions.md)). It is shown so that the core's ev
 |---|---|---|
 | DB details | DB2–DB8 (layout decided in D-014) | §7, §5 |
 | Auth implementation | AU1–AU8 → research/authentication.md | §8 |
-| Hosting | SA4 (owner, D-047) | §12 |
+| Hosting | Decided for development in D-050 (owner's laptop, no paid hosting; how it is reached from outside is still an owner question) | §12 |
 | RFID hardware and offline behaviour | D-003, SA3 (owner, D-047, then RFID research) | §3, §6.2 |
 | Final module list | PRD, owner decides (D-047) | §4 |
 | Test framework and policies | S11, Q2–Q7 | §11 |

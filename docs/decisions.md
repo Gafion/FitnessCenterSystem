@@ -1528,3 +1528,206 @@ Owner decision. The meeting will not happen within reasonable time, and a workin
 - D-001, D-004
 - [open-questions.md](open-questions.md) — "Owner decides (D-047)"
 - FIT-64
+
+---
+
+## D-048: Monthly rolling membership with no binding; one month's notice to month-end
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-019, D-032, D-047, FIT-65. Answers "Owner decides" rows 1 and 2 (M1, M2, D8, U2).
+
+### Problem statement
+Under D-047 the owner decides the questions that waited on the center. The next features after the MVP need to know which membership types exist (M1; D-019 says six, none named) and how binding, notice and cancellation work (M2, D8, U2).
+
+### Options considered
+1. **Recommended default ("Owner decides" rows 1–2):** monthly rolling membership with no binding; more types one at a time as features need them; one month's notice to the end of a month; members cancel online themselves; access lasts until the effective date; no "save" step. Pros: avoids the binding rules Danish law limits; matches the legal notice and cancellation-medium rules. Cons: no binding-period revenue.
+2. **Name all six types now, with binding periods.** Pros: matches D-019's count at once. Cons: binding and price rules for types no feature uses yet; binding is limited by Danish law.
+
+### Decision
+**Option 1**, as recommended.
+
+- **Membership types:** one monthly rolling membership with no binding. More types are added one at a time as features need them. Until then the signup slice keeps "General membership" (D-032).
+- **Notice:** one month's notice to the end of a month.
+- **Cancellation:** members cancel online themselves. There is no "save" or retention step before the cancellation.
+- **Access:** the member keeps access until the date the cancellation takes effect.
+
+```mermaid
+timeline
+  title Cancellation on 10 March (example)
+  10 March : Member cancels online : No "save" step
+  31 March : End of the month the cancellation was made in
+  30 April : Notice ends (one month to month-end) : Cancellation takes effect
+  1 May : Access ends
+```
+
+### Reasoning
+Owner decision, as recommended. Danish law limits binding to about 5 months plus 1 month's notice and requires cancellation on the same medium the contract was made on, so a rolling membership with online cancellation stays inside the rules. A retention step before cancelling is legally risky.
+
+### Sources
+- [research/compliance-legal-security.md](research/compliance-legal-security.md) — §6.2
+- [research/fitness-domain-operations.md](research/fitness-domain-operations.md) — §3.3
+- [research/ux-patterns.md](research/ux-patterns.md) — §3.4
+- [open-questions.md](open-questions.md) — "Owner decides (D-047)" rows 1–2 (moved to Answered)
+
+---
+
+## D-049: Four staff roles; instructors see only their own classes
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-047, FIT-65. Answers "Owner decides" row 3 (D13, E1).
+
+### Problem statement
+Staff features need to know which roles exist and what each may see (D13, E1).
+
+### Options considered
+1. **Recommended default (row 3):** role-based access with four roles: admin, manager, front desk, instructor. Instructors see only their own classes. Pros: RBAC is the baseline in the compliance checklist; single site, so no site scopes. Cons: finer permissions need a later change.
+2. **Fine-grained per-user permissions.** Pros: flexible. Cons: more to build and review for ~10 staff.
+
+### Decision
+**Option 1**, as recommended. Four roles: **admin, manager, front desk, instructor**. Instructors see only their own classes. No site scopes (single site, D-001).
+
+```mermaid
+flowchart LR
+  A[Admin] --- M[Manager] --- F[Front desk] --- I[Instructor]
+  I -.->|sees only| OWN[Own classes]
+```
+
+### Reasoning
+Owner decision, as recommended. RBAC is the baseline in the compliance checklist, and one site needs no site scoping.
+
+### Sources
+- [research/domain-modeling.md](research/domain-modeling.md) — §3.1
+- [research/compliance-legal-security.md](research/compliance-legal-security.md) — §10.2
+- [open-questions.md](open-questions.md) — "Owner decides (D-047)" row 3 (moved to Answered)
+
+---
+
+## D-050: No paid hosting; the owner's laptop if hosting is needed during development
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-009, D-047, FIT-57, FIT-65. Answers "Owner decides" row 5 (SA4, S8, T2, T3) and the FIT-57 question.
+
+### Problem statement
+Where does the system run once it needs to run somewhere other than `aspire run` on a developer machine (SA4, S8), and what may it cost (T2)? architecture.md §12 listed a Hetzner VPS, Render, Fly.io and Azure as candidates.
+
+### Options considered
+1. **Recommended default (row 5):** one EU VPS with Docker Compose and PostgreSQL with backups. Pros: cheapest paid option. Cons: a monthly cost (≈ €11–13 plus backups, **UNVERIFIED** prices) and the owner patches and backs up.
+2. **PaaS (Render, Fly.io, Azure).** Pros: low ops. Cons: higher monthly cost.
+3. **No paid hosting; the owner's own laptop when hosting is needed.** Pros: no cost. Cons: the laptop is not always on; reaching it from outside is a separate question; not a production setup.
+
+### Decision
+**Option 3**, the owner's own answer (not the recommendation).
+
+- The owner will not pay for hosting. There is **no paid VPS** and no PaaS.
+- While development is ongoing, the owner **may** run the system on a laptop in their own apartment, if hosting is needed at all.
+- **How the laptop is reached from outside is still open** (local network only, a free tunnel such as Cloudflare Tunnel, or opening a port on the router). It is an "Owner decides" row in [open-questions.md](open-questions.md).
+- Production hosting for real members is not decided here; it comes back when the system is to serve real members.
+
+```mermaid
+flowchart LR
+  DEV["Development:<br/>aspire run (D-009)"] --> NEED{Hosting needed?}
+  NEED -->|no| DEV
+  NEED -->|yes| LAP["Owner's laptop<br/>in the apartment"]
+  LAP --> REACH{"Reached from outside?<br/>🟡 Owner decides"}
+  REACH --> LAN[Local network only]
+  REACH --> TUN["Free tunnel<br/>(e.g. Cloudflare Tunnel)"]
+  REACH --> PORT[Port on the router]
+```
+
+### Reasoning
+Owner decision: no money is spent on hosting. During development there are no real members, so the EU data-residency need for member data (T3) does not yet apply to the laptop (synthetic data only, CLAUDE.md).
+
+### Sources
+- [research/integrations-and-architecture.md](research/integrations-and-architecture.md) — §3.5 (**UNVERIFIED** prices)
+- [architecture.md](architecture.md) — §12
+- [open-questions.md](open-questions.md) — "Owner decides (D-047)" row 5 (moved to Answered)
+- FIT-57
+
+---
+
+## D-051: Waitlist after the MVP: offer with expiry, no no-show penalties
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-022, D-039, D-047, FIT-65. Answers "Owner decides" row 7 (U4, D10).
+
+### Problem statement
+The MVP has no waitlist (D-022, D-039). After the MVP, what happens when a full class frees a spot, and are no-shows penalised (U4, D10)?
+
+### Options considered
+1. **Auto-promotion:** the next person is booked automatically. Pros: common. Cons: causes unwanted no-shows.
+2. **Offer with expiry (recommended, row 7):** the freed spot is offered to the next person for a set time, then to the person after them. Pros: avoids unwanted no-shows. Cons: one more step for the member.
+3. **Auto-promote outside the late-cancel window, offer-only inside it.** Pros: mixes both. Cons: two rules to explain.
+
+### Decision
+**Option 2**, as recommended. When a spot frees up, it is offered to the next person on the waitlist for a set time. If they don't accept in time, it goes to the next person. **No penalties for not showing up** yet. **How long the offer lasts is open**: an "Owner decides" row in [open-questions.md](open-questions.md).
+
+```mermaid
+stateDiagram-v2
+  [*] --> Waiting
+  Waiting --> Offered: a spot frees up
+  Offered --> Booked: accepted in time
+  Offered --> Expired: time runs out
+  Expired --> [*]: offer goes to the next person
+  Booked --> [*]
+```
+
+### Reasoning
+Owner decision, as recommended. Auto-promotion is common but causes unwanted no-shows; an offer with expiry avoids that.
+
+### Sources
+- [research/domain-modeling.md](research/domain-modeling.md) — §4.3, §7.11
+- [open-questions.md](open-questions.md) — "Owner decides (D-047)" row 7 (moved to Answered)
+
+---
+
+## D-052: Members must be 18 or older; date of birth collected at signup
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-032, D-047, FIT-65. Answers "Owner decides" row 9 (M4). Adds date of birth to D-032's signup data.
+
+### Problem statement
+May minors become members (M4)? D-032's signup collects name, email and password only, so the system cannot tell a member's age.
+
+### Options considered
+1. **18 or older only; collect date of birth at signup (recommended, row 9).** Pros: avoids the open questions on minors. Cons: excludes younger members; one more field at signup.
+2. **Accept members from 15.** Pros: wider market. Cons: minors' contract capacity is unresearched, and classes for under-15s may need a børneattest.
+
+### Decision
+**Option 1**, as recommended. Members must be **18 or older** for now. **Date of birth is collected at signup**, which adds a field to D-032's signup data.
+
+### Reasoning
+Owner decision, as recommended. Danish consent age is 15, minors' contract capacity is unresearched, and classes for under-15s may need a børneattest. An 18+ rule avoids all three until they are researched.
+
+### Sources
+- [research/compliance-legal-security.md](research/compliance-legal-security.md) — §8
+- [open-questions.md](open-questions.md) — "Owner decides (D-047)" row 9 (moved to Answered)
+
+---
+
+## D-053: Collect no health data
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner
+- **Relates to:** D-047, FIT-65. Answers "Owner decides" row 10 (M5).
+
+### Problem statement
+CLAUDE.md says health data needs an explicit decision first (M5). Does the system store health declarations, injury records or trainer notes?
+
+### Options considered
+1. **Collect none (recommended, row 10).** Pros: no special-category data to protect. Cons: no health declaration in the system.
+2. **Collect health declarations or notes.** Pros: trainers have the information. Cons: special-category data under GDPR, with stricter rules.
+
+### Decision
+**Option 1**, as recommended. The system collects **no health data**: no health declaration, no injury records, no trainer notes.
+
+### Reasoning
+Owner decision, as recommended. Health data is special-category data, and the research says to ask whether it is needed at all; it is not.
+
+### Sources
+- [research/compliance-legal-security.md](research/compliance-legal-security.md) — §3.2
+- [open-questions.md](open-questions.md) — "Owner decides (D-047)" row 10 (moved to Answered)
