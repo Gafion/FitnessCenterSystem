@@ -119,8 +119,7 @@
       "after-membership-ends": "Your membership ends before this class, so you can't book it.",
       "already-booked": "You have already booked this class.",
       "cancellation-closed": "Cancelling closes 12 hours before the class starts."
-    },
-    "notBookable": "Not bookable"
+    }
   },
   "simulation": {
     "label": "Simulation",
