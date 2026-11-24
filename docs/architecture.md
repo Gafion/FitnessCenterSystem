@@ -586,7 +586,7 @@ This is not built now ([D-006](decisions.md)). It is shown so that the core's ev
 |---|---|---|
 | DB details | DB2–DB8 (layout decided in D-014) | §7, §5 |
 | Auth implementation | AU1–AU8 → research/authentication.md | §8 |
-| Hosting | SA4 (owner, D-047) | §12 |
+| Hosting | Decided for development in D-050 (owner's laptop, no paid hosting; how it is reached from outside is still an owner question) | §12 |
 | RFID hardware and offline behaviour | D-003, SA3 (owner, D-047, then RFID research) | §3, §6.2 |
 | Final module list | PRD, owner decides (D-047) | §4 |
 | Test framework and policies | S11, Q2–Q7 | §11 |
