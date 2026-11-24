@@ -194,5 +194,16 @@
   "myBookings": {
     "none": "You have no upcoming classes.",
     "when": "{{start}}–{{end}}, Danish time"
+  },
+  "shell": {
+    "home": "FitnessCenter home",
+    "skip": "Skip to content",
+    "menu": "Menu",
+    "nav": {
+      "label": "Main",
+      "classes": "Classes",
+      "account": "My account"
+    },
+    "footer": "PLACEHOLDER: the name and logo are placeholders until the product is named."
   }
 }

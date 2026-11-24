@@ -6,8 +6,8 @@ export function GoogleButton({ href, label }: { href: string; label: string }) {
   const { t } = useTranslation();
 
   return (
-    <Button asChild variant="outline">
-      <a href={href}>{t(label)}</a>
+    <Button variant="outline" render={<a href={href} />}>
+      {t(label)}
     </Button>
   );
 }

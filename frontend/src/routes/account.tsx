@@ -196,8 +196,12 @@ function AccountPage() {
           ) : (
             <MyBookings bookings={bookings} />
           )}
-          <Button asChild variant="outline" className="self-start">
-            <Link to="/classes">{t('account.classes')}</Link>
+          <Button
+            variant="outline"
+            className="self-start"
+            render={<Link to="/classes" />}
+          >
+            {t('account.classes')}
           </Button>
         </AccountSection>
 
@@ -210,8 +214,12 @@ function AccountPage() {
             <p>{t('account.noCard')}</p>
           )}
           {simulation && (
-            <Button asChild variant="outline" className="self-start">
-              <Link to="/simulation/check-in">{t('account.checkIn')}</Link>
+            <Button
+              variant="outline"
+              className="self-start"
+              render={<Link to="/simulation/check-in" />}
+            >
+              {t('account.checkIn')}
             </Button>
           )}
         </AccountSection>

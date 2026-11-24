@@ -37,8 +37,8 @@ function ConfirmEmailPage() {
       <p>
         {t(confirmed ? 'confirmEmail.doneBody' : 'confirmEmail.failedBody')}
       </p>
-      <Button asChild className="self-start">
-        <Link to="/login">{t('login.title')}</Link>
+      <Button className="self-start" render={<Link to="/login" />}>
+        {t('login.title')}
       </Button>
     </section>
   );

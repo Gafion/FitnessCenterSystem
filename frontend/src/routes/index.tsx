@@ -59,14 +59,12 @@ export function LandingPage({ terms, upcoming }: Props) {
         </h1>
         <p className="text-lg text-muted-foreground">{t('landing.tagline')}</p>
         <div className="flex flex-wrap gap-3">
-          <Button asChild>
-            <Link to="/signup">{t('signup.title')}</Link>
+          <Button render={<Link to="/signup" />}>{t('signup.title')}</Button>
+          <Button variant="outline" render={<Link to="/login" />}>
+            {t('login.title')}
           </Button>
-          <Button asChild variant="outline">
-            <Link to="/login">{t('login.title')}</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/classes">{t('landing.classes')}</Link>
+          <Button variant="outline" render={<Link to="/classes" />}>
+            {t('landing.classes')}
           </Button>
         </div>
       </section>
@@ -114,8 +112,8 @@ export function LandingPage({ terms, upcoming }: Props) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild>
-                <Link to="/signup">{t('landing.membership.join')}</Link>
+              <Button render={<Link to="/signup" />}>
+                {t('landing.membership.join')}
               </Button>
             </CardContent>
           </Card>
