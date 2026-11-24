@@ -10,7 +10,7 @@ internal sealed class IdentityDbContextFactory : IDesignTimeDbContextFactory<Ide
     {
         var options = new DbContextOptionsBuilder<IdentityDbContext>()
             .UseNpgsql("Host=design-time-only", npgsql =>
-                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", IdentityDbContext.Schema))
+                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", IdentityDbContext.Schema).UseNodaTime())
             .Options;
         return new IdentityDbContext(options);
     }

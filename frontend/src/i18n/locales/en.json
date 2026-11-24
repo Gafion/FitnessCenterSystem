@@ -96,6 +96,19 @@
     "failed": "This link doesn't work",
     "failedBody": "It may be old. Log in with your email and password to ask for a new link."
   },
+  "acceptInvite": {
+    "title": "Set up your staff account",
+    "intro": "You were invited to join the staff. Give your name and choose a password.",
+    "submit": "Create staff account",
+    "done": "Your staff account is ready",
+    "doneBody": "Log in with the email the invite was sent to and the password you chose.",
+    "missing": "This invite link doesn't work",
+    "missingBody": "Check that you used the whole link from the email.",
+    "invite-used": "This invite has already been used. Log in with the email and password you chose.",
+    "invite-expired": "This invite has expired. Ask an admin to send a new one.",
+    "invalid-invite": "This invite link doesn't work. Check that you used the whole link from the email.",
+    "account-exists": "An account with this email already exists. Ask an admin to invite another email."
+  },
   "classes": {
     "title": "Classes",
     "intro": "Classes in the next 14 days. Times are Danish time.",

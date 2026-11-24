@@ -13,6 +13,8 @@ internal sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> opti
 {
     public const string Schema = "identity";
 
+    public DbSet<StaffInvite> StaffInvites => Set<StaffInvite>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -25,5 +27,16 @@ internal sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> opti
         });
 
         builder.Entity<IdentityRole<Guid>>().HasData(StaffRoleSeed.Roles);
+
+        builder.Entity<StaffInvite>(invite =>
+        {
+            invite.ToTable("StaffInvites");
+            invite.HasKey(i => i.Id);
+            invite.Property(i => i.Email).HasMaxLength(256);
+            invite.Property(i => i.Role).HasMaxLength(256);
+            invite.Property(i => i.CodeHash).HasMaxLength(StaffInvite.CodeHashLength);
+            invite.HasOne<Account>().WithMany().HasForeignKey(i => i.InvitedBy).OnDelete(DeleteBehavior.Restrict);
+            invite.HasOne<Account>().WithMany().HasForeignKey(i => i.AccountId).OnDelete(DeleteBehavior.Restrict);
+        });
     }
 }
