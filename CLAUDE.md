@@ -15,6 +15,7 @@ Member and employee administration for a **single-site fitness center in Denmark
 | Data model draft | `docs/data-model.md` |
 | Research (cited, verified) | `docs/research/` (index: `docs/research/README.md`) |
 | Interview guide for the center (on hold, D-047) | `docs/stakeholder-interview-guide.md` |
+| Design rules (based on Linear's design language) | `docs/design.md` |
 
 Read the relevant decision before changing anything it covers. Load docs on demand; don't read everything.
 
