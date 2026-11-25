@@ -38,6 +38,7 @@ async function mockMe(page: Page) {
         firstName: 'Test',
         lastName: 'Person',
         hasGoogleLogin: false,
+        staffRoles: [],
       },
     }),
   );
