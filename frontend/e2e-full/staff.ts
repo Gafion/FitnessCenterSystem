@@ -13,6 +13,12 @@ export const devAdmin: Staff = {
   firstName: 'Admin',
 };
 
+/** Teaches every development class (D-060). */
+export const devInstructor: Staff = {
+  email: 'dev-instructor@example.com',
+  firstName: 'Instructor',
+};
+
 function required(name: string): string {
   const value = process.env[name];
   if (!value) {
