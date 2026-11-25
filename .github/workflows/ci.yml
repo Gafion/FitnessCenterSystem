@@ -187,6 +187,12 @@ jobs:
       API_URL: http://localhost:5398
       E2E_BASE_URL: http://localhost:4173
       MAILPIT_URL: http://localhost:8025
+      # TEST-ONLY values, not secrets: the API seeds the synthetic development staff
+      # (dev-admin@example.com and so on, D-049) with this password and this TOTP key,
+      # and the staff specs compute the login code from the same key (FIT-109). They
+      # exist only in this job's throwaway database. Never use them anywhere else.
+      E2E_STAFF_PASSWORD: ci-test-only-staff-password
+      E2E_STAFF_AUTHENTICATOR_KEY: CITE STON LYFA KEKE YFOR TEST SONL YAAA
     steps:
       - uses: actions/checkout@v7
 
@@ -209,8 +215,9 @@ jobs:
       - name: Build API
         run: dotnet build src/FitnessCenter.Api
 
-      # Development: migrates the database and seeds the synthetic class schedule at
-      # startup. No Google client ID, so email/password only.
+      # Development: migrates the database and seeds the synthetic class schedule and the
+      # synthetic staff, with the authenticator on, at startup. No Google client ID, so
+      # email/password only.
       - name: Start API
         env:
           ASPNETCORE_ENVIRONMENT: Development
@@ -218,6 +225,8 @@ jobs:
           ConnectionStrings__fitnesscenter: Host=localhost;Port=5432;Database=fitnesscenter;Username=postgres;Password=postgres
           Email__Smtp__Host: localhost
           Email__Smtp__Port: '1025'
+          Identity__DevelopmentStaffPassword: ${{ env.E2E_STAFF_PASSWORD }}
+          Identity__DevelopmentStaffAuthenticatorKey: ${{ env.E2E_STAFF_AUTHENTICATOR_KEY }}
         run: |
           nohup dotnet run --project src/FitnessCenter.Api --no-build --no-launch-profile > api.log 2>&1 &
           for i in $(seq 1 60); do
