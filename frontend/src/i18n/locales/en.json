@@ -137,13 +137,19 @@
     "cancelClosed": "Cancelling closed at {{time}}.",
     "full": "This class is full.",
     "afterMembershipEnds": "Your membership ends before this class, so you can't book it.",
+    "joinWaitlist": "Join waitlist",
+    "leaveWaitlist": "Leave waitlist",
+    "waitlisted": "You're on the waitlist.",
+    "waitlistPlace": "You're number {{place}} in the queue.",
     "errors": {
       "class-full": "This class is full.",
       "class-started": "This class has already started.",
       "booking-not-open": "Booking opens 14 days before the class.",
       "after-membership-ends": "Your membership ends before this class, so you can't book it.",
       "already-booked": "You have already booked this class.",
-      "cancellation-closed": "Cancelling closes 12 hours before the class starts."
+      "cancellation-closed": "Cancelling closes 12 hours before the class starts.",
+      "already-waitlisted": "You're already on the waitlist for this class.",
+      "class-not-full": "This class has free spots, so book it instead."
     }
   },
   "simulation": {

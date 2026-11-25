@@ -2281,3 +2281,46 @@ Owner decision on FIT-52. Resend was the research's labelled recommendation for 
 - https://resend.com/docs/knowledge-base/403-error-resend-dev-domain
 - https://resend.com/docs/api-reference/errors
 - [open-questions.md](open-questions.md) — AU9 (moved to Answered)
+
+---
+
+## D-067: A waitlist offer lasts 2 hours, never past the cancel deadline; email plus account notice
+- **Date:** 2026-11-25
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-25 (FIT-78)
+- **Relates to:** D-039, D-051, D-066, FIT-79. Answers "Owner decides" row 2.
+
+### Problem statement
+D-051 offers a freed spot to the next person on the waitlist "for a set time", but left the length open. The member must also learn that they have an offer, or it runs out unseen.
+
+### Options considered
+1. **2 hours, but never past the 12-hour cancel deadline (D-039); then the next person (recommended, row 2).** Pros: spots free up only before the cancel deadline, so a short hold gives several people a chance. Cons: a member who doesn't check email for 2 hours loses the offer.
+2. **A longer hold (e.g. until the cancel deadline).** Pros: more time to answer. Cons: one slow member can block the spot for everyone behind them.
+
+How the member is told: **email** (the only channel the system sends today, D-066) **plus a notice on the account page**, so a member who opens the app sees the offer even if the email is missed.
+
+### Decision
+**Option 1, as recommended.**
+
+- An offer lasts **2 hours** from when it is made, but **never past the cancel deadline** (12 hours before the class, D-039). Whichever comes first ends it.
+- When an offer ends unanswered, the spot goes to the **next person** in the queue (D-051).
+- The member is told by **email** (Mailpit locally, Resend when switched on, D-066) **and** by a **notice on their account page**.
+- The queue is first come, first served. FIT-79 builds joining and leaving it; making and expiring offers is the next issue in the Waitlist project.
+
+```mermaid
+flowchart LR
+  F[A spot frees up] --> O["Offer to the first in the queue<br/>ends at min(now + 2 h, start − 12 h)"]
+  O -->|email + account notice| M[Member]
+  M -->|accepts in time| B[Booked]
+  O -->|time runs out| N[Offer to the next in the queue]
+  N --> O
+```
+
+### Reasoning
+Owner decision on FIT-78, as recommended. The research names "offer with expiry" but gives no length, so the 2-hour value is a product choice, not a researched figure (**UNVERIFIED** as an industry norm). Capping at the cancel deadline follows from D-039: after it, members can no longer cancel, so no hold should run past it.
+
+### Sources
+- Linear FIT-78: "Owner answer (2026-11-25): as recommended"
+- [research/domain-modeling.md](research/domain-modeling.md) — §4.3
+- D-039 (cancel deadline), D-051 (offer with expiry), D-066 (email provider)
+- [open-questions.md](open-questions.md) — "Owner decides (D-047)" row 2 (moved to Answered)
