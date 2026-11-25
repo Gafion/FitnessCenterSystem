@@ -2319,6 +2319,27 @@ flowchart LR
 ### Reasoning
 Owner decision on FIT-78, as recommended. The research names "offer with expiry" but gives no length, so the 2-hour value is a product choice, not a researched figure (**UNVERIFIED** as an industry norm). Capping at the cancel deadline follows from D-039: after it, members can no longer cancel, so no hold should run past it.
 
+### Consequences
+Added with the build (FIT-80, 2026-11-25), as the orchestrator's brief asked.
+
+- **Less than 2 hours before the cancel deadline:** the offer is still made, and it ends **at the cancel deadline**. An offer made 30 minutes before the deadline lasts 30 minutes. Once the cancel deadline has passed, **no offer is made**: a spot that frees up after it (members can't cancel then, but the system can, e.g. when a membership ends, D-055) is open to whoever books first. The queue stays, but nobody is offered the spot. Tests: `WaitlistOfferTests` (`An_offer_never_runs_past_the_cancel_deadline`, `An_offer_made_2_hours_before_the_cancel_deadline_lasts_until_it`, `After_the_cancel_deadline_no_offer_is_made_and_anyone_can_book`) and the property `Every_offer_ends_within_2_hours_and_by_the_cancel_deadline`.
+- **A held spot is not free:** while an offer is open, the class shows no free spot to anyone else, and only the member it was offered to can book it. Booking the class themselves accepts the offer. Declining, leaving the waitlist or an ending membership (FIT-80) gives it to the next person.
+- **How offers expire when nobody makes a request: lazily plus a sweep.** Every request that changes a class (book, cancel, join, leave, accept, decline) first expires the class's run-out offers and offers its free spots, under the class's row lock (D-039), and offers any spot the change freed. So an accept after the expiry always fails, and a cancellation offers the spot at once. Between requests, a hosted background service, `WaitlistOfferJob`, runs the same update for every upcoming class with a waitlist, once a minute (`Booking:WaitlistOffers:Interval`). It uses the injected clock and the domain rules; the timer only sets how soon the next person hears. The integration tests turn it off and run it themselves. This was chosen over a timer per offer because a sweep survives a restart with nothing to rebuild, and the row lock keeps it from offering a spot twice. The cost is that the next person may hear up to a minute late.
+- **When a membership ends,** the member is taken off the waitlists of classes after their last day of access, in the same transaction that cancels those bookings (D-055 amendment, FIT-97). A spot they held goes to the next person at the next sweep.
+- **The offer email** is sent after the offer is saved, in the account's language (D-065). A failed send is logged and not retried: the account page and the classes page show the offer too. The Danish email text is a developer translation (**UNVERIFIED**, listed in `frontend/src/i18n/locales/README.md`).
+
+```mermaid
+sequenceDiagram
+  participant R as Request or sweep (every minute)
+  participant C as Class (row lock)
+  participant M as Member
+  R->>C: expire run-out offers
+  R->>C: offer free spots to the queue, until min(now + 2 h, cancel deadline)
+  Note over C: no new offer once the cancel deadline has passed
+  C-->>M: email + account notice
+  M->>C: accept (booked) or decline (next person)
+```
+
 ### Sources
 - Linear FIT-78: "Owner answer (2026-11-25): as recommended"
 - [research/domain-modeling.md](research/domain-modeling.md) — §4.3
