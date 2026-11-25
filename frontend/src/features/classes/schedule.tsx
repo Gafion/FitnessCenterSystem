@@ -9,10 +9,19 @@ type Props = {
   now: Date;
   onBook: (classId: string) => Promise<BookingResult>;
   onCancel: (classId: string) => Promise<BookingResult>;
+  onJoinWaitlist?: (classId: string) => Promise<BookingResult>;
+  onLeaveWaitlist?: (classId: string) => Promise<BookingResult>;
 };
 
 /** The classes of the booking window, one section per Copenhagen day (D-039). */
-export function Schedule({ entries, now, onBook, onCancel }: Props) {
+export function Schedule({
+  entries,
+  now,
+  onBook,
+  onCancel,
+  onJoinWaitlist,
+  onLeaveWaitlist,
+}: Props) {
   const { t } = useTranslation();
   if (entries.length === 0) {
     return (
@@ -45,6 +54,12 @@ export function Schedule({ entries, now, onBook, onCancel }: Props) {
                 now={now}
                 onBook={() => onBook(entry.classId)}
                 onCancel={() => onCancel(entry.classId)}
+                onJoinWaitlist={
+                  onJoinWaitlist && (() => onJoinWaitlist(entry.classId))
+                }
+                onLeaveWaitlist={
+                  onLeaveWaitlist && (() => onLeaveWaitlist(entry.classId))
+                }
               />
             ))}
           </div>
