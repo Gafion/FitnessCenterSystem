@@ -58,11 +58,16 @@ test('a full class says so and cannot be booked', () => {
       now={beforeCutOff}
       onBook={noop}
       onCancel={noop}
+      onJoinWaitlist={noop}
     />,
   );
 
   expect(screen.getByText('This class is full.')).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Book' })).toBeDisabled();
+  // D-051: a full class offers only the waitlist; there is no Book button.
+  expect(screen.getByRole('button', { name: 'Join waitlist' })).toBeEnabled();
+  expect(
+    screen.queryByRole('button', { name: 'Book' }),
+  ).not.toBeInTheDocument();
 });
 
 test('a class after the membership ends says why and cannot be booked', () => {
