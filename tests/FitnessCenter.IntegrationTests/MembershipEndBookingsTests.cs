@@ -134,6 +134,80 @@ public sealed class MembershipEndBookingsTests
         Assert.IsFalse(await IsBookedAsync(factory, dayAfter, account), "the member books again");
     }
 
+    /// <summary>
+    /// Cancelling also takes the member off the waitlists of classes after the effective date,
+    /// including a spot held for them, which then goes to the next person (FIT-80). Waitlists on
+    /// the effective date itself stay.
+    /// </summary>
+    [TestMethod]
+    public async Task Cancelling_takes_the_member_off_waitlists_after_the_effective_date()
+    {
+        await using var factory = new ApiFactory(services => services.AddSingleton<IClock>(new MovableClock(CancelledAt)));
+        using var leaving = factory.CreateClient();
+        using var staying = factory.CreateClient();
+        using var next = factory.CreateClient();
+        var leaver = await AccountOfAsync(factory, await SignUpConfirmedAndLoggedInAsync(leaving, SyntheticEmail()));
+        var stayer = await AccountOfAsync(factory, await SignUpConfirmedAndLoggedInAsync(staying, SyntheticEmail()));
+        var nextEmail = SyntheticEmail();
+        var nextInLine = await AccountOfAsync(factory, await SignUpConfirmedAndLoggedInAsync(next, nextEmail));
+        var onEffectiveDate = await ScheduleClassAsync(factory, OnEffectiveDate, capacity: 1, stayer);
+        await JoinWaitlistAsync(factory, onEffectiveDate, leaver);
+        var dayAfter = await ScheduleClassAsync(factory, DayAfter, capacity: 1, stayer);
+        await JoinWaitlistAsync(factory, dayAfter, leaver);
+        // In the two-days-after class, a spot is already held for the leaver, with one more behind them.
+        var held = await ScheduleClassAsync(factory, TwoDaysAfter, capacity: 1, stayer);
+        await JoinWaitlistAsync(factory, held, leaver);
+        await JoinWaitlistAsync(factory, held, nextInLine);
+        await CancelAndOfferAsync(factory, held, stayer);
+
+        using var cancel = await leaving.PostAsync("/api/members/me/cancellation", null);
+        Assert.AreEqual(HttpStatusCode.OK, cancel.StatusCode, await cancel.Content.ReadAsStringAsync());
+
+        Assert.AreEqual(WaitlistEntryStatus.Waiting, await WaitlistStatusAsync(factory, onEffectiveDate, leaver));
+        Assert.AreEqual(WaitlistEntryStatus.RemovedMembershipEnds, await WaitlistStatusAsync(factory, dayAfter, leaver));
+        Assert.AreEqual(WaitlistEntryStatus.RemovedMembershipEnds, await WaitlistStatusAsync(factory, held, leaver));
+        Assert.AreEqual(WaitlistEntryStatus.Waiting, await WaitlistStatusAsync(factory, held, nextInLine));
+
+        // The spot the leaver held goes to the next person at the next sweep.
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            // It goes through every class in the shared test database; the asserts check only this test's.
+            await scope.ServiceProvider.GetRequiredService<BookingHandler>().UpdateOffersAsync(CancellationToken.None);
+        }
+
+        Assert.AreEqual(WaitlistEntryStatus.Offered, await WaitlistStatusAsync(factory, held, nextInLine));
+        Assert.AreEqual(1, await TestMailbox.CountToAsync(nextEmail, OfferEmails.Subject));
+    }
+
+    private static async Task JoinWaitlistAsync(ApiFactory factory, ClassSessionId sessionId, Guid accountId)
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
+        var session = await db.ClassSessions.SingleAsync(s => s.Id == sessionId);
+        Assert.AreEqual(JoinWaitlistOutcome.Joined, session.JoinWaitlist(accountId, session.StartsAt - Duration.FromDays(1)));
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>The booked account cancels a day before the class, and the spot is offered to the queue.</summary>
+    private static async Task CancelAndOfferAsync(ApiFactory factory, ClassSessionId sessionId, Guid bookedBy)
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
+        var session = await db.ClassSessions.SingleAsync(s => s.Id == sessionId);
+        var dayBefore = session.StartsAt - Duration.FromDays(1);
+        Assert.AreEqual(CancelOutcome.Cancelled, session.Cancel(bookedBy, dayBefore));
+        Assert.HasCount(1, session.UpdateOffers(dayBefore));
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task<WaitlistEntryStatus> WaitlistStatusAsync(ApiFactory factory, ClassSessionId sessionId, Guid accountId)
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
+        var session = await db.ClassSessions.AsNoTracking().SingleAsync(s => s.Id == sessionId);
+        return session.Waitlist.Where(e => e.AccountId == accountId).MaxBy(e => e.Number)!.Status;
+    }
+
     private static async Task<Guid> AccountOfAsync(ApiFactory factory, Guid memberId)
     {
         await using var scope = factory.Services.CreateAsyncScope();

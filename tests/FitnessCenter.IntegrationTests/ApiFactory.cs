@@ -36,6 +36,10 @@ public sealed class ApiFactory(
         // MissingPaymentTests run the reminders themselves, with a fixed clock.
         builder.UseSetting("Members:PaymentReminders:Enabled", "false");
 
+        // The waitlist offer sweep (D-067) would move offers on its own timer. WaitlistOfferTests
+        // run the sweep themselves, with a fixed clock.
+        builder.UseSetting("Booking:WaitlistOffers:Enabled", "false");
+
         builder.UseSetting("Email:Smtp:Host", TestMailbox.SmtpHost);
         builder.UseSetting("Email:Smtp:Port", TestMailbox.SmtpMappedPort.ToString(CultureInfo.InvariantCulture));
 
