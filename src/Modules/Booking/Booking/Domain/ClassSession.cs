@@ -73,23 +73,23 @@ internal enum CancelOutcome
 /// </summary>
 internal sealed class ClassSession
 {
-    public const int InstructorNameMaxLength = 100;
-
     private readonly List<ClassBooking> _bookings = [];
 
     private readonly List<WaitlistEntry> _waitlist = [];
 
     private ClassSession()
     {
-        InstructorName = string.Empty;
     }
 
     public ClassSessionId Id { get; private set; }
 
     public ClassTypeId ClassTypeId { get; private set; }
 
-    /// <summary>Plain text until there is a Staff module (D-039).</summary>
-    public string InstructorName { get; private set; }
+    /// <summary>
+    /// The Identity account of the instructor who teaches the class (D-060). Booking shows the
+    /// name through Identity's contract, never by reading Identity's tables (rule 3).
+    /// </summary>
+    public Guid InstructorAccountId { get; private set; }
 
     public Instant StartsAt { get; private set; }
 
@@ -109,8 +109,13 @@ internal sealed class ClassSession
     public Instant CancelUntil => StartsAt - BookingPolicy.CancellationCutoff;
 
     public static ClassSession Schedule(
-        ClassType type, string instructorName, Instant startsAt, Duration length, int capacity)
+        ClassType type, Guid instructorAccountId, Instant startsAt, Duration length, int capacity)
     {
+        if (instructorAccountId == Guid.Empty)
+        {
+            throw new ArgumentException("A class needs an instructor account (D-060).", nameof(instructorAccountId));
+        }
+
         if (capacity <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "A class needs at least one spot.");
@@ -125,7 +130,7 @@ internal sealed class ClassSession
         {
             Id = ClassSessionId.New(),
             ClassTypeId = type.Id,
-            InstructorName = instructorName,
+            InstructorAccountId = instructorAccountId,
             StartsAt = startsAt,
             EndsAt = startsAt + length,
             Capacity = capacity,

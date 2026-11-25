@@ -137,7 +137,7 @@ public sealed class BookingTests
 
         CollectionAssert.AreEqual(new[] { sooner, later }, mine.Select(b => b.ClassId).ToArray());
         Assert.AreEqual("Spinning", mine[0].ClassName);
-        Assert.AreEqual("Test Instructor", mine[0].InstructorName);
+        Assert.AreEqual("Test I.", mine[0].InstructorName, "the instructor account's first name and last initial (D-060)");
         Assert.AreEqual(mine[0].StartsAt.AddHours(-12), mine[0].CancelUntil);
     }
 
@@ -211,7 +211,7 @@ public sealed class BookingTests
         var db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
         var clock = scope.ServiceProvider.GetRequiredService<IClock>();
         var session = ClassSession.Schedule(
-            ClassType.Spinning, "Test Instructor", clock.GetCurrentInstant() + startsIn, Duration.FromMinutes(45), capacity);
+            ClassType.Spinning, await TestInstructors.CreateAsync(scope.ServiceProvider), clock.GetCurrentInstant() + startsIn, Duration.FromMinutes(45), capacity);
         db.ClassSessions.Add(session);
         await db.SaveChangesAsync();
         return session.Id.Value;

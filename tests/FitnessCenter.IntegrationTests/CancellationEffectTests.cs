@@ -121,7 +121,7 @@ public sealed class CancellationEffectTests
     {
         await using var scope = factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
-        var session = ClassSession.Schedule(ClassType.Spinning, "Test Instructor", startsAt, Duration.FromMinutes(45), 5);
+        var session = ClassSession.Schedule(ClassType.Spinning, await TestInstructors.CreateAsync(scope.ServiceProvider), startsAt, Duration.FromMinutes(45), 5);
         db.ClassSessions.Add(session);
         await db.SaveChangesAsync();
         return session.Id.Value;

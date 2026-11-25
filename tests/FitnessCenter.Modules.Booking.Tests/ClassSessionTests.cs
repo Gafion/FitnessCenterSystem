@@ -13,6 +13,23 @@ public sealed class ClassSessionTests
     private static readonly Guid Ben = Guid.Parse("0199a3c0-0000-7000-8000-00000000a002");
 
     [TestMethod]
+    public void A_class_is_linked_to_its_instructor_account()
+    {
+        var session = Session(capacity: 2);
+
+        Assert.AreEqual(TestInstructor.Id, session.InstructorAccountId);
+    }
+
+    [TestMethod]
+    public void A_class_needs_an_instructor_account()
+    {
+        var error = Assert.ThrowsExactly<ArgumentException>(
+            () => ClassSession.Schedule(ClassType.Spinning, Guid.Empty, Start, Duration.FromMinutes(50), 5));
+
+        Assert.AreEqual("instructorAccountId", error.ParamName);
+    }
+
+    [TestMethod]
     public void A_member_books_a_spot()
     {
         var session = Session(capacity: 2);
@@ -91,7 +108,7 @@ public sealed class ClassSessionTests
     public void The_cutoff_counts_real_hours_across_daylight_saving()
     {
         var start = new LocalDateTime(2026, 3, 29, 9, 0).InZoneStrictly(CenterTime.Zone).ToInstant();
-        var session = ClassSession.Schedule(ClassType.Spinning, "Test Instructor", start, Duration.FromMinutes(50), capacity: 5);
+        var session = ClassSession.Schedule(ClassType.Spinning, TestInstructor.Id, start, Duration.FromMinutes(50), capacity: 5);
 
         var cancelUntil = session.CancelUntil.InZone(CenterTime.Zone).LocalDateTime;
 
@@ -128,7 +145,7 @@ public sealed class ClassSessionTests
     {
         // 23:30 UTC on 12 January is 00:30 on 13 January in Copenhagen (UTC+1).
         var lateStart = Instant.FromUtc(2027, 1, 12, 23, 30);
-        var session = ClassSession.Schedule(ClassType.Spinning, "Test Instructor", lateStart, Duration.FromMinutes(50), 5);
+        var session = ClassSession.Schedule(ClassType.Spinning, TestInstructor.Id, lateStart, Duration.FromMinutes(50), 5);
 
         Assert.IsTrue(session.StartsAfter(new LocalDate(2027, 1, 12)));
         Assert.IsFalse(session.StartsAfter(new LocalDate(2027, 1, 13)));
@@ -182,5 +199,5 @@ public sealed class ClassSessionTests
     }
 
     private static ClassSession Session(int capacity) =>
-        ClassSession.Schedule(ClassType.Spinning, "Test Instructor", Start, Duration.FromMinutes(50), capacity);
+        ClassSession.Schedule(ClassType.Spinning, TestInstructor.Id, Start, Duration.FromMinutes(50), capacity);
 }

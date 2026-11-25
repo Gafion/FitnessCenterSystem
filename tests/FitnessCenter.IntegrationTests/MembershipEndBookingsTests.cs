@@ -224,7 +224,7 @@ public sealed class MembershipEndBookingsTests
     {
         await using var scope = factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
-        var session = ClassSession.Schedule(ClassType.Spinning, "Test Instructor", startsAt, Duration.FromMinutes(45), capacity);
+        var session = ClassSession.Schedule(ClassType.Spinning, await TestInstructors.CreateAsync(scope.ServiceProvider), startsAt, Duration.FromMinutes(45), capacity);
         foreach (var account in bookedBy)
         {
             Assert.AreEqual(BookOutcome.Booked, session.Book(account, startsAt - Duration.FromDays(1)));

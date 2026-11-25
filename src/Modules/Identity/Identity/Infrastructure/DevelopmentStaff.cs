@@ -22,13 +22,16 @@ internal static partial class DevelopmentStaff
     /// </summary>
     public const string AuthenticatorKeyKey = "Identity:DevelopmentStaffAuthenticatorKey";
 
+    /// <summary>The development instructor, who teaches the development classes (D-060).</summary>
+    public const string InstructorEmail = "dev-instructor@example.com";
+
     // Synthetic names on the reserved example.com domain.
     public static IReadOnlyList<(string Role, string Email, string FirstName)> Accounts { get; } =
     [
         (StaffRoles.Admin, "dev-admin@example.com", "Admin"),
         (StaffRoles.Manager, "dev-manager@example.com", "Manager"),
         (StaffRoles.FrontDesk, "dev-frontdesk@example.com", "Frontdesk"),
-        (StaffRoles.Instructor, "dev-instructor@example.com", "Instructor"),
+        (StaffRoles.Instructor, InstructorEmail, "Instructor"),
     ];
 
     /// <summary>Creates the accounts that are missing and gives each its role. Safe to run on every start.</summary>

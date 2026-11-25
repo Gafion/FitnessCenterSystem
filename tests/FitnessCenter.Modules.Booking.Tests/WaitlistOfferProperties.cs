@@ -147,5 +147,5 @@ public sealed class WaitlistOfferProperties
     }
 
     private static ClassSession Session(int capacity) =>
-        ClassSession.Schedule(ClassType.Spinning, "Test Instructor", Start, Duration.FromMinutes(50), capacity);
+        ClassSession.Schedule(ClassType.Spinning, TestInstructor.Id, Start, Duration.FromMinutes(50), capacity);
 }

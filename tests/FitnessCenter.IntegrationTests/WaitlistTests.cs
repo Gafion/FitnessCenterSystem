@@ -193,7 +193,7 @@ public sealed class WaitlistTests
         var db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
         var clock = scope.ServiceProvider.GetRequiredService<IClock>();
         var session = ClassSession.Schedule(
-            ClassType.Spinning, "Test Instructor", clock.GetCurrentInstant() + Duration.FromDays(2), Duration.FromMinutes(45), capacity);
+            ClassType.Spinning, await TestInstructors.CreateAsync(scope.ServiceProvider), clock.GetCurrentInstant() + Duration.FromDays(2), Duration.FromMinutes(45), capacity);
         db.ClassSessions.Add(session);
         await db.SaveChangesAsync();
         return session.Id.Value;

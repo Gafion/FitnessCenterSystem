@@ -3,6 +3,7 @@ using FitnessCenter.Modules.Identity.Infrastructure;
 using FitnessCenter.SharedKernel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace FitnessCenter.Modules.Identity.Application;
 
@@ -99,6 +100,24 @@ internal sealed class AccountService(
         await users.FindByIdAsync(accountId.Value.ToString()) is { } account
             ? new EmailRecipient(account.FirstName, account.PreferredLanguage)
             : null;
+
+    public async Task<IReadOnlyDictionary<AccountId, string>> FindDisplayNamesAsync(
+        IReadOnlyCollection<AccountId> accountIds, CancellationToken cancellationToken)
+    {
+        var ids = accountIds.Select(id => id.Value).Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            return new Dictionary<AccountId, string>();
+        }
+
+        var names = await users.Users
+            .AsNoTracking()
+            .Where(account => ids.Contains(account.Id))
+            .Select(account => new { account.Id, account.FirstName, account.LastName })
+            .ToListAsync(cancellationToken);
+        return names.ToDictionary(
+            name => new AccountId(name.Id), name => DisplayNames.Of(name.FirstName, name.LastName));
+    }
 
     private static Account NewAccount(string email, string firstName, string lastName, Language language) => new()
     {
