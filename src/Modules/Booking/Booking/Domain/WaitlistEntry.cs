@@ -30,6 +30,9 @@ internal enum WaitlistEntryStatus
     /// (D-055 amendment, FIT-80), as it cancels their bookings.
     /// </summary>
     RemovedMembershipEnds,
+
+    /// <summary>The center cancelled the class, which clears its waitlist (D-068).</summary>
+    ClassCancelled,
 }
 
 /// <summary>
@@ -106,6 +109,20 @@ internal sealed class WaitlistEntry
     internal void Expire() => End(WaitlistEntryStatus.Expired, OfferExpiresAt!.Value);
 
     internal void RemoveBecauseMembershipEnds(Instant now) => End(WaitlistEntryStatus.RemovedMembershipEnds, now);
+
+    internal void RemoveBecauseClassCancelled(Instant now) => End(WaitlistEntryStatus.ClassCancelled, now);
+
+    /// <summary>
+    /// Ends an open offer no later than <paramref name="latest"/>, when the class moved and its
+    /// cancel deadline came closer (D-067, D-068). Never before the offer was made.
+    /// </summary>
+    internal void EndOfferBy(Instant latest)
+    {
+        if (IsOffered && OfferExpiresAt > latest)
+        {
+            OfferExpiresAt = Instant.Max(latest, OfferedAt!.Value);
+        }
+    }
 
     private void End(WaitlistEntryStatus status, Instant now)
     {

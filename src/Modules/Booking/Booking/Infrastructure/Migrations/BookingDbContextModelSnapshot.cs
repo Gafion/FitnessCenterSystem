@@ -29,6 +29,9 @@ namespace Booking.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<Instant?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("Capacity")
                         .HasColumnType("integer");
 
@@ -43,6 +46,11 @@ namespace Booking.Infrastructure.Migrations
 
                     b.Property<Instant>("StartsAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
 
                     b.HasKey("Id");
 
@@ -66,6 +74,9 @@ namespace Booking.Infrastructure.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("class_types", "booking");
 
@@ -102,6 +113,9 @@ namespace Booking.Infrastructure.Migrations
                                 .HasColumnType("timestamp with time zone");
 
                             b1.Property<Instant?>("CancelledAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<Instant?>("ClassMovedAt")
                                 .HasColumnType("timestamp with time zone");
 
                             b1.Property<Guid>("ClassSessionId")

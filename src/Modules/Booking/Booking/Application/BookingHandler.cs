@@ -51,10 +51,10 @@ internal sealed class BookingHandler(
         var until = now + BookingPolicy.BookingWindow;
         var sessions = await db.ClassSessions
             .AsNoTracking()
-            .Where(s => s.StartsAt > now && s.StartsAt <= until)
+            .Where(s => s.StartsAt > now && s.StartsAt <= until && s.Status == ClassSessionStatus.Scheduled)
             .OrderBy(s => s.StartsAt)
             .ToListAsync(cancellationToken);
-        var names = ClassType.All.ToDictionary(t => t.Id, t => t.Name);
+        var names = await ClassNamesAsync(cancellationToken);
         var instructors = await InstructorNamesAsync(sessions, cancellationToken);
         var lastDayOfAccess = accountId is { } account
             ? await members.FindLastDayOfAccessAsync(account, cancellationToken)
@@ -70,7 +70,7 @@ internal sealed class BookingHandler(
                 s.Capacity,
                 s.SpotsLeft,
                 accountId is { } id && s.IsBookedBy(id),
-                s.CancelUntil,
+                accountId is { } own ? s.CancelUntilFor(own) : s.CancelUntil,
                 s.StartsAfter(lastDayOfAccess),
                 accountId is { } waiting ? s.WaitlistPlaceOf(waiting) : null,
                 accountId is { } offered ? s.OpenOfferOf(offered, now)?.OfferExpiresAt : null))
@@ -87,7 +87,7 @@ internal sealed class BookingHandler(
                 && s.Waitlist.Any(e => e.AccountId == accountId && e.Status == WaitlistEntryStatus.Offered && e.OfferExpiresAt > now))
             .OrderBy(s => s.StartsAt)
             .ToListAsync(cancellationToken);
-        var names = ClassType.All.ToDictionary(t => t.Id, t => t.Name);
+        var names = await ClassNamesAsync(cancellationToken);
         var instructors = await InstructorNamesAsync(sessions, cancellationToken);
 
         return sessions
@@ -113,11 +113,12 @@ internal sealed class BookingHandler(
                 && s.Bookings.Any(b => b.AccountId == accountId && b.Status == ClassBookingStatus.Booked))
             .OrderBy(s => s.StartsAt)
             .ToListAsync(cancellationToken);
-        var names = ClassType.All.ToDictionary(t => t.Id, t => t.Name);
+        var names = await ClassNamesAsync(cancellationToken);
         var instructors = await InstructorNamesAsync(sessions, cancellationToken);
 
         return sessions
-            .Select(s => new BookedClass(s.Id, names[s.ClassTypeId], instructors(s), s.StartsAt, s.EndsAt, s.CancelUntil))
+            .Select(s => new BookedClass(
+                s.Id, names[s.ClassTypeId], instructors(s), s.StartsAt, s.EndsAt, s.CancelUntilFor(accountId)))
             .ToList();
     }
 
@@ -209,13 +210,13 @@ internal sealed class BookingHandler(
         var offers = new List<NewOffer>();
         await using (var transaction = await db.Database.BeginTransactionAsync(cancellationToken))
         {
-            var session = await LockAsync(sessionId, cancellationToken);
+            var session = await db.LockClassAsync(sessionId, cancellationToken);
             if (session is null)
             {
                 return 0;
             }
 
-            offers.AddRange(Offers(session, session.UpdateOffers(clock.GetCurrentInstant())));
+            offers.AddRange(await OffersAsync(session, session.UpdateOffers(clock.GetCurrentInstant()), cancellationToken));
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
@@ -238,17 +239,17 @@ internal sealed class BookingHandler(
         TOutcome outcome;
         await using (var transaction = await db.Database.BeginTransactionAsync(cancellationToken))
         {
-            var session = await LockAsync(sessionId, cancellationToken);
+            var session = await db.LockClassAsync(sessionId, cancellationToken);
             if (session is null)
             {
                 return null;
             }
 
-            offers.AddRange(Offers(session, session.UpdateOffers(clock.GetCurrentInstant())));
+            offers.AddRange(await OffersAsync(session, session.UpdateOffers(clock.GetCurrentInstant()), cancellationToken));
             outcome = change(session);
             if (EqualityComparer<TOutcome>.Default.Equals(outcome, success))
             {
-                offers.AddRange(Offers(session, session.UpdateOffers(clock.GetCurrentInstant())));
+                offers.AddRange(await OffersAsync(session, session.UpdateOffers(clock.GetCurrentInstant()), cancellationToken));
             }
 
             // Saved even when the change is refused: the offers may have moved on.
@@ -260,32 +261,29 @@ internal sealed class BookingHandler(
         return outcome;
     }
 
-    private static IEnumerable<NewOffer> Offers(ClassSession session, IReadOnlyList<WaitlistEntry> entries)
+    /// <summary>The members to email about the new offers (D-067).</summary>
+    internal async Task<IReadOnlyList<NewOffer>> OffersAsync(
+        ClassSession session, IReadOnlyList<WaitlistEntry> entries, CancellationToken cancellationToken)
     {
-        var name = ClassType.All.Single(t => t.Id == session.ClassTypeId).Name;
+        if (entries.Count == 0)
+        {
+            return [];
+        }
+
+        var name = await db.ClassTypes.Where(t => t.Id == session.ClassTypeId).Select(t => t.Name).SingleAsync(cancellationToken);
         return entries
             .Select(entry => new NewOffer(entry.AccountId, name, session.StartsAt, entry.OfferExpiresAt!.Value))
             .ToList();
     }
 
-    private async Task<ClassSession?> LockAsync(ClassSessionId sessionId, CancellationToken cancellationToken)
-    {
-        // Lock the class row first, so two requests for the last spot take turns: the second
-        // one sees the first one's booking and gets "full" (D-039). The same lock keeps the
-        // waitlist in order, stops a booking and a queue entry racing (D-051), and stops the
-        // offer sweep and a request offering the same spot twice (D-067).
-        await db.Database.ExecuteSqlAsync(
-            $"""SELECT 1 FROM booking.class_sessions WHERE "Id" = {sessionId.Value} FOR UPDATE""",
-            cancellationToken);
-
-        return await db.ClassSessions.SingleOrDefaultAsync(s => s.Id == sessionId, cancellationToken);
-    }
+    private Task<Dictionary<ClassTypeId, string>> ClassNamesAsync(CancellationToken cancellationToken) =>
+        db.ClassTypes.AsNoTracking().ToDictionaryAsync(t => t.Id, t => t.Name, cancellationToken);
 
     /// <summary>
     /// Looks up the instructors' names for the sessions in one call to Identity (D-060). Every
     /// instructor account exists: the foreign key keeps an account with classes from being deleted.
     /// </summary>
-    private async Task<Func<ClassSession, string>> InstructorNamesAsync(
+    internal async Task<Func<ClassSession, string>> InstructorNamesAsync(
         IReadOnlyCollection<ClassSession> sessions, CancellationToken cancellationToken)
     {
         var ids = sessions.Select(s => new AccountId(s.InstructorAccountId)).Distinct().ToList();

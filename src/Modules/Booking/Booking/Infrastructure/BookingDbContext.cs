@@ -25,7 +25,8 @@ internal sealed class BookingDbContext(DbContextOptions<BookingDbContext> option
             type.HasKey(t => t.Id);
             type.Property(t => t.Id).HasConversion(id => id.Value, value => new ClassTypeId(value));
             type.Property(t => t.Name).HasMaxLength(ClassType.NameMaxLength);
-            type.HasData(ClassType.All.Select(t => new { t.Id, t.Name }));
+            type.HasIndex(t => t.Name).IsUnique();
+            type.HasData(ClassType.Seeded.Select(t => new { t.Id, t.Name }));
         });
 
         modelBuilder.Entity<ClassSession>(session =>
@@ -41,6 +42,11 @@ internal sealed class BookingDbContext(DbContextOptions<BookingDbContext> option
             session.HasIndex(s => s.StartsAt);
             session.Ignore(s => s.SpotsLeft);
             session.Ignore(s => s.CancelUntil);
+            session.Ignore(s => s.IsCancelled);
+            session.Ignore(s => s.BookedCount);
+            session.Ignore(s => s.WaitlistCount);
+            session.Ignore(s => s.Length);
+            session.Property(s => s.Status).HasConversion<string>().HasMaxLength(40);
 
             session.OwnsMany(s => s.Bookings, booking =>
             {

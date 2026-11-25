@@ -119,6 +119,13 @@ internal sealed class AccountService(
             name => new AccountId(name.Id), name => DisplayNames.Of(name.FirstName, name.LastName));
     }
 
+    public async Task<bool> HasRoleAsync(AccountId accountId, string role, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var account = await users.FindByIdAsync(accountId.Value.ToString());
+        return account is not null && await users.IsInRoleAsync(account, role);
+    }
+
     private static Account NewAccount(string email, string firstName, string lastName, Language language) => new()
     {
         PreferredLanguage = language,

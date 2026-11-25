@@ -27,6 +27,8 @@ public static class BookingModule
 
         services.AddScoped<BookingHandler>();
         services.AddScoped<OfferEmails>();
+        services.AddScoped<StaffClassHandler>();
+        services.AddScoped<ClassChangeEmails>();
         services.AddHostedService<WaitlistOfferJob>();
         services.AddScoped<IMemberBookings, MemberBookings>();
 
@@ -37,7 +39,7 @@ public static class BookingModule
 
     public static IEndpointRouteBuilder MapBookingEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        return endpoints.MapClassEndpoints();
+        return endpoints.MapClassEndpoints().MapStaffClassEndpoints();
     }
 
     /// <summary>Applies this module's migrations. The host calls it at startup in Development.</summary>
