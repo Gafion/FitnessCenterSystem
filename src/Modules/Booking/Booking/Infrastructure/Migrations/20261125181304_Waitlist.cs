@@ -20,6 +20,7 @@ namespace Booking.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ClassSessionId = table.Column<Guid>(type: "uuid", nullable: false),
                     AccountId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Number = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: false),
                     JoinedAt = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
                     LeftAt = table.Column<Instant>(type: "timestamp with time zone", nullable: true)
@@ -49,6 +50,13 @@ namespace Booking.Infrastructure.Migrations
                 columns: new[] { "ClassSessionId", "AccountId" },
                 unique: true,
                 filter: "\"Status\" = 'Waiting'");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_waitlist_entries_ClassSessionId_Number",
+                schema: "booking",
+                table: "waitlist_entries",
+                columns: new[] { "ClassSessionId", "Number" },
+                unique: true);
         }
 
         /// <inheritdoc />

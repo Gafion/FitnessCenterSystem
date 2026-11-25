@@ -74,6 +74,7 @@ internal sealed class BookingDbContext(DbContextOptions<BookingDbContext> option
                     .IsUnique()
                     .HasFilter("\"Status\" = 'Waiting'");
                 entry.HasIndex(e => e.AccountId);
+                entry.HasIndex(e => new { e.ClassSessionId, e.Number }).IsUnique();
             });
             session.Navigation(s => s.Waitlist).HasField("_waitlist");
         });

@@ -16,8 +16,8 @@ internal enum WaitlistEntryStatus
 
 /// <summary>
 /// One account's place in the waitlist of a full class (D-051). The queue is first come, first
-/// served: ordered by <see cref="JoinedAt"/>, then by the time-ordered id. An entry that left
-/// the queue stays as history, like a cancelled booking.
+/// served: ordered by <see cref="Number"/>, like a ticket from a queue machine. An entry that
+/// left the queue stays as history, like a cancelled booking.
 /// </summary>
 internal sealed class WaitlistEntry
 {
@@ -31,6 +31,12 @@ internal sealed class WaitlistEntry
 
     public Guid AccountId { get; private set; }
 
+    /// <summary>
+    /// The entry's ticket number within its class: one more than the class's highest so far.
+    /// Join times alone can tie, and time-ordered ids aren't ordered within a millisecond.
+    /// </summary>
+    public int Number { get; private set; }
+
     public WaitlistEntryStatus Status { get; private set; }
 
     public Instant JoinedAt { get; private set; }
@@ -39,11 +45,12 @@ internal sealed class WaitlistEntry
 
     public bool IsWaiting => Status == WaitlistEntryStatus.Waiting;
 
-    internal static WaitlistEntry Create(ClassSessionId sessionId, Guid accountId, Instant now) => new()
+    internal static WaitlistEntry Create(ClassSessionId sessionId, Guid accountId, int number, Instant now) => new()
     {
         Id = WaitlistEntryId.New(),
         ClassSessionId = sessionId,
         AccountId = accountId,
+        Number = number,
         Status = WaitlistEntryStatus.Waiting,
         JoinedAt = now,
     };

@@ -117,8 +117,7 @@ internal sealed class ClassSession
     public IReadOnlyList<WaitlistEntry> Queue =>
         _waitlist
             .Where(entry => entry.IsWaiting)
-            .OrderBy(entry => entry.JoinedAt)
-            .ThenBy(entry => entry.Id.Value)
+            .OrderBy(entry => entry.Number)
             .ToList();
 
     /// <summary>The account's place in the queue, counting from 1, or null when it isn't waiting.</summary>
@@ -203,7 +202,8 @@ internal sealed class ClassSession
             return JoinWaitlistOutcome.NotFull;
         }
 
-        _waitlist.Add(WaitlistEntry.Create(Id, accountId, now));
+        var number = _waitlist.Count == 0 ? 1 : _waitlist.Max(entry => entry.Number) + 1;
+        _waitlist.Add(WaitlistEntry.Create(Id, accountId, number, now));
         return JoinWaitlistOutcome.Joined;
     }
 

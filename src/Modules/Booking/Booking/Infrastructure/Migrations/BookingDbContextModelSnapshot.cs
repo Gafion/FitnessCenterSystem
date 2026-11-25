@@ -143,6 +143,9 @@ namespace Booking.Infrastructure.Migrations
                             b1.Property<Instant?>("LeftAt")
                                 .HasColumnType("timestamp with time zone");
 
+                            b1.Property<int>("Number")
+                                .HasColumnType("integer");
+
                             b1.Property<string>("Status")
                                 .IsRequired()
                                 .HasMaxLength(40)
@@ -155,6 +158,9 @@ namespace Booking.Infrastructure.Migrations
                             b1.HasIndex("ClassSessionId", "AccountId")
                                 .IsUnique()
                                 .HasFilter("\"Status\" = 'Waiting'");
+
+                            b1.HasIndex("ClassSessionId", "Number")
+                                .IsUnique();
 
                             b1.ToTable("waitlist_entries", "booking");
 
