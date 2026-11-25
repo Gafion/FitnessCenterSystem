@@ -57,11 +57,29 @@ namespace Booking.Infrastructure.Migrations
                 table: "waitlist_entries",
                 columns: new[] { "ClassSessionId", "Number" },
                 unique: true);
+
+            // Added by hand, like bookings in InitialBooking: a waitlist entry belongs to an
+            // Identity account (D-039, D-051). Integrity only; Booking never reads Identity's
+            // tables (rule 3).
+            migrationBuilder.AddForeignKey(
+                name: "FK_waitlist_entries_identity_AspNetUsers_AccountId",
+                schema: "booking",
+                table: "waitlist_entries",
+                column: "AccountId",
+                principalSchema: "identity",
+                principalTable: "AspNetUsers",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_waitlist_entries_identity_AspNetUsers_AccountId",
+                schema: "booking",
+                table: "waitlist_entries");
+
             migrationBuilder.DropTable(
                 name: "waitlist_entries",
                 schema: "booking");

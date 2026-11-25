@@ -55,6 +55,7 @@ Answers will be recorded here and, where they settle a medium/large decision, in
 | SA4, S8, T2, T3 (former row 5) | No paid hosting. During development the owner's laptop may run the system if hosting is needed. How it is reached from outside is under "Owner decides". | D-050 |
 | Booking window and cancel deadline (former row 6) | Keep D-039: 14-day window, cancel until 12 hours before start, no penalties. | D-039 |
 | U4, D10 (former row 7) | After the MVP: offer with expiry to the next person on the waitlist; no no-show penalties yet. Offer length is under "Owner decides". | D-051 |
+| Waitlist offer length and notice (former "Owner decides" row 2) | An offer lasts 2 hours, never past the 12-hour cancel deadline; then the next person. The member is told by email plus a notice on the account page. | D-067 |
 | D11 (former row 8) | Keep D-042 and D-046. Repeat reminders and late fees come only with real payments. | D-042, D-046 |
 | M4 (former row 9) | Members must be 18 or older for now; date of birth collected at signup. | D-052 |
 | M5 (former row 10) | Collect no health data. | D-053 |
@@ -72,17 +73,16 @@ The [stakeholder interview guide](stakeholder-interview-guide.md) is on hold (D-
 
 These questions waited on the center (D-004). Under D-047 the owner decides each one. Every row has a **recommended default**, a one-line reason and a source. These are recommendations only; nothing here is decided until it is recorded in [decisions.md](decisions.md). The full question text stays in the tier tables below.
 
-Rows 1–10 of the first version were answered on 2026-11-24 (D-048–D-053; see Answered above). The rows below are renumbered. Row 6 (languages) was answered later the same day (D-065); the other rows keep their numbers. Rows 1–2 follow from those answers, and later rows come with staff, payments and hardware.
+Rows 1–10 of the first version were answered on 2026-11-24 (D-048–D-053; see Answered above). The rows below are renumbered. Row 6 (languages) was answered later the same day (D-065), and row 2 (waitlist offer length) on 2026-11-25 (D-067); the other rows keep their numbers. Row 1 follows from those answers, and later rows come with staff, payments and hardware.
 
 ```mermaid
 flowchart LR
-  N["Follow-ups to D-050, D-051<br/>1–2"] --> S["Staff and operations<br/>3–12"] --> L["Payments, hardware, later<br/>13–19"]
+  N["Follow-up to D-050<br/>1"] --> S["Staff and operations<br/>3–12"] --> L["Payments, hardware, later<br/>13–19"]
 ```
 
 | # | Question (IDs) | Recommended default | Reason | Source |
 |---|---|---|---|---|
 | 1 | How the owner's laptop is reached from outside (D-050) | Local network only while nobody outside needs it; when someone does, Cloudflare Tunnel rather than a port on the router. | cloudflared makes outbound-only connections, so no inbound port is opened on the home router. Cloudflare says it is "available on all plans"; that the free plan has no cost limits, and whether a domain on Cloudflare is needed, are **UNVERIFIED**. | https://developers.cloudflare.com/tunnel/ ; https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/ |
-| 2 | How long a waitlist offer lasts (D-051) | 2 hours, but never past the 12-hour cancel deadline (D-039); then the next person. | The research names "offer with expiry" but gives no length (**UNVERIFIED** value). Spots free up only before the cancel deadline, so a short hold gives several people a chance. | [domain-modeling.md §4.3](research/domain-modeling.md); D-039 |
 | 3 | Product name and brand (U10) | The owner picks a product name; keep D-044's marked placeholders and no logo until then. | No center brand to reuse any more. | D-044 |
 | 4 | Legal form and VAT (F7, D1, D2) | Design for a commercial operator (ApS): VAT on access, and on instruction for members aged 30+. Ask an accountant the D2 questions before invoices are built. | Since 1 Jan 2026 instruction VAT depends on the member's age and the operator's status. | [domain-modeling.md §1, §2.12](research/domain-modeling.md) |
 | 5 | Sales channels and front desk (M3, U1, U6) | Online signup (built, D-032) plus front desk acting for a member on signup, booking and check-in. | Front-desk tools in the market look up members and flag unpaid memberships at the door. | [ux-patterns.md §4](research/ux-patterns.md) |
