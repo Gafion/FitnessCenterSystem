@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using FitnessCenter.Modules.Booking.Application;
 using FitnessCenter.Modules.Booking.Domain;
+using FitnessCenter.Modules.Identity.Contracts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -32,7 +33,36 @@ internal static class ClassEndpoints
         group.MapDelete("/classes/{classId:guid}/offer", DeclineOfferAsync).WithName("DeclineOffer").RequireAuthorization()
             .Produces(StatusCodes.Status401Unauthorized);
 
+        // Instructor policy: the Instructor role only (D-062); each instructor sees their own classes (D-049).
+        group.MapGet("/my-classes", GetMyClassesAsync).WithName("GetMyClasses").RequireAuthorization(StaffPolicies.Instructor)
+            .Produces(StatusCodes.Status401Unauthorized).Produces(StatusCodes.Status403Forbidden);
+
         return endpoints;
+    }
+
+    /// <param name="BookedNames">The booked members' display names only, in booking order (GDPR minimum).</param>
+    internal sealed record MyClass(
+        Guid ClassId,
+        string ClassName,
+        DateTimeOffset StartsAt,
+        DateTimeOffset EndsAt,
+        int Capacity,
+        string[] BookedNames);
+
+    /// <summary>The logged-in instructor's classes that haven't started yet, soonest first (D-049, D-060).</summary>
+    private static async Task<Ok<MyClass[]>> GetMyClassesAsync(
+        ClaimsPrincipal user, BookingHandler handler, CancellationToken cancellationToken)
+    {
+        var classes = await handler.GetTaughtClassesAsync(AccountIdOf(user)!.Value, cancellationToken);
+        return TypedResults.Ok(classes
+            .Select(c => new MyClass(
+                c.Id.Value,
+                c.ClassName,
+                c.StartsAt.ToDateTimeOffset(),
+                c.EndsAt.ToDateTimeOffset(),
+                c.Capacity,
+                [.. c.BookedNames]))
+            .ToArray());
     }
 
     /// <param name="CancelUntil">After this moment the booking can't be cancelled (D-039).</param>

@@ -482,9 +482,15 @@ public sealed partial class StaffInviteTests
     }
 
     /// <summary>A confirmed staff account with <paramref name="role"/>, logged in on a new client.</summary>
-    internal static async Task<HttpClient> LoggedInStaffAsync(ApiFactory factory, string role)
+    internal static async Task<HttpClient> LoggedInStaffAsync(ApiFactory factory, string role) =>
+        (await LoggedInStaffWithIdAsync(factory, role)).Client;
+
+    /// <returns>A client logged in as a new staff account with the role, and the account's ID.</returns>
+    internal static async Task<(HttpClient Client, Guid AccountId)> LoggedInStaffWithIdAsync(
+        ApiFactory factory, string role, string firstName = "Test", string? lastName = null)
     {
         var email = SyntheticStaffEmail();
+        Guid accountId;
         await using (var scope = factory.Services.CreateAsyncScope())
         {
             var users = scope.ServiceProvider.GetRequiredService<UserManager<Account>>();
@@ -493,11 +499,12 @@ public sealed partial class StaffInviteTests
                 UserName = email,
                 Email = email,
                 EmailConfirmed = true,
-                FirstName = "Test",
-                LastName = role,
+                FirstName = firstName,
+                LastName = lastName ?? role,
             };
             Assert.IsTrue((await users.CreateAsync(account, StaffPassword)).Succeeded);
             Assert.IsTrue((await users.AddToRoleAsync(account, role)).Succeeded);
+            accountId = account.Id;
         }
 
         var client = factory.CreateClient();
@@ -506,7 +513,7 @@ public sealed partial class StaffInviteTests
 
         // Staff endpoints need the authenticator app set up first (D-013, D-059).
         await TestAuthenticator.SetUpAsync(client);
-        return client;
+        return (client, accountId);
     }
 
     private static async Task<IList<string>> RolesOfAsync(ApiFactory factory, string email)
