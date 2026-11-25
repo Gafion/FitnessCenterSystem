@@ -2080,6 +2080,26 @@ Owner decision on the recommended default. Danish dates are traditionally DD.MM.
 - Linear FIT-83 — "Owner decision (2026-11-24)" and "Brief"
 - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat — locale-aware date and time formatting
 
+### Amendment (FIT-101, 2026-11-25): backend texts in Danish
+Lifts "Out of scope for now" above. As built, following the recommendation in FIT-101's brief:
+- **Each account has a preferred language** (`identity.AspNetUsers.PreferredLanguage`, `da` or `en`). Accounts from before this are Danish.
+- **Where it comes from:** the frontend sends its current language as `Accept-Language` on every API call. A signup (password or Google) stores that language. A new staff account gets the language its invite was accepted in. The account page has a Dansk/English control that changes it (`PUT /api/identity/me/language`). The header DA/EN switch changes only the browser, as before.
+- **Emails go out in the account's language:** signup confirmation, payment reminder, cancellation and undo. A staff invite to an email with an account uses that account's language; an invite to a new email has no account yet, so it uses the inviter's language. Danish emails use the Danish formats: `30.04.2027` and `18.00`. English emails keep their wording and formats.
+- **The API answers in the requested language:** the signup terms, the early-start text and the membership type name follow `Accept-Language` (the supported language with the highest weight); a missing header or one naming neither gives Danish.
+- **Consents stay exact:** each language has its own text version (`terms-placeholder-v1-da` next to `terms-placeholder-v1`), so a stored consent also says which language the person read. Signup accepts the current version in either language.
+- **UNVERIFIED Danish wording:** the Danish terms and early-start placeholders and the cancellation and undo emails are the developer's translations for the owner to check, listed in `frontend/src/i18n/locales/README.md` (real terms wording is FIT-53).
+
+```mermaid
+flowchart LR
+  FE["Frontend language<br/>(header switch)"] -- Accept-Language --> API
+  API -- signup / accept invite --> PL[(Account.PreferredLanguage)]
+  AP["Account page<br/>Dansk / English"] -- PUT /me/language --> PL
+  PL --> EM["Emails: da or en"]
+  API -- Accept-Language --> TX["Terms, early-start text,<br/>membership name"]
+```
+
+Sources: Linear FIT-101 ("What to build"); D-065 above.
+
 ---
 
 ## D-062: Staff roles stack, except Instructor

@@ -45,6 +45,7 @@ erDiagram
     string last_name
     string email
     string phone
+    string preferred_language "da or en (D-065, FIT-101)"
   }
   MEMBER {
     uuid id PK

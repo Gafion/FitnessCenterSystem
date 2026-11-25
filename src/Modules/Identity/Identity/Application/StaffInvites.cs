@@ -224,6 +224,7 @@ internal sealed class StaffInvites(
 
     public const string InviteSubjectEnglish = "You're invited to join the staff";
 
+    // UNVERIFIED: the developer's Danish wording, for the owner to check (D-065).
     public const string InviteSubjectDanish = "Du er inviteret som medarbejder";
 
     private static (string Subject, string Body) InviteEmail(Language language, string role, bool existingAccount, string link)

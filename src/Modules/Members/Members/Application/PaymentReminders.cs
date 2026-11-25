@@ -19,6 +19,7 @@ internal sealed class PaymentReminders(
 {
     public const string Subject = "Your payment is missing";
 
+    // UNVERIFIED: the developer's Danish wording, for the owner to check (D-065).
     public const string SubjectDanish = "Din betaling mangler";
 
     // Danish formats (D-065): 23.11.2026.

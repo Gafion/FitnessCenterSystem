@@ -15,5 +15,18 @@ should check them before real members use them (FIT-53 covers the real terms tex
 | `classes.cancel`, `classes.cancelUntil`, `classes.cancelClosed`, `classes.errors.cancellation-closed` | Class booking cancellation ("afmelding").                                                                                                                          |
 | `loginCode.*`, `authenticator.*`                                                                      | Login code and authenticator setup (D-059), translated by the developer.                                                                                           |
 
-Texts from the backend (emails, the terms and early-start texts, the membership type
-name) are still English (D-065, out of scope).
+## Texts from the backend
+
+Since FIT-101 the backend sends Danish or English too (D-065 amendment): emails in the
+account's language, and the terms, early-start text and membership type name in the
+request's `Accept-Language`. These Danish backend texts are also UNVERIFIED translations by
+the developer, for the owner to check:
+
+| Where                                                             | What                                                                           |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `src/Modules/Members/Members/Domain/ConsentTexts.cs`              | Danish terms and early-start placeholders (FIT-53 brings the real wording).    |
+| `src/Modules/Members/Members/Application/MembershipHandler.cs`    | Cancellation and undo emails ("opsigelse", "annullere opsigelsen", "afmeldt"). |
+| `src/Modules/Members/Members/Application/PaymentReminders.cs`     | Payment reminder email.                                                        |
+| `src/Modules/Identity/Identity/Infrastructure/SmtpEmailSender.cs` | Signup confirmation email.                                                     |
+| `src/Modules/Identity/Identity/Application/StaffInvites.cs`       | Staff invite email. The role names in it stay English, as in the app.          |
+| `src/Modules/Members/Members/Domain/MembershipType.cs`            | "Almindeligt medlemskab" for the placeholder membership type.                  |

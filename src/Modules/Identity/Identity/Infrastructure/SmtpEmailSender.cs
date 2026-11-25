@@ -20,6 +20,7 @@ internal sealed class SmtpEmailSender(IConfiguration configuration) : IEmailSend
 
     public const string ConfirmationSubjectEnglish = "Confirm your email";
 
+    // UNVERIFIED: the developer's Danish wording, for the owner to check (D-065).
     public const string ConfirmationSubjectDanish = "Bekræft din e-mail";
 
     /// <summary>In the account's language (D-065).</summary>

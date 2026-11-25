@@ -29,7 +29,7 @@ internal sealed class MembershipType
 
     /// <summary>
     /// The name in the language asked for (D-065). The stored name is English; the placeholder
-    /// type has a Danish name here. A type without one shows the stored name.
+    /// type has a Danish name here (UNVERIFIED wording). A type without one shows the stored name.
     /// </summary>
     public string NameIn(Language language) =>
         language == Language.Danish && Id == General.Id ? "Almindeligt medlemskab" : Name;
