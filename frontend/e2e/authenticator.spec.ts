@@ -9,6 +9,7 @@ const staff = {
   firstName: 'Test',
   lastName: 'Staff',
   hasGoogleLogin: false,
+  staffRoles: ['FrontDesk'],
   twoFactorEnabled: false,
   mustSetUpAuthenticator: true,
 };
