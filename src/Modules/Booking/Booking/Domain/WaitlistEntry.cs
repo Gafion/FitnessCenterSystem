@@ -10,8 +10,26 @@ internal enum WaitlistEntryStatus
     /// <summary>The member left the queue themselves.</summary>
     Left,
 
-    /// <summary>The member booked a spot in the class, which took them out of the queue.</summary>
+    /// <summary>
+    /// The member booked a spot in the class, which took them out of the queue. Accepting an
+    /// offer ends here too.
+    /// </summary>
     Booked,
+
+    /// <summary>A freed spot is held for the member until the offer expires (D-051, D-067).</summary>
+    Offered,
+
+    /// <summary>The member said no to the offer; the spot went to the next person.</summary>
+    Declined,
+
+    /// <summary>The offer ran out unanswered; the spot went to the next person (D-067).</summary>
+    Expired,
+
+    /// <summary>
+    /// The member's membership ends before the class, so the system took them off the queue
+    /// (D-055 amendment, FIT-80), as it cancels their bookings.
+    /// </summary>
+    RemovedMembershipEnds,
 }
 
 /// <summary>
@@ -43,7 +61,23 @@ internal sealed class WaitlistEntry
 
     public Instant? LeftAt { get; private set; }
 
+    /// <summary>When the open offer was made (D-067), or null when there has been none.</summary>
+    public Instant? OfferedAt { get; private set; }
+
+    /// <summary>When the offer ends unanswered (D-067). Null when there has been no offer.</summary>
+    public Instant? OfferExpiresAt { get; private set; }
+
+    /// <summary>In the queue, still waiting for an offer.</summary>
     public bool IsWaiting => Status == WaitlistEntryStatus.Waiting;
+
+    /// <summary>Holds a spot: an offer was made and not yet answered or expired by the class.</summary>
+    public bool IsOffered => Status == WaitlistEntryStatus.Offered;
+
+    /// <summary>Waiting or holding an offer: the account is still on this class's waitlist.</summary>
+    public bool IsQueued => IsWaiting || IsOffered;
+
+    /// <summary>Whether the offer can still be accepted at <paramref name="now"/>.</summary>
+    public bool IsOfferOpenAt(Instant now) => IsOffered && now < OfferExpiresAt;
 
     internal static WaitlistEntry Create(ClassSessionId sessionId, Guid accountId, int number, Instant now) => new()
     {
@@ -58,6 +92,20 @@ internal sealed class WaitlistEntry
     internal void Leave(Instant now) => End(WaitlistEntryStatus.Left, now);
 
     internal void EndBecauseBooked(Instant now) => End(WaitlistEntryStatus.Booked, now);
+
+    internal void Offer(Instant now, Instant expiresAt)
+    {
+        Status = WaitlistEntryStatus.Offered;
+        OfferedAt = now;
+        OfferExpiresAt = expiresAt;
+    }
+
+    internal void Decline(Instant now) => End(WaitlistEntryStatus.Declined, now);
+
+    /// <summary>The offer ran out; it ended at its expiry, whenever the system noticed.</summary>
+    internal void Expire() => End(WaitlistEntryStatus.Expired, OfferExpiresAt!.Value);
+
+    internal void RemoveBecauseMembershipEnds(Instant now) => End(WaitlistEntryStatus.RemovedMembershipEnds, now);
 
     private void End(WaitlistEntryStatus status, Instant now)
     {

@@ -68,11 +68,14 @@ internal sealed class BookingDbContext(DbContextOptions<BookingDbContext> option
                 entry.Property(e => e.ClassSessionId).HasConversion(id => id.Value, value => new ClassSessionId(value));
                 entry.Property(e => e.Status).HasConversion<string>().HasMaxLength(40);
                 entry.Ignore(e => e.IsWaiting);
+                entry.Ignore(e => e.IsOffered);
+                entry.Ignore(e => e.IsQueued);
 
                 // The database's own guard against queueing twice, next to the rule in ClassSession.
+                // Holding an offer still counts as being on the waitlist (D-067).
                 entry.HasIndex(e => new { e.ClassSessionId, e.AccountId })
                     .IsUnique()
-                    .HasFilter("\"Status\" = 'Waiting'");
+                    .HasFilter("\"Status\" IN ('Waiting', 'Offered')");
                 entry.HasIndex(e => e.AccountId);
                 entry.HasIndex(e => new { e.ClassSessionId, e.Number }).IsUnique();
             });

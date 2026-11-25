@@ -143,6 +143,10 @@
     "leaveWaitlist": "Leave waitlist",
     "waitlisted": "You're on the waitlist.",
     "waitlistPlace": "You're number {{place}} in the queue.",
+    "offered": "A spot is held for you.",
+    "offerExpires": "Accept by {{time}}, or it goes to the next person.",
+    "acceptOffer": "Accept spot",
+    "declineOffer": "Decline",
     "errors": {
       "class-full": "This class is full.",
       "class-started": "This class has already started.",
@@ -151,7 +155,8 @@
       "already-booked": "You have already booked this class.",
       "cancellation-closed": "Cancelling closes 12 hours before the class starts.",
       "already-waitlisted": "You're already on the waitlist for this class.",
-      "class-not-full": "This class has free spots, so book it instead."
+      "class-not-full": "This class has free spots, so book it instead.",
+      "offer-expired": "The offer has run out, so the spot went to the next person."
     }
   },
   "simulation": {
@@ -229,6 +234,12 @@
   "myBookings": {
     "none": "You have no upcoming classes.",
     "when": "{{start}}–{{end}}, Danish time"
+  },
+  "offers": {
+    "title": "A spot is free for you",
+    "text": "{{className}}, {{start}}–{{end}}, Danish time. Accept by {{expires}}, or it goes to the next person on the waitlist.",
+    "accept": "Accept spot",
+    "decline": "Decline"
   },
   "shell": {
     "home": "FitnessCenter home",

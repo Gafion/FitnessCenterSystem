@@ -146,6 +146,12 @@ namespace Booking.Infrastructure.Migrations
                             b1.Property<int>("Number")
                                 .HasColumnType("integer");
 
+                            b1.Property<Instant?>("OfferExpiresAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<Instant?>("OfferedAt")
+                                .HasColumnType("timestamp with time zone");
+
                             b1.Property<string>("Status")
                                 .IsRequired()
                                 .HasMaxLength(40)
@@ -157,7 +163,7 @@ namespace Booking.Infrastructure.Migrations
 
                             b1.HasIndex("ClassSessionId", "AccountId")
                                 .IsUnique()
-                                .HasFilter("\"Status\" = 'Waiting'");
+                                .HasFilter("\"Status\" IN ('Waiting', 'Offered')");
 
                             b1.HasIndex("ClassSessionId", "Number")
                                 .IsUnique();
