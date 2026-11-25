@@ -87,7 +87,7 @@ public static class IdentityModule
 
     public static IEndpointRouteBuilder MapIdentityEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        return endpoints.MapAccountEndpoints().MapExternalLoginEndpoints().MapStaffInviteEndpoints()
+        return endpoints.MapAccountEndpoints().MapExternalLoginEndpoints().MapStaffInviteEndpoints().MapStaffEndpoints()
             .MapAuthenticatorEndpoints();
     }
 
