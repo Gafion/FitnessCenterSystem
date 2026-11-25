@@ -85,6 +85,7 @@ test('a new Google user gives a date of birth, accepts the terms and lands on th
             firstName: 'Test',
             lastName: 'Googler',
             hasGoogleLogin: true,
+            staffRoles: [],
           },
         })
       : route.fulfill({ status: 401 }),
@@ -142,6 +143,7 @@ test('a member without Google can connect it from the account page', async ({
         firstName: 'Test',
         lastName: 'Person',
         hasGoogleLogin: false,
+        staffRoles: [],
       },
     }),
   );

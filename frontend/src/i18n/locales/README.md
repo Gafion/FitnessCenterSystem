@@ -15,6 +15,7 @@ should check them before real members use them (FIT-53 covers the real terms tex
 | `classes.cancel`, `classes.cancelUntil`, `classes.cancelClosed`, `classes.errors.cancellation-closed`                                                                | Class booking cancellation ("afmelding").                                                                                                                          |
 | `classes.joinWaitlist`, `classes.leaveWaitlist`, `classes.waitlisted`, `classes.waitlistPlace`, `classes.errors.already-waitlisted`, `classes.errors.class-not-full` | Waitlist wording (D-051, FIT-79), translated by the developer.                                                                                                     |
 | `loginCode.*`, `authenticator.*`                                                                                                                                     | Login code and authenticator setup (D-059), translated by the developer.                                                                                           |
+| `staffRoles.*`, `staffInvite.*`, `account.sections.staff`, `account.inviteStaff`                                                                                     | Staff invite screen (D-058, D-063) and role names, translated by the developer.                                                                                    |
 
 ## Texts from the backend
 

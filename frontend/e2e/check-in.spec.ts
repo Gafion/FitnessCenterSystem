@@ -10,6 +10,7 @@ const account = {
   firstName: 'Test',
   lastName: 'Person',
   hasGoogleLogin: false,
+  staffRoles: [],
 };
 
 const myCard = 'SIM-04A1B2C3D4E5F6';
