@@ -4,7 +4,7 @@ namespace FitnessCenter.Modules.Booking.Domain;
 
 /// <summary>
 /// The center's booking rules (D-039). Placeholders until the center answers its own policy
-/// (fitness-domain-operations questions 35–36): no waitlist and no penalties in the MVP (D-022).
+/// (fitness-domain-operations questions 35–36). Full classes have a waitlist (D-051); no penalties.
 /// </summary>
 internal static class BookingPolicy
 {

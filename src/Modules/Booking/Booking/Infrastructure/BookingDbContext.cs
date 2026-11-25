@@ -57,6 +57,25 @@ internal sealed class BookingDbContext(DbContextOptions<BookingDbContext> option
                 booking.HasIndex(b => b.AccountId);
             });
             session.Navigation(s => s.Bookings).HasField("_bookings");
+            session.Ignore(s => s.Queue);
+
+            session.OwnsMany(s => s.Waitlist, entry =>
+            {
+                entry.ToTable("waitlist_entries");
+                entry.WithOwner().HasForeignKey(e => e.ClassSessionId);
+                entry.HasKey(e => e.Id);
+                entry.Property(e => e.Id).HasConversion(id => id.Value, value => new WaitlistEntryId(value));
+                entry.Property(e => e.ClassSessionId).HasConversion(id => id.Value, value => new ClassSessionId(value));
+                entry.Property(e => e.Status).HasConversion<string>().HasMaxLength(40);
+                entry.Ignore(e => e.IsWaiting);
+
+                // The database's own guard against queueing twice, next to the rule in ClassSession.
+                entry.HasIndex(e => new { e.ClassSessionId, e.AccountId })
+                    .IsUnique()
+                    .HasFilter("\"Status\" = 'Waiting'");
+                entry.HasIndex(e => e.AccountId);
+            });
+            session.Navigation(s => s.Waitlist).HasField("_waitlist");
         });
     }
 }
