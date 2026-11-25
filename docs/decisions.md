@@ -1184,7 +1184,7 @@ Owner decision. Option 1 is what the research asks for, and it is the simplest t
 
 ## D-039: Class booking: who books, the booking window and cancelling
 - **Date:** 2026-11-23
-- **Status:** Accepted
+- **Status:** Accepted. The plain-text instructor name is superseded by D-060.
 - **Decided by:** Owner
 - **Relates to:** D-014, D-022, D-038, FIT-48
 
@@ -2345,3 +2345,64 @@ sequenceDiagram
 - [research/domain-modeling.md](research/domain-modeling.md) — §4.3
 - D-039 (cancel deadline), D-051 (offer with expiry), D-066 (email provider)
 - [open-questions.md](open-questions.md) — "Owner decides (D-047)" row 2 (moved to Answered)
+
+---
+
+## D-060: Each class is linked to an instructor's account
+- **Date:** 2026-11-25
+- **Status:** Accepted
+- **Decided by:** Owner (option A of the FIT-76 proposal)
+- **Relates to:** D-014, D-022, D-039, D-047, D-049, D-058, D-062, D-064, FIT-76, FIT-104
+- **Supersedes:** the plain-text instructor name in D-039
+
+### Problem statement
+A class (`booking.class_sessions`) named its instructor as free text, up to 100 characters (D-039). Instructors are now Identity accounts with the `Instructor` role (D-049, D-058, D-062), and a member can also be an instructor (D-064). D-049 says instructors see **only their own classes**, which needs an exact link from a class to the instructor's account. Booking may use only `Identity.Contracts`, and may have a foreign key to `identity.AspNetUsers` for integrity only (CLAUDE.md rules 1–3, D-014), as `bookings` already does (D-039). The only classes so far are the synthetic development schedule (D-022), and there is no real data (D-047).
+
+### Options considered
+1. **A: a required `InstructorAccountId` on the class**, with a foreign key to `identity.AspNetUsers`. The free-text name is dropped. Booking gets the name to show from a new `Identity.Contracts` method that looks up a batch of accounts in one query.
+   - Pros: one source of truth; a name change shows everywhere; "own classes" is an exact match; no orphan names.
+   - Cons: every class needs an instructor account first, so instructors are invited before they are scheduled. Guest or substitute instructors without an account are impossible. One more cross-module call per list (one batch query).
+2. **B: a nullable `InstructorAccountId` plus the kept free-text name.** When the ID is set, the name is a snapshot copied from the account.
+   - Pros: the smallest, additive migration; guest instructors without accounts; no cross-module call for the schedule.
+   - Cons: two ways to say who teaches. The snapshot goes stale on a rename. "Own classes" silently misses free-text rows. The admin screen needs an "account or free text" switch.
+3. **C: a new Staff module with an `Instructor` profile** (`staff.StaffMembers`), referenced by the class.
+   - Pros: room for later staff data (working time, pay, bios) that doesn't belong in Identity; matches D-039's "until a Staff module exists".
+   - Cons: a new module, schema, contracts and architecture tests before any staff data needs them. By far the largest build.
+
+### Decision
+**Option A.**
+
+- `ClassSession.InstructorAccountId` (`uuid`, required) with a foreign key to `identity.AspNetUsers` for integrity only, `ON DELETE RESTRICT`: an account that teaches classes can't be deleted. `InstructorName` is dropped.
+- `IAccountService.FindDisplayNamesAsync(accountIds)` in `Identity.Contracts` returns the name to show for each existing account, in one query: the **first name plus the last name's initial**, e.g. "Alex E.". Booking never reads Identity's tables (rule 3).
+- The schedule, "my bookings" and the open waitlist offers still return `instructorName`; it now comes from that lookup.
+- The migration (`InstructorAccount`) deletes all existing classes with their bookings and waitlist entries. They are synthetic seed data (D-022, D-047), and a free-text name can't be turned into an account.
+- The development schedule is taught by the synthetic `dev-instructor@example.com` account (D-049). Without the development staff password, no staff are seeded, so no development classes are seeded either; the API logs how to turn them on.
+
+```mermaid
+erDiagram
+  AspNetUsers ||--o{ class_sessions : "teaches (FK, integrity only)"
+  AspNetUsers ||--o{ bookings : books
+  class_types ||--o{ class_sessions : "is a"
+  class_sessions ||--o{ bookings : has
+```
+
+```mermaid
+sequenceDiagram
+  participant FE as Frontend
+  participant B as Booking
+  participant I as Identity.Contracts
+  FE->>B: GET /api/booking/schedule
+  B->>I: FindDisplayNamesAsync(instructor ids), one query
+  I-->>B: "Alex E.", "Sam S."
+  B-->>FE: schedule with instructorName
+```
+
+### Reasoning
+Owner decision on FIT-76 (2026-11-25), as recommended. There is no real data to migrate (D-047, seed-only D-022). An exact account ID is the only way "instructors see only their own classes" (D-049) can't leak or miss a class. A Staff module (C) can come later, when working time or pay needs one, and can re-point the foreign key then. B's guest-instructor case is not a stated requirement. Showing the first name and last initial instead of the full name keeps the personal data shown to members small (data minimisation, GDPR Art. 5, in the principles table of `docs/research/compliance-legal-security.md`); the exact format is a product choice from the FIT-76 proposal.
+
+### Sources
+- Linear FIT-76: "Step 1 proposal: linking a class to an instructor's staff account" and "Owner decision (2026-11-25)"
+- Linear FIT-104 (build)
+- D-014 (one schema per module, integrity-only FKs), D-022, D-039, D-047, D-049, D-058, D-062, D-064
+- CLAUDE.md, "Module boundary rules" 1–3
+- [research/compliance-legal-security.md](research/compliance-legal-security.md) — GDPR principles table (Art. 5, data minimisation)
