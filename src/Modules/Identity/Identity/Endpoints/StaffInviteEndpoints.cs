@@ -24,6 +24,10 @@ internal static class StaffInviteEndpoints
         // The Manager policy admits admins too (D-062); which roles each may give is D-063.
         group.MapPost("/", InviteAsync).WithName("InviteStaff").RequireAuthorization(StaffPolicies.Manager)
             .Produces(StatusCodes.Status401Unauthorized).Produces(StatusCodes.Status403Forbidden);
+
+        // The roles the logged-in inviter may give (D-063), so the invite screen offers only those.
+        group.MapGet("/roles", GetInvitableRoles).WithName("GetInvitableRoles").RequireAuthorization(StaffPolicies.Manager)
+            .Produces(StatusCodes.Status401Unauthorized).Produces(StatusCodes.Status403Forbidden);
         group.MapPost("/accept", AcceptAsync).WithName("AcceptStaffInvite");
 
         // Any logged-in account: the invite says which email it is for (D-064).
@@ -33,7 +37,15 @@ internal static class StaffInviteEndpoints
         return endpoints;
     }
 
-    internal sealed record InviteStaffRequest(string Email, string Role);
+    /// <param name="Language">
+    /// The language of the invite email to an email without an account: "da" or "en" (D-065).
+    /// Left out, it is the language the inviter uses the app in. An email that has an account
+    /// always gets that account's language.
+    /// </param>
+    internal sealed record InviteStaffRequest(string Email, string Role, string? Language = null);
+
+    /// <param name="Roles">The staff roles the logged-in inviter may give (D-063).</param>
+    internal sealed record InvitableRoles(IReadOnlyList<string> Roles);
 
     internal sealed record StaffInviteResponse(Guid InviteId, string Email, string Role, DateTimeOffset ExpiresAt);
 
@@ -50,7 +62,7 @@ internal static class StaffInviteEndpoints
             ?? throw new InvalidOperationException("An authorized inviter has no account id."));
         var inviterRoles = StaffRoles.All.Where(user.IsInRole).ToList();
         var outcome = await invites.InviteAsync(
-            inviterId, inviterRoles, request.Email, request.Role,
+            inviterId, inviterRoles, request.Email, request.Role, request.Language,
             Languages.FromAcceptLanguage(context.Request.Headers.AcceptLanguage), context.Request, cancellationToken);
 
         switch (outcome.Status)
@@ -71,6 +83,13 @@ internal static class StaffInviteEndpoints
         return TypedResults.Created(
             (string?)null,
             new StaffInviteResponse(invite.Id, invite.Email, invite.Role, invite.ExpiresAt.ToDateTimeOffset()));
+    }
+
+    private static Ok<InvitableRoles> GetInvitableRoles(ClaimsPrincipal user)
+    {
+        var inviterRoles = StaffRoles.All.Where(user.IsInRole).ToList();
+        return TypedResults.Ok(new InvitableRoles(
+            StaffRoles.All.Where(role => StaffRoleRules.MayGive(inviterRoles, role)).ToList()));
     }
 
     private static async Task<Results<NoContent, ValidationProblem, ProblemHttpResult>> AcceptAsync(

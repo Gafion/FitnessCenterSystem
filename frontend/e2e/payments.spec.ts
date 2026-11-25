@@ -10,6 +10,7 @@ const account = {
   firstName: 'Test',
   lastName: 'Person',
   hasGoogleLogin: false,
+  staffRoles: [],
 };
 
 type Payment = {
