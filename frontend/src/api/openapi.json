@@ -936,6 +936,90 @@
         }
       }
     },
+    "/api/booking/my-offers": {
+      "get": {
+        "tags": [
+          "Booking"
+        ],
+        "operationId": "GetMyOffers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyOffer"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/booking/classes/{classId}/offer": {
+      "post": {
+        "tags": [
+          "Booking"
+        ],
+        "operationId": "AcceptOffer",
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Booking"
+        ],
+        "operationId": "DeclineOffer",
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/api/access/cards/mine": {
       "get": {
         "tags": [
@@ -1456,6 +1540,41 @@
           }
         }
       },
+      "MyOffer": {
+        "required": [
+          "classId",
+          "className",
+          "instructorName",
+          "startsAt",
+          "endsAt",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "className": {
+            "type": "string"
+          },
+          "instructorName": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "MyPayments": {
         "required": [
           "status",
@@ -1616,7 +1735,8 @@
           "bookedByMe",
           "cancelUntil",
           "afterMyMembershipEnds",
-          "myWaitlistPlace"
+          "myWaitlistPlace",
+          "myOfferExpiresAt"
         ],
         "type": "object",
         "properties": {
@@ -1662,6 +1782,13 @@
               "integer"
             ],
             "format": "int32"
+          },
+          "myOfferExpiresAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },

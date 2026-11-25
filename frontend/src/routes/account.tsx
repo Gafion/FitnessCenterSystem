@@ -15,7 +15,9 @@ import { EmailLanguage } from '@/features/account/email-language';
 import { ErrorMessage } from '@/features/account/error-message';
 import { GoogleButton } from '@/features/account/google-button';
 import { TextLink } from '@/features/account/text-link';
+import type { BookingResult } from '@/features/classes/class-card';
 import { MyBookings } from '@/features/classes/my-bookings';
+import { WaitlistOffers } from '@/features/classes/waitlist-offers';
 import {
   CancelMembership,
   type CancelResult,
@@ -29,9 +31,11 @@ import {
   getLoginOptions,
   getMyBookings,
   getMyMembership,
+  getMyOffers,
   getMyPayments,
   googleLinkUrl,
   isSimulationEnabled,
+  problemType,
   setPreferredLanguage,
   undoMyCancellation,
 } from '@/lib/api';
@@ -51,12 +55,13 @@ export const Route = createFileRoute('/account')({
       throw redirect({ to: '/authenticator' });
     }
     // A failed call for one section must not take the rest of the account page with it.
-    const [options, card, membership, bookings, payments, simulation] =
+    const [options, card, membership, bookings, offers, payments, simulation] =
       await Promise.all([
         getLoginOptions(),
         api.GET('/api/access/cards/mine'),
         getMyMembership().catch(() => 'failed' as const),
         getMyBookings().catch(() => 'failed' as const),
+        getMyOffers().catch(() => []),
         getMyPayments().catch(() => 'failed' as const),
         // One flag for every simulated page (D-041).
         isSimulationEnabled().catch(() => false),
@@ -67,6 +72,7 @@ export const Route = createFileRoute('/account')({
       cardUid: card.data?.uid ?? null,
       membership,
       bookings,
+      offers,
       payments: payments === 'logged-out' ? null : payments,
       simulation,
     };
@@ -124,6 +130,7 @@ function AccountPage() {
     cardUid,
     membership,
     bookings,
+    offers,
     payments,
     simulation,
   } = Route.useLoaderData();
@@ -159,6 +166,25 @@ function AccountPage() {
     return 'ok';
   }
 
+  /** Accepts or declines a spot held from a waitlist (D-067), then reloads the page. */
+  async function answerOffer(
+    method: 'POST' | 'DELETE',
+    classId: string,
+  ): Promise<BookingResult> {
+    const options = { params: { path: { classId } } };
+    const { response, error } =
+      method === 'POST'
+        ? await api.POST('/api/booking/classes/{classId}/offer', options)
+        : await api.DELETE('/api/booking/classes/{classId}/offer', options);
+    if (response.status === 401) {
+      await navigate({ to: '/login', search: {} });
+      return undefined;
+    }
+    // Reload after a refused answer too: an expired offer is gone from the page.
+    await router.invalidate();
+    return response.ok ? undefined : problemType(error);
+  }
+
   async function logOut() {
     await api.POST('/api/identity/logout');
     await navigate({ to: '/' });
@@ -168,6 +194,13 @@ function AccountPage() {
     <Page width="wide">
       <PageHeader title={t('account.welcome', { name: account.firstName })} />
       <ErrorMessage code={error} />
+      {/* D-067: a spot held from a waitlist. If the offers fail to load, the notice is left
+          out rather than shown as an error: the email and the classes page show it too. */}
+      <WaitlistOffers
+        offers={offers}
+        onAccept={(classId) => answerOffer('POST', classId)}
+        onDecline={(classId) => answerOffer('DELETE', classId)}
+      />
       <div className="grid gap-4 md:grid-cols-2 md:gap-6">
         <AccountSection
           id="membership"

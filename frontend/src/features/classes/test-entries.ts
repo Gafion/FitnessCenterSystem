@@ -16,6 +16,7 @@ export function classEntry(
     cancelUntil: '2026-11-24T05:00:00Z',
     afterMyMembershipEnds: false,
     myWaitlistPlace: null,
+    myOfferExpiresAt: null,
     ...overrides,
   };
 }

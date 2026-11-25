@@ -143,6 +143,10 @@
     "leaveWaitlist": "Forlad venteliste",
     "waitlisted": "Du står på ventelisten.",
     "waitlistPlace": "Du er nummer {{place}} i køen.",
+    "offered": "Der holdes en plads til dig.",
+    "offerExpires": "Tag imod den senest {{time}}, ellers går den til den næste.",
+    "acceptOffer": "Tag imod plads",
+    "declineOffer": "Afslå",
     "errors": {
       "class-full": "Holdet er fuldt.",
       "class-started": "Holdet er allerede startet.",
@@ -151,7 +155,8 @@
       "already-booked": "Du har allerede booket dette hold.",
       "cancellation-closed": "Afmelding lukker 12 timer før holdet starter.",
       "already-waitlisted": "Du står allerede på ventelisten til dette hold.",
-      "class-not-full": "Holdet har ledige pladser, så book det i stedet."
+      "class-not-full": "Holdet har ledige pladser, så book det i stedet.",
+      "offer-expired": "Tilbuddet er udløbet, så pladsen gik til den næste."
     }
   },
   "simulation": {
@@ -229,6 +234,12 @@
   "myBookings": {
     "none": "Du har ingen kommende hold.",
     "when": "{{start}}–{{end}}, dansk tid"
+  },
+  "offers": {
+    "title": "Der er en plads til dig",
+    "text": "{{className}}, {{start}}–{{end}}, dansk tid. Tag imod den senest {{expires}}, ellers går den til den næste på ventelisten.",
+    "accept": "Tag imod plads",
+    "decline": "Afslå"
   },
   "shell": {
     "home": "FitnessCenter forside",

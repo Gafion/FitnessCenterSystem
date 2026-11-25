@@ -1,4 +1,4 @@
-import { BanIcon, CheckIcon, HourglassIcon } from 'lucide-react';
+import { BanIcon, CheckIcon, GiftIcon, HourglassIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,9 @@ type Props = {
   /** Joins the waitlist of a full class (D-051). Without it, the card offers no waitlist. */
   onJoinWaitlist?: () => Promise<BookingResult>;
   onLeaveWaitlist?: () => Promise<BookingResult>;
+  /** Accepts the spot held for the member from the waitlist (D-051, D-067). */
+  onAcceptOffer?: () => Promise<BookingResult>;
+  onDeclineOffer?: () => Promise<BookingResult>;
 };
 
 export function ClassCard({
@@ -30,6 +33,8 @@ export function ClassCard({
   onCancel,
   onJoinWaitlist,
   onLeaveWaitlist,
+  onAcceptOffer,
+  onDeclineOffer,
 }: Props) {
   const { t } = useTranslation();
   const [error, setError] = useState<string>();
@@ -48,8 +53,15 @@ export function ClassCard({
   // D-051: the member's place in the queue, counting from 1; absent when not waiting.
   const waitlistPlace = entry.myWaitlistPlace ?? undefined;
   const waiting = waitlistPlace !== undefined;
+  // D-067: a freed spot is held for the member until this moment; absent without an offer.
+  const offerExpiresAt = entry.myOfferExpiresAt ?? undefined;
+  const offered = offerExpiresAt !== undefined;
   const canJoinWaitlist =
-    full && !entry.bookedByMe && !waiting && !entry.afterMyMembershipEnds;
+    full &&
+    !entry.bookedByMe &&
+    !waiting &&
+    !offered &&
+    !entry.afterMyMembershipEnds;
 
   return (
     <article
@@ -98,7 +110,20 @@ export function ClassCard({
             </p>
           </div>
         )}
-        {!entry.bookedByMe && !waiting && full && (
+        {offered && (
+          <div className="flex flex-col items-start gap-1">
+            <Badge variant="success">
+              <GiftIcon aria-hidden="true" className="size-3.5" />
+              {t('classes.offered')}
+            </Badge>
+            <p className="text-sm text-subtle">
+              {t('classes.offerExpires', {
+                time: formatDateTime(offerExpiresAt),
+              })}
+            </p>
+          </div>
+        )}
+        {!entry.bookedByMe && !waiting && !offered && full && (
           <p className="text-sm text-muted-foreground">{t('classes.full')}</p>
         )}
         {/* D-055: a cancelled membership can't book classes after its last day. */}
@@ -131,6 +156,25 @@ export function ClassCard({
         )
       ) : (
         <div className="flex flex-col gap-2 sm:w-36">
+          {offered && onAcceptOffer && (
+            <Button
+              className="w-full"
+              disabled={busy}
+              onClick={() => run(onAcceptOffer)}
+            >
+              {t('classes.acceptOffer')}
+            </Button>
+          )}
+          {offered && onDeclineOffer && (
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={busy}
+              onClick={() => run(onDeclineOffer)}
+            >
+              {t('classes.declineOffer')}
+            </Button>
+          )}
           {canJoinWaitlist && onJoinWaitlist && (
             <Button
               className="w-full"
@@ -151,7 +195,7 @@ export function ClassCard({
             </Button>
           )}
           {/* D-051, FIT-80: a full class offers only the waitlist, no Book button. */}
-          {!full && (
+          {!full && !offered && (
             <Button
               // A class that can't be booked gets a dashed, flat button with a
               // "no" sign, so it never reads as a working Book button.

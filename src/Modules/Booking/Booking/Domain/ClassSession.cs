@@ -39,6 +39,26 @@ internal enum LeaveWaitlistOutcome
     NotWaitlisted,
 }
 
+internal enum AcceptOfferOutcome
+{
+    Booked,
+
+    /// <summary>The account holds no offer for this class.</summary>
+    NoOffer,
+
+    /// <summary>The offer ran out before the member accepted it (D-067).</summary>
+    Expired,
+
+    /// <inheritdoc cref="BookOutcome.AfterMembershipEnds"/>
+    AfterMembershipEnds,
+}
+
+internal enum DeclineOfferOutcome
+{
+    Declined,
+    NoOffer,
+}
+
 internal enum CancelOutcome
 {
     Cancelled,
@@ -82,7 +102,8 @@ internal sealed class ClassSession
     /// <summary>Every waitlist entry, including the ones that left the queue.</summary>
     public IReadOnlyList<WaitlistEntry> Waitlist => _waitlist;
 
-    public int SpotsLeft => Capacity - _bookings.Count(booking => booking.IsActive);
+    /// <summary>Free spots: an open offer holds its spot for the member it was offered to (D-051).</summary>
+    public int SpotsLeft => Capacity - _bookings.Count(booking => booking.IsActive) - _waitlist.Count(entry => entry.IsOffered);
 
     /// <summary>The last moment a member can cancel (D-039).</summary>
     public Instant CancelUntil => StartsAt - BookingPolicy.CancellationCutoff;
@@ -113,7 +134,10 @@ internal sealed class ClassSession
 
     public bool IsBookedBy(Guid accountId) => ActiveBookingOf(accountId) is not null;
 
-    /// <summary>The members waiting for a spot, first come, first served (D-051).</summary>
+    /// <summary>
+    /// The members waiting for a spot, first come, first served (D-051). A member who holds an
+    /// offer has left the queue's line: their spot is set aside.
+    /// </summary>
     public IReadOnlyList<WaitlistEntry> Queue =>
         _waitlist
             .Where(entry => entry.IsWaiting)
@@ -132,6 +156,17 @@ internal sealed class ClassSession
     /// </param>
     public BookOutcome Book(Guid accountId, Instant now, LocalDate? lastDayOfAccess = null)
     {
+        // Booking a class whose spot is held for this member accepts the offer.
+        if (OpenOfferOf(accountId, now) is not null)
+        {
+            return AcceptOffer(accountId, now, lastDayOfAccess) switch
+            {
+                AcceptOfferOutcome.Booked => BookOutcome.Booked,
+                AcceptOfferOutcome.AfterMembershipEnds => BookOutcome.AfterMembershipEnds,
+                var other => throw new InvalidOperationException($"An open offer can't end in {other}."),
+            };
+        }
+
         if (now >= StartsAt)
         {
             return BookOutcome.Started;
@@ -158,7 +193,7 @@ internal sealed class ClassSession
         }
 
         // A member is never both booked and waitlisted: booking takes them out of the queue.
-        WaitingEntryOf(accountId)?.EndBecauseBooked(now);
+        QueuedEntryOf(accountId)?.EndBecauseBooked(now);
         _bookings.Add(ClassBooking.Create(Id, accountId, now));
         return BookOutcome.Booked;
     }
@@ -187,7 +222,7 @@ internal sealed class ClassSession
             return JoinWaitlistOutcome.AlreadyBooked;
         }
 
-        if (WaitingEntryOf(accountId) is not null)
+        if (QueuedEntryOf(accountId) is not null)
         {
             return JoinWaitlistOutcome.AlreadyWaitlisted;
         }
@@ -207,10 +242,13 @@ internal sealed class ClassSession
         return JoinWaitlistOutcome.Joined;
     }
 
-    /// <summary>Takes the account out of the queue. Leaving is always allowed; there are no penalties (D-051).</summary>
+    /// <summary>
+    /// Takes the account out of the queue. Leaving is always allowed; there are no penalties
+    /// (D-051). Leaving while holding an offer gives the spot up, like declining it.
+    /// </summary>
     public LeaveWaitlistOutcome LeaveWaitlist(Guid accountId, Instant now)
     {
-        if (WaitingEntryOf(accountId) is not { } entry)
+        if (QueuedEntryOf(accountId) is not { } entry)
         {
             return LeaveWaitlistOutcome.NotWaitlisted;
         }
@@ -261,8 +299,108 @@ internal sealed class ClassSession
         return true;
     }
 
-    private WaitlistEntry? WaitingEntryOf(Guid accountId) =>
-        _waitlist.SingleOrDefault(entry => entry.IsWaiting && entry.AccountId == accountId);
+    /// <summary>
+    /// Brings the offers up to date at <paramref name="now"/> (D-051, D-067). First, offers
+    /// that ran out expire. Then every free spot is offered to the next person in the queue,
+    /// until the spots or the queue run out. An offer ends 2 hours after it is made, or at the
+    /// cancel deadline if that comes first. Once the cancel deadline has passed, no new offer
+    /// is made: a spot that frees up after it is open to anyone who books first.
+    /// </summary>
+    /// <returns>The entries that got a new offer, so the members can be told.</returns>
+    public IReadOnlyList<WaitlistEntry> UpdateOffers(Instant now)
+    {
+        foreach (var entry in _waitlist.Where(entry => entry.IsOffered && !entry.IsOfferOpenAt(now)))
+        {
+            entry.Expire();
+        }
+
+        var offered = new List<WaitlistEntry>();
+        if (now >= CancelUntil)
+        {
+            return offered;
+        }
+
+        var expiresAt = Instant.Min(now + BookingPolicy.OfferLength, CancelUntil);
+        foreach (var next in Queue.Take(Math.Max(SpotsLeft, 0)))
+        {
+            next.Offer(now, expiresAt);
+            offered.Add(next);
+        }
+
+        return offered;
+    }
+
+    /// <summary>The account's offer for this class while it can still be accepted, else null.</summary>
+    public WaitlistEntry? OpenOfferOf(Guid accountId, Instant now) =>
+        QueuedEntryOf(accountId) is { } entry && entry.IsOfferOpenAt(now) ? entry : null;
+
+    /// <summary>Books the spot held for the account (D-051), while the offer is open.</summary>
+    /// <param name="lastDayOfAccess">
+    /// The member's last day of access (Copenhagen) when they have cancelled, else null (D-048).
+    /// </param>
+    public AcceptOfferOutcome AcceptOffer(Guid accountId, Instant now, LocalDate? lastDayOfAccess = null)
+    {
+        var latest = LatestEntryOf(accountId);
+        if (latest is { IsOffered: true } && !latest.IsOfferOpenAt(now))
+        {
+            latest.Expire();
+        }
+
+        if (latest is { Status: WaitlistEntryStatus.Expired })
+        {
+            return AcceptOfferOutcome.Expired;
+        }
+
+        if (latest is not { IsOffered: true } offer)
+        {
+            return AcceptOfferOutcome.NoOffer;
+        }
+
+        if (StartsAfter(lastDayOfAccess))
+        {
+            return AcceptOfferOutcome.AfterMembershipEnds;
+        }
+
+        offer.EndBecauseBooked(now);
+        _bookings.Add(ClassBooking.Create(Id, accountId, now));
+        return AcceptOfferOutcome.Booked;
+    }
+
+    /// <summary>Gives the held spot up; <see cref="UpdateOffers"/> then offers it to the next person.</summary>
+    public DeclineOfferOutcome DeclineOffer(Guid accountId, Instant now)
+    {
+        if (OpenOfferOf(accountId, now) is not { } offer)
+        {
+            return DeclineOfferOutcome.NoOffer;
+        }
+
+        offer.Decline(now);
+        return DeclineOfferOutcome.Declined;
+    }
+
+    /// <summary>
+    /// Takes the account off this class's waitlist because their membership ends before the
+    /// class (D-055 amendment, FIT-80), as <see cref="CancelBecauseMembershipEnds"/> does for
+    /// bookings. An offer the account held is given up.
+    /// </summary>
+    /// <returns>True when an entry was removed.</returns>
+    public bool RemoveFromWaitlistBecauseMembershipEnds(Guid accountId, LocalDate lastDayOfAccess, Instant now)
+    {
+        if (!StartsAfter(lastDayOfAccess) || QueuedEntryOf(accountId) is not { } entry)
+        {
+            return false;
+        }
+
+        entry.RemoveBecauseMembershipEnds(now);
+        return true;
+    }
+
+    /// <summary>The account's entry while it waits or holds an offer.</summary>
+    private WaitlistEntry? QueuedEntryOf(Guid accountId) =>
+        _waitlist.SingleOrDefault(entry => entry.IsQueued && entry.AccountId == accountId);
+
+    private WaitlistEntry? LatestEntryOf(Guid accountId) =>
+        _waitlist.Where(entry => entry.AccountId == accountId).MaxBy(entry => entry.Number);
 
     private ClassBooking? ActiveBookingOf(Guid accountId) =>
         _bookings.SingleOrDefault(booking => booking.IsActive && booking.AccountId == accountId);
