@@ -482,7 +482,7 @@ public sealed partial class StaffInviteTests
     }
 
     /// <summary>A confirmed staff account with <paramref name="role"/>, logged in on a new client.</summary>
-    private static async Task<HttpClient> LoggedInStaffAsync(ApiFactory factory, string role)
+    internal static async Task<HttpClient> LoggedInStaffAsync(ApiFactory factory, string role)
     {
         var email = SyntheticStaffEmail();
         await using (var scope = factory.Services.CreateAsyncScope())
