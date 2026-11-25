@@ -13,11 +13,10 @@ import { useTranslation } from 'react-i18next';
 import { Button, buttonVariants, focusRing } from '@/components/ui/button';
 import { LanguageMenuGroup, LanguageSwitch } from './language-switch';
 import { Logo } from './logo';
+import { useSession } from './use-session';
 
-const navLinks = [
-  { to: '/classes', label: 'shell.nav.classes' },
-  { to: '/account', label: 'shell.nav.account' },
-] as const;
+const classesLink = { to: '/classes', label: 'shell.nav.classes' } as const;
+const accountLink = { to: '/account', label: 'shell.nav.account' } as const;
 
 const menuItem =
   'flex h-11 cursor-pointer items-center rounded-md px-3 text-base text-foreground outline-none data-highlighted:bg-muted';
@@ -29,6 +28,11 @@ const menuItem =
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
+  // "My account" only when logged in; "Log in" and "Join" only when logged out.
+  // Neither while the session is loading, so they don't flicker (FIT-103).
+  const session = useSession();
+  const navLinks =
+    session === 'logged-in' ? [classesLink, accountLink] : [classesLink];
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -69,12 +73,16 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
           <div className="ml-auto hidden items-center gap-2 md:flex">
             <LanguageSwitch />
-            <Button variant="ghost" render={<Link to="/login" />}>
-              {t('login.title')}
-            </Button>
-            <Button render={<Link to="/signup" />}>
-              {t('landing.membership.join')}
-            </Button>
+            {session === 'logged-out' && (
+              <>
+                <Button variant="ghost" render={<Link to="/login" />}>
+                  {t('login.title')}
+                </Button>
+                <Button render={<Link to="/signup" />}>
+                  {t('landing.membership.join')}
+                </Button>
+              </>
+            )}
           </div>
           <div className="ml-auto md:hidden">
             <Menu>
@@ -98,18 +106,25 @@ export function AppShell({ children }: { children: ReactNode }) {
                     {t(link.label)}
                   </MenuItem>
                 ))}
-                <MenuItem className={menuItem} render={<Link to="/login" />}>
-                  {t('login.title')}
-                </MenuItem>
-                <MenuItem
-                  className={cn(
-                    buttonVariants(),
-                    'mt-1 data-highlighted:bg-primary/90',
-                  )}
-                  render={<Link to="/signup" />}
-                >
-                  {t('landing.membership.join')}
-                </MenuItem>
+                {session === 'logged-out' && (
+                  <>
+                    <MenuItem
+                      className={menuItem}
+                      render={<Link to="/login" />}
+                    >
+                      {t('login.title')}
+                    </MenuItem>
+                    <MenuItem
+                      className={cn(
+                        buttonVariants(),
+                        'mt-1 data-highlighted:bg-primary/90',
+                      )}
+                      render={<Link to="/signup" />}
+                    >
+                      {t('landing.membership.join')}
+                    </MenuItem>
+                  </>
+                )}
                 <MenuSeparator className="my-1 h-px bg-border" />
                 <LanguageMenuGroup />
               </MenuContent>
