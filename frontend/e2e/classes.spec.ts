@@ -39,6 +39,7 @@ const account = {
   firstName: 'Test',
   lastName: 'Person',
   hasGoogleLogin: false,
+  staffRoles: [],
 };
 
 async function mockApi(

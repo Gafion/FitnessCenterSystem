@@ -49,9 +49,11 @@ internal static class AccountEndpoints
     /// <param name="PreferredLanguage">The language of the account's emails: "da" or "en" (D-065).</param>
     /// <param name="TwoFactorEnabled">The authenticator app is set up (D-059).</param>
     /// <param name="MustSetUpAuthenticator">A staff account without the authenticator: staff endpoints refuse it until it is set up (D-013).</param>
+    /// <param name="StaffRoles">The account's staff roles (D-049), empty for a member. The screens use it to show staff links; the API checks the roles itself.</param>
     internal sealed record CurrentAccount(
         Guid AccountId, string Email, string FirstName, string LastName, bool HasGoogleLogin,
-        bool TwoFactorEnabled, bool MustSetUpAuthenticator, string PreferredLanguage);
+        bool TwoFactorEnabled, bool MustSetUpAuthenticator, string PreferredLanguage,
+        IReadOnlyList<string> StaffRoles);
 
     private static async Task<Results<NoContent, UnauthorizedHttpResult, ProblemHttpResult>> LoginAsync(
         LoginRequest request, SignInManager<Account> signIn, UserManager<Account> users)
@@ -174,7 +176,8 @@ internal static class AccountEndpoints
             logins.Any(login => login.LoginProvider == ExternalLogins.Google),
             account.TwoFactorEnabled,
             !account.TwoFactorEnabled && await Authenticator.IsStaffAsync(users, account),
-            account.PreferredLanguage.Code()));
+            account.PreferredLanguage.Code(),
+            (await users.GetRolesAsync(account)).Where(Contracts.StaffRoles.All.Contains).ToList()));
     }
 
     /// <summary>Changes the language of the account's emails (D-065).</summary>

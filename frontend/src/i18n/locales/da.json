@@ -70,7 +70,8 @@
       "profile": "Profil",
       "membership": "Medlemskab",
       "bookings": "Kommende hold",
-      "card": "Adgangskort"
+      "card": "Adgangskort",
+      "staff": "Medarbejder"
     },
     "noMembership": "Du har ikke noget medlemskab.",
     "membershipFailed": "Dit medlemskab kunne ikke hentes. Prøv igen senere.",
@@ -79,7 +80,8 @@
       "label": "E-mails fra os er på",
       "saved": "Gemt. Nye e-mails kommer på dette sprog.",
       "failed": "Sproget kunne ikke gemmes. Prøv igen."
-    }
+    },
+    "inviteStaff": "Inviter medarbejder"
   },
   "errors": {
     "unexpected": "Noget gik galt. Prøv igen.",
@@ -288,5 +290,36 @@
     "alreadyOn": "Autentificeringsappen er allerede slået til for din konto.",
     "on": "Autentificeringsapp: slået til.",
     "setUp": "Sæt en autentificeringsapp op"
+  },
+  "staffRoles": {
+    "Admin": "Administrator",
+    "Manager": "Leder",
+    "FrontDesk": "Reception",
+    "Instructor": "Instruktør"
+  },
+  "staffInvite": {
+    "title": "Inviter medarbejder",
+    "intro": "Vi sender personen et link på e-mail. Det virker én gang i 7 dage. Personen vælger sit navn og sin adgangskode eller logger ind, hvis personen allerede har en konto.",
+    "email": "E-mail",
+    "emailRequired": "Skriv en e-mailadresse.",
+    "role": "Rolle",
+    "roleRequired": "Vælg en rolle.",
+    "roleHints": {
+      "Admin": "Alt, også at invitere ledere og administratorer.",
+      "Manager": "Driver centret til daglig og inviterer reception og instruktører.",
+      "FrontDesk": "Hjælper medlemmer i receptionen.",
+      "Instructor": "Underviser på hold og ser kun sine egne."
+    },
+    "language": "E-mailens sprog",
+    "languageHint": "Bruges, når e-mailen ikke har en konto endnu. En eksisterende konto får e-mailen på sit eget sprog.",
+    "submit": "Send invitation",
+    "sent": "Invitation sendt til {{email}} som {{role}}. Linket virker indtil {{expires}}.",
+    "notAllowed": "Kun administratorer og ledere kan invitere medarbejdere.",
+    "backToAccount": "Tilbage til din konto",
+    "errors": {
+      "role-not-allowed": "Du må ikke give denne rolle. En leder kan kun invitere reception og instruktører.",
+      "already-has-role": "Kontoen har allerede denne rolle.",
+      "unexpected": "Noget gik galt. Prøv igen."
+    }
   }
 }

@@ -277,6 +277,21 @@ function AccountPage() {
           )}
         </AccountSection>
 
+        {/* Admins and managers invite staff (D-058, D-063); the API checks the role too. */}
+        {account.staffRoles.some(
+          (role) => role === 'Admin' || role === 'Manager',
+        ) && (
+          <AccountSection id="staff" title={t('account.sections.staff')}>
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto sm:self-start"
+              render={<Link to="/staff/invite" />}
+            >
+              {t('account.inviteStaff')}
+            </Button>
+          </AccountSection>
+        )}
+
         <AccountSection id="profile" title={t('account.sections.profile')}>
           <div className="flex flex-col gap-0.5">
             <p className="font-medium">

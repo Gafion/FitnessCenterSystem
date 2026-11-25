@@ -228,6 +228,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/identity/staff-invites/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetInvitableRoles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/identity/staff-invites/accept": {
         parameters: {
             query?: never;
@@ -601,6 +617,7 @@ export interface components {
             twoFactorEnabled: boolean;
             mustSetUpAuthenticator: boolean;
             preferredLanguage: string;
+            staffRoles: string[];
         };
         /** @enum {unknown} */
         DoorOutcome: "welcome" | "unknown-card" | "payment-missing" | "membership-ended";
@@ -628,9 +645,13 @@ export interface components {
                 [key: string]: string[];
             };
         };
+        InvitableRoles: {
+            roles: string[];
+        };
         InviteStaffRequest: {
             email: string;
             role: string;
+            language?: null | string;
         };
         LoginOptions: {
             google: boolean;
@@ -1149,6 +1170,40 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetInvitableRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitableRoles"];
                 };
             };
             /** @description Unauthorized */

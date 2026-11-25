@@ -70,7 +70,8 @@
       "profile": "Profile",
       "membership": "Membership",
       "bookings": "Upcoming classes",
-      "card": "Access card"
+      "card": "Access card",
+      "staff": "Staff"
     },
     "noMembership": "You have no membership.",
     "membershipFailed": "Your membership could not be loaded. Please try again later.",
@@ -79,7 +80,8 @@
       "label": "Emails from us are in",
       "saved": "Saved. New emails come in this language.",
       "failed": "The language could not be saved. Please try again."
-    }
+    },
+    "inviteStaff": "Invite staff"
   },
   "errors": {
     "unexpected": "Something went wrong. Please try again.",
@@ -288,5 +290,36 @@
   },
   "auth": {
     "or": "or"
+  },
+  "staffRoles": {
+    "Admin": "Admin",
+    "Manager": "Manager",
+    "FrontDesk": "Front desk",
+    "Instructor": "Instructor"
+  },
+  "staffInvite": {
+    "title": "Invite staff",
+    "intro": "We email the person a link. It works once, for 7 days. They choose their name and password, or log in if they already have an account.",
+    "email": "Email",
+    "emailRequired": "Enter an email address.",
+    "role": "Role",
+    "roleRequired": "Choose a role.",
+    "roleHints": {
+      "Admin": "Everything, including inviting managers and admins.",
+      "Manager": "Runs the center day to day and invites front desk and instructors.",
+      "FrontDesk": "Helps members at the desk.",
+      "Instructor": "Teaches classes and sees only their own."
+    },
+    "language": "Language of the email",
+    "languageHint": "Used when the email has no account yet. An existing account gets the email in its own language.",
+    "submit": "Send invite",
+    "sent": "Invite sent to {{email}} as {{role}}. The link works until {{expires}}.",
+    "notAllowed": "Only admins and managers can invite staff.",
+    "backToAccount": "Back to your account",
+    "errors": {
+      "role-not-allowed": "You may not give this role. A manager can invite front desk and instructors only.",
+      "already-has-role": "This account already has this role.",
+      "unexpected": "Something went wrong. Try again."
+    }
   }
 }

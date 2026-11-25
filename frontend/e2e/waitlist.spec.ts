@@ -39,6 +39,7 @@ test('a member joins the waitlist of a full class and leaves it', async ({
         firstName: 'Test',
         lastName: 'Person',
         hasGoogleLogin: false,
+        staffRoles: [],
       },
     }),
   );

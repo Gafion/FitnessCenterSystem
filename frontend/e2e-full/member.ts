@@ -26,15 +26,17 @@ export function mailpitUrl(): string {
 }
 
 /**
- * The path and query of the newest confirmation link Mailpit caught for `email`.
- * Only the path is used, so the test opens it on its own base URL whatever host
- * the API put in the link.
+ * The path and query of the first link to `path` in the newest email Mailpit
+ * caught for `email`. Only the path is used, so the test opens it on its own
+ * base URL whatever host the API put in the link.
  */
-async function confirmationPath(
+export async function linkPathFromEmail(
   request: APIRequestContext,
   email: string,
+  path: string,
 ): Promise<string> {
   let link: string | undefined;
+  const pattern = new RegExp(`\\S+${path}\\?\\S+`);
   await expect
     .poll(
       async () => {
@@ -50,10 +52,10 @@ async function confirmationPath(
           `${mailpitUrl()}/api/v1/message/${messages[0].ID}`,
         );
         const { Text } = (await message.json()) as { Text: string };
-        link = Text.match(/\S+\/confirm-email\?\S+/)?.[0];
+        link = Text.match(pattern)?.[0];
         return link;
       },
-      { message: `a confirmation email to ${email}`, timeout: 15_000 },
+      { message: `an email to ${email} with a ${path} link`, timeout: 15_000 },
     )
     .toBeDefined();
   const url = new URL(link as string);
@@ -81,7 +83,9 @@ export async function confirmEmail(
   request: APIRequestContext,
   member: Member,
 ) {
-  await page.goto(await confirmationPath(request, member.email));
+  await page.goto(
+    await linkPathFromEmail(request, member.email, '/confirm-email'),
+  );
   await expect(
     page.getByRole('heading', { name: 'Your email is confirmed' }),
   ).toBeVisible();

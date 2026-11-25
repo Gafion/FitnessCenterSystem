@@ -326,6 +326,32 @@
         }
       }
     },
+    "/api/identity/staff-invites/roles": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "GetInvitableRoles",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitableRoles"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/api/identity/staff-invites/accept": {
       "post": {
         "tags": [
@@ -1150,7 +1176,8 @@
           "hasGoogleLogin",
           "twoFactorEnabled",
           "mustSetUpAuthenticator",
-          "preferredLanguage"
+          "preferredLanguage",
+          "staffRoles"
         ],
         "type": "object",
         "properties": {
@@ -1178,6 +1205,12 @@
           },
           "preferredLanguage": {
             "type": "string"
+          },
+          "staffRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -1284,6 +1317,20 @@
           }
         }
       },
+      "InvitableRoles": {
+        "required": [
+          "roles"
+        ],
+        "type": "object",
+        "properties": {
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "InviteStaffRequest": {
         "required": [
           "email",
@@ -1296,6 +1343,12 @@
           },
           "role": {
             "type": "string"
+          },
+          "language": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
