@@ -3,20 +3,18 @@ using FitnessCenter.SharedKernel;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using MimeKit;
 
 namespace FitnessCenter.Modules.Identity.Infrastructure;
 
 /// <summary>
 /// Sends Identity's emails over SMTP. Locally that is the Mailpit test mailbox, which the
-/// AppHost starts (D-038). The real email provider is still open, so without an SMTP host
-/// sending fails instead of silently dropping the email.
+/// AppHost starts (D-038); for real email it is Resend's SMTP relay (D-066). Without an SMTP
+/// host sending fails instead of silently dropping the email.
 /// </summary>
-internal sealed class SmtpEmailSender(IConfiguration configuration) : IEmailSender<Account>
+internal sealed class SmtpEmailSender(IOptions<EmailOptions> options) : IEmailSender<Account>
 {
-    // Placeholder sender until the center's domain and provider are chosen (D-038).
-    private static readonly MailboxAddress From = new("FitnessCenter", "no-reply@fitnesscenter.invalid");
 
     public const string ConfirmationSubjectEnglish = "Confirm your email";
 
@@ -61,25 +59,50 @@ internal sealed class SmtpEmailSender(IConfiguration configuration) : IEmailSend
     /// <summary>Sends a plain-text email. Other modules' emails come here through <c>IAccountService.SendEmailAsync</c>.</summary>
     public async Task SendAsync(string to, string subject, string body, CancellationToken cancellationToken)
     {
-        var host = configuration["Email:Smtp:Host"];
-        if (string.IsNullOrEmpty(host))
+        var settings = options.Value;
+        var smtp = settings.Smtp;
+        if (string.IsNullOrEmpty(smtp.Host))
         {
             throw new InvalidOperationException(
                 "No SMTP host is configured (Email:Smtp:Host). Locally, Aspire starts the Mailpit test mailbox.");
         }
 
-        var port = configuration.GetValue("Email:Smtp:Port", 25);
-
-        using var message = new MimeMessage();
-        message.From.Add(From);
-        message.To.Add(MailboxAddress.Parse(to));
-        message.Subject = subject;
-        message.Body = new TextPart("plain") { Text = body };
+        // Checked before connecting, so half a login fails without touching the network.
+        var credentials = smtp.HasCredentials ? Credentials(smtp) : null;
+        using var message = CreateMessage(settings.From, to, subject, body);
 
         using var client = new SmtpClient();
-        // Mailpit speaks plain SMTP on localhost. A real provider will need TLS and a login.
-        await client.ConnectAsync(host, port, SecureSocketOptions.None, cancellationToken);
+        await client.ConnectAsync(smtp.Host, smtp.Port, SocketOptions(smtp), cancellationToken);
+        if (credentials is not null)
+        {
+            await client.AuthenticateAsync(credentials, cancellationToken);
+        }
+
         await client.SendAsync(message, cancellationToken);
         await client.DisconnectAsync(quit: true, cancellationToken);
     }
+
+    internal static MimeMessage CreateMessage(EmailOptions.FromOptions from, string to, string subject, string body)
+    {
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(from.Name, from.Address));
+        message.To.Add(MailboxAddress.Parse(to));
+        message.Subject = subject;
+        message.Body = new TextPart("plain") { Text = body };
+        return message;
+    }
+
+    /// <summary>
+    /// Plain SMTP for Mailpit. STARTTLS is required, not just attempted, when TLS is asked for or a
+    /// login is set, so a password never goes over an unencrypted connection.
+    /// </summary>
+    internal static SecureSocketOptions SocketOptions(EmailOptions.SmtpOptions smtp) =>
+        smtp.UseTls || smtp.HasCredentials ? SecureSocketOptions.StartTls : SecureSocketOptions.None;
+
+    /// <summary>Both parts or neither. The error names the setting, never its value.</summary>
+    internal static System.Net.NetworkCredential Credentials(EmailOptions.SmtpOptions smtp) =>
+        string.IsNullOrEmpty(smtp.Username) || string.IsNullOrEmpty(smtp.Password)
+            ? throw new InvalidOperationException(
+                "Email:Smtp:Username and Email:Smtp:Password must be set together.")
+            : new System.Net.NetworkCredential(smtp.Username, smtp.Password);
 }

@@ -119,8 +119,8 @@ Whichever is chosen, the code change is small: SMTP settings in configuration (u
 
 ## 7. Open questions for the owner
 
-- **O1. Will the project register a domain?** Every option needs one for real email [EM-107][EM-205][EM-301]. It is a yearly cost, which D-050 ("no paid hosting") does not cover either way. A subdomain of a domain the owner already has would also work.
-- **O2. Must personal data (email addresses, message content) be stored in the EU?** If yes, SES is the only verified option. If an EU sending region plus a DPA with SCCs is enough, Resend fits.
+- **O1. Will the project register a domain?** **Answered by [D-066](../decisions.md#d-066-resend-free-plan-without-a-domain-for-the-proof-of-concept): no domain; see section 9 for what that allows.** Every option needs one for real email [EM-107][EM-205][EM-301]. It is a yearly cost, which D-050 ("no paid hosting") does not cover either way. A subdomain of a domain the owner already has would also work.
+- **O2. Must personal data (email addresses, message content) be stored in the EU?** **Answered by [D-066](../decisions.md#d-066-resend-free-plan-without-a-domain-for-the-proof-of-concept): not required for the proof of concept; needed if it ever goes commercial.** If yes, SES is the only verified option. If an EU sending region plus a DPA with SCCs is enough, Resend fits.
 
 ## 8. Sources
 
@@ -156,7 +156,23 @@ All accessed 2026-11-25. All primary (vendor's own pages).
 | https://resend.com/docs/dashboard/domains/dmarc | DMARC | Resend |
 | https://resend.com/security/gdpr | GDPR | Resend |
 | https://resend.com/legal/dpa | DPA | Resend |
+| https://resend.com/docs/knowledge-base/403-error-resend-dev-domain | 403 error with the resend.dev domain (section 9) | Resend |
+| https://resend.com/docs/api-reference/errors | API errors (section 9) | Resend |
+| https://resend.com/docs/dashboard/emails/send-test-emails | Send test emails (section 9) | Resend |
 | https://www.brevo.com/free-smtp-server | Free SMTP server | Brevo |
 | https://www.brevo.com/pricing/ | Pricing | Brevo |
 | https://developers.brevo.com/docs/smtp-integration | SMTP integration | Brevo |
 | https://developers.brevo.com/docs/send-a-transactional-email | Send a transactional email | Brevo |
+
+## 9. Resend without a domain
+
+Added 2026-11-25 (FIT-52), after the owner chose Resend with no domain (D-066). All pages accessed 2026-11-25; all primary.
+
+- [EM-308] SMTP settings, re-checked: host `smtp.resend.com`; ports 25, 587 and 2587 use STARTTLS ("First connects via plaintext, then upgrades to SSL/TLS"), 465 and 2465 implicit TLS; username `resend`; password the API key. The page lists "A verified domain" as a prerequisite. Source: https://resend.com/docs/send-with-smtp. Confidence: High. (Primary) Our `SmtpEmailSender` uses STARTTLS, so it uses **port 587**.
+- [EM-309] The test domain `resend.dev` "is only available for testing purposes and can only send emails to the email address associated with your Resend account". Source: https://resend.com/docs/knowledge-base/403-error-resend-dev-domain. Confidence: High. (Primary)
+- [EM-310] Sending anywhere else fails with HTTP 403: "You can only send testing emails to your own email address". The fix Resend gives is to verify a domain to "send emails to addresses beyond your own". Source: https://resend.com/docs/api-reference/errors. Confidence: High. (Primary)
+- [EM-311] Test recipients `delivered@resend.dev`, `bounced@resend.dev`, `complained@resend.dev` and `suppressed@resend.dev` simulate events, accept a `+label` suffix, and "count against your account's sending quota". Source: https://resend.com/docs/dashboard/emails/send-test-emails. The SMTP page's example sends from `onboarding@resend.dev` to `delivered@resend.dev`, but no page says outright that this passes the 403 rule: **UNVERIFIED**.
+- **Sender address:** the SMTP example uses `onboarding@resend.dev` as the From address (https://resend.com/docs/send-with-smtp). That any other `@resend.dev` sender is refused is **UNVERIFIED**; use `onboarding@resend.dev`.
+- **Plus-addresses** (`owner+x@...`) of the account owner's email: no Resend page says whether they count as "your own email address". **UNVERIFIED**; it can be tested once with the real key.
+
+What this means [Synthesis]: without a domain, Resend delivers real email **only to the Resend account owner's own address**. Emails to any other address are refused (HTTP 403 on the API [EM-310]; the exact SMTP reply is **UNVERIFIED**), so `SmtpEmailSender` throws and that email is not sent. Mailpit stays the default for development and CI; Resend is for showing real delivery to the owner's inbox. Free-plan limits still apply: 100 emails a day, 3,000 a month [EM-302].
