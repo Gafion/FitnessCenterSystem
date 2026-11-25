@@ -21,6 +21,7 @@
 | [performance-testing.md](performance-testing.md) | 4 | Load/response-time testing: k6, NBomber, JMeter, Gatling, Locust, Artillery; targets method; CI schedule and environment (feeds D-016, Q14) |
 | [stack-comparison-acme-corp.md](stack-comparison-acme-corp.md) | 4 | Recommended full-stack TS starter (acme-corp) vs our decided stack; component table; keep / adopt / hybrid options (FIT-40) |
 | [scaffolding-for-agents.md](scaffolding-for-agents.md) | 4 | Evidence on scaffolding before agent coding; walking skeleton; prioritised scaffold checklist; golden slice; .NET/TS templates (FIT-49) |
+| [email-provider.md](email-provider.md) | 4 | Real email provider: Amazon SES, Postmark, Resend (+ Brevo) on free tier, EU data, DPA, SMTP, DNS, limits; recommendation for the owner (FIT-52, feeds AU9) |
 
 Raw source material: [transcripts/](transcripts/) (video transcripts; currently only a failed-retrieval note for mkN4uRZYPfs).
 
