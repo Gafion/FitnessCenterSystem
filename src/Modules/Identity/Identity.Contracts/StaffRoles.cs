@@ -16,8 +16,9 @@ public static class StaffRoles
 
 /// <summary>
 /// Authorization policies that endpoints in any module can require, e.g.
-/// <c>.RequireAuthorization(StaffPolicies.FrontDesk)</c>. Each role's policy admits that role
-/// only; there is no hierarchy between the roles (D-049 doesn't define one).
+/// <c>.RequireAuthorization(StaffPolicies.FrontDesk)</c>. Roles stack (D-062): the Manager
+/// policy also admits Admin, and the FrontDesk policy admits Manager and Admin. Instructor
+/// admits the Instructor role only; an admin or manager is not an instructor without that role.
 /// </summary>
 public static class StaffPolicies
 {

@@ -92,16 +92,21 @@ public static class IdentityModule
 
     /// <summary>
     /// One policy per staff role, plus one for any staff role (D-049). Members match none.
-    /// Every staff policy also needs the authenticator app set up (D-013, D-059).
+    /// Roles stack (D-062): a role's policy also admits the roles above it, so the Manager
+    /// policy admits Admin, and the FrontDesk policy admits Manager and Admin. Instructor
+    /// stands apart. Every staff policy also needs the authenticator app set up (D-013, D-059).
     /// </summary>
     private static void AddStaffPolicies(AuthorizationOptions options)
     {
-        options.AddPolicy(StaffPolicies.Admin, policy => StaffPolicy(policy, StaffRoles.Admin));
-        options.AddPolicy(StaffPolicies.Manager, policy => StaffPolicy(policy, StaffRoles.Manager));
-        options.AddPolicy(StaffPolicies.FrontDesk, policy => StaffPolicy(policy, StaffRoles.FrontDesk));
-        options.AddPolicy(StaffPolicies.Instructor, policy => StaffPolicy(policy, StaffRoles.Instructor));
+        options.AddPolicy(StaffPolicies.Admin, policy => RolePolicy(policy, StaffRoles.Admin));
+        options.AddPolicy(StaffPolicies.Manager, policy => RolePolicy(policy, StaffRoles.Manager));
+        options.AddPolicy(StaffPolicies.FrontDesk, policy => RolePolicy(policy, StaffRoles.FrontDesk));
+        options.AddPolicy(StaffPolicies.Instructor, policy => RolePolicy(policy, StaffRoles.Instructor));
         options.AddPolicy(StaffPolicies.AnyStaff, policy => StaffPolicy(policy, [.. StaffRoles.All]));
     }
+
+    private static void RolePolicy(AuthorizationPolicyBuilder policy, string role) =>
+        StaffPolicy(policy, [.. StaffRoleRules.AdmittedBy(role)]);
 
     private static void StaffPolicy(AuthorizationPolicyBuilder policy, params string[] roles) =>
         policy.RequireRole(roles).AddRequirements(new AuthenticatorSetUpRequirement());

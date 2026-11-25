@@ -323,6 +323,32 @@
         }
       }
     },
+    "/api/identity/staff-invites/accept-existing": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "AcceptStaffInviteForAccount",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptStaffInviteForAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/api/identity/authenticator": {
       "get": {
         "tags": [
@@ -852,6 +878,22 @@
   },
   "components": {
     "schemas": {
+      "AcceptStaffInviteForAccountRequest": {
+        "required": [
+          "inviteId",
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "inviteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      },
       "AcceptStaffInviteRequest": {
         "required": [
           "inviteId",
