@@ -141,7 +141,8 @@ public static class IdentityModule
     /// <summary>
     /// One synthetic staff account per role, for local development only (D-049). Needs a
     /// password in <c>Identity:DevelopmentStaffPassword</c> (user-secrets); without one it logs
-    /// how to set it and seeds nothing.
+    /// how to set it and seeds nothing. With a key in <c>Identity:DevelopmentStaffAuthenticatorKey</c>,
+    /// the accounts also get the authenticator app turned on with that key (FIT-109).
     /// </summary>
     public static async Task SeedDevelopmentStaffAsync(this IServiceProvider services, CancellationToken cancellationToken)
     {
@@ -150,7 +151,9 @@ public static class IdentityModule
         var provider = scope.ServiceProvider;
         await DevelopmentStaff.EnsureAsync(
             provider.GetRequiredService<UserManager<Account>>(),
+            provider.GetRequiredService<IUserStore<Account>>(),
             provider.GetRequiredService<IConfiguration>()[DevelopmentStaff.PasswordKey],
+            provider.GetRequiredService<IConfiguration>()[DevelopmentStaff.AuthenticatorKeyKey],
             provider.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(DevelopmentStaff)));
     }
 
