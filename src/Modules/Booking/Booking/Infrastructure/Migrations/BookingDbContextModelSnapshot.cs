@@ -126,7 +126,51 @@ namespace Booking.Infrastructure.Migrations
                                 .HasForeignKey("ClassSessionId");
                         });
 
+                    b.OwnsMany("FitnessCenter.Modules.Booking.Domain.WaitlistEntry", "Waitlist", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("AccountId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("ClassSessionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Instant>("JoinedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<Instant?>("LeftAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<int>("Number")
+                                .HasColumnType("integer");
+
+                            b1.Property<string>("Status")
+                                .IsRequired()
+                                .HasMaxLength(40)
+                                .HasColumnType("character varying(40)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("AccountId");
+
+                            b1.HasIndex("ClassSessionId", "AccountId")
+                                .IsUnique()
+                                .HasFilter("\"Status\" = 'Waiting'");
+
+                            b1.HasIndex("ClassSessionId", "Number")
+                                .IsUnique();
+
+                            b1.ToTable("waitlist_entries", "booking");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ClassSessionId");
+                        });
+
                     b.Navigation("Bookings");
+
+                    b.Navigation("Waitlist");
                 });
 #pragma warning restore 612, 618
         }

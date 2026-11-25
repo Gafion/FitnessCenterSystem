@@ -32,13 +32,21 @@ function ClassesPage() {
 
   async function change(
     method: 'POST' | 'DELETE',
+    target: 'booking' | 'waitlist',
     classId: string,
   ): Promise<BookingResult> {
     const options = { params: { path: { classId } } };
     const { response, error } =
-      method === 'POST'
-        ? await api.POST('/api/booking/classes/{classId}/booking', options)
-        : await api.DELETE('/api/booking/classes/{classId}/booking', options);
+      target === 'booking'
+        ? method === 'POST'
+          ? await api.POST('/api/booking/classes/{classId}/booking', options)
+          : await api.DELETE('/api/booking/classes/{classId}/booking', options)
+        : method === 'POST'
+          ? await api.POST('/api/booking/classes/{classId}/waitlist', options)
+          : await api.DELETE(
+              '/api/booking/classes/{classId}/waitlist',
+              options,
+            );
     if (response.status === 401) {
       await navigate({ to: '/login', search: {} });
       return undefined;
@@ -50,12 +58,16 @@ function ClassesPage() {
     return response.ok ? undefined : problemType(error);
   }
 
-  async function book(classId: string): Promise<BookingResult> {
+  /** Booking and joining a waitlist need a login; a visitor goes to log in first. */
+  async function join(
+    target: 'booking' | 'waitlist',
+    classId: string,
+  ): Promise<BookingResult> {
     if (!loggedIn) {
       await navigate({ to: '/login', search: {} });
       return undefined;
     }
-    return change('POST', classId);
+    return change('POST', target, classId);
   }
 
   return (
@@ -67,8 +79,10 @@ function ClassesPage() {
       <Schedule
         entries={schedule}
         now={new Date()}
-        onBook={book}
-        onCancel={(classId) => change('DELETE', classId)}
+        onBook={(classId) => join('booking', classId)}
+        onCancel={(classId) => change('DELETE', 'booking', classId)}
+        onJoinWaitlist={(classId) => join('waitlist', classId)}
+        onLeaveWaitlist={(classId) => change('DELETE', 'waitlist', classId)}
       />
     </Page>
   );

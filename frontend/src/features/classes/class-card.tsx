@@ -1,4 +1,4 @@
-import { BanIcon, CheckIcon } from 'lucide-react';
+import { BanIcon, CheckIcon, HourglassIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
@@ -18,9 +18,19 @@ type Props = {
   now: Date;
   onBook: () => Promise<BookingResult>;
   onCancel: () => Promise<BookingResult>;
+  /** Joins the waitlist of a full class (D-051). Without it, the card offers no waitlist. */
+  onJoinWaitlist?: () => Promise<BookingResult>;
+  onLeaveWaitlist?: () => Promise<BookingResult>;
 };
 
-export function ClassCard({ entry, now, onBook, onCancel }: Props) {
+export function ClassCard({
+  entry,
+  now,
+  onBook,
+  onCancel,
+  onJoinWaitlist,
+  onLeaveWaitlist,
+}: Props) {
   const { t } = useTranslation();
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -35,6 +45,11 @@ export function ClassCard({ entry, now, onBook, onCancel }: Props) {
 
   const full = entry.spotsLeft === 0;
   const bookable = !full && !entry.afterMyMembershipEnds;
+  // D-051: the member's place in the queue, counting from 1; absent when not waiting.
+  const waitlistPlace = entry.myWaitlistPlace ?? undefined;
+  const waiting = waitlistPlace !== undefined;
+  const canJoinWaitlist =
+    full && !entry.bookedByMe && !waiting && !entry.afterMyMembershipEnds;
 
   return (
     <article
@@ -72,7 +87,18 @@ export function ClassCard({ entry, now, onBook, onCancel }: Props) {
             </p>
           </div>
         )}
-        {!entry.bookedByMe && full && (
+        {waiting && (
+          <div className="flex flex-col items-start gap-1">
+            <Badge variant="default">
+              <HourglassIcon aria-hidden="true" className="size-3.5" />
+              {t('classes.waitlisted')}
+            </Badge>
+            <p className="text-sm text-subtle">
+              {t('classes.waitlistPlace', { place: waitlistPlace })}
+            </p>
+          </div>
+        )}
+        {!entry.bookedByMe && !waiting && full && (
           <p className="text-sm text-muted-foreground">{t('classes.full')}</p>
         )}
         {/* D-055: a cancelled membership can't book classes after its last day. */}
@@ -104,16 +130,41 @@ export function ClassCard({ entry, now, onBook, onCancel }: Props) {
           </Button>
         )
       ) : (
-        <Button
-          // A class that can't be booked gets a dashed, flat button with a
-          // "no" sign, so it never reads as a working Book button.
-          className="w-full data-disabled:border-dashed data-disabled:border-border-strong sm:w-36"
-          disabled={busy || !bookable}
-          onClick={() => run(onBook)}
-        >
-          {!bookable && <BanIcon aria-hidden="true" />}
-          {t('classes.book')}
-        </Button>
+        <div className="flex flex-col gap-2 sm:w-36">
+          {canJoinWaitlist && onJoinWaitlist && (
+            <Button
+              className="w-full"
+              disabled={busy}
+              onClick={() => run(onJoinWaitlist)}
+            >
+              {t('classes.joinWaitlist')}
+            </Button>
+          )}
+          {waiting && onLeaveWaitlist && (
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={busy}
+              onClick={() => run(onLeaveWaitlist)}
+            >
+              {t('classes.leaveWaitlist')}
+            </Button>
+          )}
+          {/* D-051, FIT-80: a full class offers only the waitlist, no Book button. */}
+          {!full && (
+            <Button
+              // A class that can't be booked gets a dashed, flat button with a
+              // "no" sign, so it never reads as a working Book button.
+              variant={waiting ? 'outline' : undefined}
+              className="w-full data-disabled:border-dashed data-disabled:border-border-strong"
+              disabled={busy || !bookable}
+              onClick={() => run(onBook)}
+            >
+              {!bookable && <BanIcon aria-hidden="true" />}
+              {t('classes.book')}
+            </Button>
+          )}
+        </div>
       )}
     </article>
   );

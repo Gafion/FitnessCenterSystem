@@ -139,13 +139,19 @@
     "cancelClosed": "Afmelding lukkede {{time}}.",
     "full": "Holdet er fuldt.",
     "afterMembershipEnds": "Dit medlemskab slutter før dette hold, så du kan ikke booke det.",
+    "joinWaitlist": "Skriv på venteliste",
+    "leaveWaitlist": "Forlad venteliste",
+    "waitlisted": "Du står på ventelisten.",
+    "waitlistPlace": "Du er nummer {{place}} i køen.",
     "errors": {
       "class-full": "Holdet er fuldt.",
       "class-started": "Holdet er allerede startet.",
       "booking-not-open": "Booking åbner 14 dage før holdet.",
       "after-membership-ends": "Dit medlemskab slutter før dette hold, så du kan ikke booke det.",
       "already-booked": "Du har allerede booket dette hold.",
-      "cancellation-closed": "Afmelding lukker 12 timer før holdet starter."
+      "cancellation-closed": "Afmelding lukker 12 timer før holdet starter.",
+      "already-waitlisted": "Du står allerede på ventelisten til dette hold.",
+      "class-not-full": "Holdet har ledige pladser, så book det i stedet."
     }
   },
   "simulation": {

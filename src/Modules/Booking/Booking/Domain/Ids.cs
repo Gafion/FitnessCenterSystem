@@ -11,3 +11,8 @@ internal readonly record struct ClassBookingId(Guid Value)
 {
     public static ClassBookingId New() => new(Guid.CreateVersion7());
 }
+
+internal readonly record struct WaitlistEntryId(Guid Value)
+{
+    public static WaitlistEntryId New() => new(Guid.CreateVersion7());
+}

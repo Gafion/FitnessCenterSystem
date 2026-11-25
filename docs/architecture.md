@@ -315,7 +315,7 @@ sequenceDiagram
   SPA-->>M: Confirmation
 ```
 
-The overbooking protection (row lock or serializable transaction with retry) follows [research/domain-modeling.md](research/domain-modeling.md) (bookings section). Waitlist rules are 🟡 open (U4/D16).
+The overbooking protection (row lock or serializable transaction with retry) follows [research/domain-modeling.md](research/domain-modeling.md) (bookings section). Waitlist rules are decided: offer with expiry, no penalties (D-051); an offer lasts 2 hours, never past the cancel deadline (D-067). Joining and leaving the queue is built (FIT-79).
 
 ### 6.2 Member swipes RFID card at the entrance
 

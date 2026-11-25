@@ -810,6 +810,64 @@
         }
       }
     },
+    "/api/booking/classes/{classId}/waitlist": {
+      "post": {
+        "tags": [
+          "Booking"
+        ],
+        "operationId": "JoinWaitlist",
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Booking"
+        ],
+        "operationId": "LeaveWaitlist",
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/api/access/cards/mine": {
       "get": {
         "tags": [
@@ -1509,7 +1567,8 @@
           "spotsLeft",
           "bookedByMe",
           "cancelUntil",
-          "afterMyMembershipEnds"
+          "afterMyMembershipEnds",
+          "myWaitlistPlace"
         ],
         "type": "object",
         "properties": {
@@ -1548,6 +1607,13 @@
           },
           "afterMyMembershipEnds": {
             "type": "boolean"
+          },
+          "myWaitlistPlace": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },
