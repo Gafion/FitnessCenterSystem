@@ -452,6 +452,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/booking/my-offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMyOffers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/booking/classes/{classId}/offer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AcceptOffer"];
+        delete: operations["DeclineOffer"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/access/cards/mine": {
         parameters: {
             query?: never;
@@ -641,6 +673,18 @@ export interface components {
             cancellationEffectiveOn: null | string;
             canUndoCancellation: boolean;
         };
+        MyOffer: {
+            /** Format: uuid */
+            classId: string;
+            className: string;
+            instructorName: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
         MyPayments: {
             status: string;
             /** Format: date */
@@ -698,6 +742,8 @@ export interface components {
             afterMyMembershipEnds: boolean;
             /** Format: int32 */
             myWaitlistPlace: null | number;
+            /** Format: date-time */
+            myOfferExpiresAt: null | string;
         };
         SetLanguageRequest: {
             language: string;
@@ -1649,6 +1695,101 @@ export interface operations {
         };
     };
     LeaveWaitlist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                classId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetMyOffers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyOffer"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AcceptOffer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                classId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DeclineOffer: {
         parameters: {
             query?: never;
             header?: never;
