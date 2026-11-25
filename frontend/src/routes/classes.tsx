@@ -32,21 +32,28 @@ function ClassesPage() {
 
   async function change(
     method: 'POST' | 'DELETE',
-    target: 'booking' | 'waitlist',
+    target: 'booking' | 'waitlist' | 'offer',
     classId: string,
   ): Promise<BookingResult> {
     const options = { params: { path: { classId } } };
     const { response, error } =
-      target === 'booking'
+      target === 'offer'
         ? method === 'POST'
-          ? await api.POST('/api/booking/classes/{classId}/booking', options)
-          : await api.DELETE('/api/booking/classes/{classId}/booking', options)
-        : method === 'POST'
-          ? await api.POST('/api/booking/classes/{classId}/waitlist', options)
-          : await api.DELETE(
-              '/api/booking/classes/{classId}/waitlist',
-              options,
-            );
+          ? await api.POST('/api/booking/classes/{classId}/offer', options)
+          : await api.DELETE('/api/booking/classes/{classId}/offer', options)
+        : target === 'booking'
+          ? method === 'POST'
+            ? await api.POST('/api/booking/classes/{classId}/booking', options)
+            : await api.DELETE(
+                '/api/booking/classes/{classId}/booking',
+                options,
+              )
+          : method === 'POST'
+            ? await api.POST('/api/booking/classes/{classId}/waitlist', options)
+            : await api.DELETE(
+                '/api/booking/classes/{classId}/waitlist',
+                options,
+              );
     if (response.status === 401) {
       await navigate({ to: '/login', search: {} });
       return undefined;
@@ -83,6 +90,8 @@ function ClassesPage() {
         onCancel={(classId) => change('DELETE', 'booking', classId)}
         onJoinWaitlist={(classId) => join('waitlist', classId)}
         onLeaveWaitlist={(classId) => change('DELETE', 'waitlist', classId)}
+        onAcceptOffer={(classId) => change('POST', 'offer', classId)}
+        onDeclineOffer={(classId) => change('DELETE', 'offer', classId)}
       />
     </Page>
   );

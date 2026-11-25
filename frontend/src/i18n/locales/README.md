@@ -14,6 +14,7 @@ should check them before real members use them (FIT-53 covers the real terms tex
 | `membership.cancellation.*`, `membership.cancelledOn`, `membership.accessUntil`                                                                                      | Cancellation wording. The research says cancel and withdrawal buttons need exact Danish wording ([ux-patterns.md §2.3](../../../../docs/research/ux-patterns.md)). |
 | `classes.cancel`, `classes.cancelUntil`, `classes.cancelClosed`, `classes.errors.cancellation-closed`                                                                | Class booking cancellation ("afmelding").                                                                                                                          |
 | `classes.joinWaitlist`, `classes.leaveWaitlist`, `classes.waitlisted`, `classes.waitlistPlace`, `classes.errors.already-waitlisted`, `classes.errors.class-not-full` | Waitlist wording (D-051, FIT-79), translated by the developer.                                                                                                     |
+| `classes.offered`, `classes.offerExpires`, `classes.acceptOffer`, `classes.declineOffer`, `classes.errors.offer-expired`, `offers.*`                                 | Waitlist offer wording (D-067, FIT-80), translated by the developer.                                                                                               |
 | `loginCode.*`, `authenticator.*`                                                                                                                                     | Login code and authenticator setup (D-059), translated by the developer.                                                                                           |
 
 ## Texts from the backend
@@ -30,4 +31,5 @@ the developer, for the owner to check:
 | `src/Modules/Members/Members/Application/PaymentReminders.cs`     | Payment reminder email.                                                        |
 | `src/Modules/Identity/Identity/Infrastructure/SmtpEmailSender.cs` | Signup confirmation email.                                                     |
 | `src/Modules/Identity/Identity/Application/StaffInvites.cs`       | Staff invite email. The role names in it stay English, as in the app.          |
+| `src/Modules/Booking/Booking/Application/OfferEmails.cs`          | Waitlist offer email ("Der er en plads til dig", D-067).                       |
 | `src/Modules/Members/Members/Domain/MembershipType.cs`            | "Almindeligt medlemskab" for the placeholder membership type.                  |

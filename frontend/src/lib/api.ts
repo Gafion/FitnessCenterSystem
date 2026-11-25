@@ -153,6 +153,15 @@ export async function getMyBookings(): Promise<Schemas['MyBooking'][]> {
   return data;
 }
 
+/** The spots held for the logged-in account from a waitlist, soonest class first (D-067). */
+export async function getMyOffers(): Promise<Schemas['MyOffer'][]> {
+  const { data } = await api.GET('/api/booking/my-offers');
+  if (!data) {
+    throw new Error('Could not load the offers.');
+  }
+  return data;
+}
+
 /** Changes the language of the logged-in account's emails (D-065). */
 export async function setPreferredLanguage(language: Language): Promise<void> {
   const { response } = await api.PUT('/api/identity/me/language', {
