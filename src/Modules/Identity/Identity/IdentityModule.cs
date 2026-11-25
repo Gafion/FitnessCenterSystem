@@ -77,6 +77,7 @@ public static class IdentityModule
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<StaffInvites>();
         services.AddScoped<IAuthorizationHandler, AuthenticatorSetUpHandler>();
+        services.AddOptions<EmailOptions>().Bind(configuration.GetSection(EmailOptions.SectionName));
         services.AddSingleton<SmtpEmailSender>();
         services.AddSingleton<IEmailSender<Account>>(provider => provider.GetRequiredService<SmtpEmailSender>());
         services.AddHealthChecks().AddDbContextCheck<IdentityDbContext>("identity-db");
