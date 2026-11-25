@@ -17,6 +17,7 @@ should check them before real members use them (FIT-53 covers the real terms tex
 | `classes.offered`, `classes.offerExpires`, `classes.acceptOffer`, `classes.declineOffer`, `classes.errors.offer-expired`, `offers.*`                                 | Waitlist offer wording (D-067, FIT-80), translated by the developer.                                                                                               |
 | `loginCode.*`, `authenticator.*`                                                                                                                                     | Login code and authenticator setup (D-059), translated by the developer.                                                                                           |
 | `staffRoles.*`, `staffInvite.*`, `account.sections.staff`, `account.inviteStaff`                                                                                     | Staff invite screen (D-058, D-063) and role names, translated by the developer.                                                                                    |
+| `myClasses.*`, `account.myClasses`                                                                                                                                   | Instructor's classes screen (D-049, FIT-106), translated by the developer.                                                                                         |
 
 ## Texts from the backend
 

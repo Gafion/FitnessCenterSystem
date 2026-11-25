@@ -81,7 +81,8 @@
       "saved": "Gemt. Nye e-mails kommer på dette sprog.",
       "failed": "Sproget kunne ikke gemmes. Prøv igen."
     },
-    "inviteStaff": "Inviter medarbejder"
+    "inviteStaff": "Inviter medarbejder",
+    "myClasses": "Dine hold"
   },
   "errors": {
     "unexpected": "Noget gik galt. Prøv igen.",
@@ -321,5 +322,17 @@
       "already-has-role": "Kontoen har allerede denne rolle.",
       "unexpected": "Noget gik galt. Prøv igen."
     }
+  },
+  "myClasses": {
+    "title": "Dine hold",
+    "intro": "Dine kommende hold og hvem der har booket dem. Tiderne er dansk tid.",
+    "empty": "Du har ingen kommende hold.",
+    "when": "{{start}}–{{end}}",
+    "booked_one": "{{count}} af {{capacity}} pladser booket",
+    "booked_other": "{{count}} af {{capacity}} pladser booket",
+    "bookedNames": "Booket til {{className}}",
+    "noBookings": "Ingen har booket endnu.",
+    "notAllowed": "Kun instruktører har hold her.",
+    "backToAccount": "Tilbage til din konto"
   }
 }

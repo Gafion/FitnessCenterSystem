@@ -22,6 +22,7 @@ import { Route as SignupGoogleRouteImport } from './routes/signup_.google'
 import { Route as SimulationCheckInRouteImport } from './routes/simulation.check-in'
 import { Route as SimulationPaymentsRouteImport } from './routes/simulation.payments'
 import { Route as StaffInviteRouteImport } from './routes/staff.invite'
+import { Route as StaffMyClassesRouteImport } from './routes/staff.my-classes'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -88,6 +89,11 @@ const StaffInviteRoute = StaffInviteRouteImport.update({
   path: '/staff/invite',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffMyClassesRoute = StaffMyClassesRouteImport.update({
+  id: '/staff/my-classes',
+  path: '/staff/my-classes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/simulation/check-in': typeof SimulationCheckInRoute
   '/simulation/payments': typeof SimulationPaymentsRoute
   '/staff/invite': typeof StaffInviteRoute
+  '/staff/my-classes': typeof StaffMyClassesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/simulation/check-in': typeof SimulationCheckInRoute
   '/simulation/payments': typeof SimulationPaymentsRoute
   '/staff/invite': typeof StaffInviteRoute
+  '/staff/my-classes': typeof StaffMyClassesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/simulation/check-in': typeof SimulationCheckInRoute
   '/simulation/payments': typeof SimulationPaymentsRoute
   '/staff/invite': typeof StaffInviteRoute
+  '/staff/my-classes': typeof StaffMyClassesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/simulation/check-in'
     | '/simulation/payments'
     | '/staff/invite'
+    | '/staff/my-classes'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/simulation/check-in'
     | '/simulation/payments'
     | '/staff/invite'
+    | '/staff/my-classes'
   id:
     | '__root__'
     | '/'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/simulation/check-in'
     | '/simulation/payments'
     | '/staff/invite'
+    | '/staff/my-classes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,6 +209,7 @@ export interface RootRouteChildren {
   SimulationCheckInRoute: typeof SimulationCheckInRoute
   SimulationPaymentsRoute: typeof SimulationPaymentsRoute
   StaffInviteRoute: typeof StaffInviteRoute
+  StaffMyClassesRoute: typeof StaffMyClassesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffInviteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff/my-classes': {
+      id: '/staff/my-classes'
+      path: '/staff/my-classes'
+      fullPath: '/staff/my-classes'
+      preLoaderRoute: typeof StaffMyClassesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -309,6 +329,7 @@ const rootRouteChildren: RootRouteChildren = {
   SimulationCheckInRoute: SimulationCheckInRoute,
   SimulationPaymentsRoute: SimulationPaymentsRoute,
   StaffInviteRoute: StaffInviteRoute,
+  StaffMyClassesRoute: StaffMyClassesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
