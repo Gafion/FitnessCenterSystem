@@ -149,6 +149,42 @@
         }
       }
     },
+    "/api/identity/me/language": {
+      "put": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "SetPreferredLanguage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetLanguageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/api/identity/login-options": {
       "get": {
         "tags": [
@@ -971,7 +1007,8 @@
           "lastName",
           "hasGoogleLogin",
           "twoFactorEnabled",
-          "mustSetUpAuthenticator"
+          "mustSetUpAuthenticator",
+          "preferredLanguage"
         ],
         "type": "object",
         "properties": {
@@ -996,6 +1033,9 @@
           },
           "mustSetUpAuthenticator": {
             "type": "boolean"
+          },
+          "preferredLanguage": {
+            "type": "string"
           }
         }
       },
@@ -1455,6 +1495,17 @@
           },
           "afterMyMembershipEnds": {
             "type": "boolean"
+          }
+        }
+      },
+      "SetLanguageRequest": {
+        "required": [
+          "language"
+        ],
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string"
           }
         }
       },

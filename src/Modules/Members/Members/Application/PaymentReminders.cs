@@ -19,6 +19,11 @@ internal sealed class PaymentReminders(
 {
     public const string Subject = "Your payment is missing";
 
+    public const string SubjectDanish = "Din betaling mangler";
+
+    // Danish formats (D-065): 23.11.2026.
+    private static readonly LocalDatePattern DanishDatePattern = LocalDatePattern.Create("dd.MM.uuuu", CultureInfo.InvariantCulture);
+
     private static readonly LocalDatePattern DatePattern = LocalDatePattern.Create("d MMMM uuuu", CultureInfo.InvariantCulture);
 
     /// <summary>
@@ -71,8 +76,11 @@ internal sealed class PaymentReminders(
 
         try
         {
-            var firstName = await accounts.FindFirstNameAsync(new AccountId(accountId), cancellationToken);
-            await accounts.SendEmailAsync(new AccountId(accountId), Subject, Body(firstName, paidUntil), cancellationToken);
+            // In the account's language (D-065).
+            var recipient = await accounts.FindEmailRecipientAsync(new AccountId(accountId), cancellationToken)
+                ?? throw new InvalidOperationException($"Account {accountId} does not exist.");
+            var (subject, body) = Email(recipient, paidUntil);
+            await accounts.SendEmailAsync(new AccountId(accountId), subject, body, cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -89,13 +97,22 @@ internal sealed class PaymentReminders(
         return true;
     }
 
-    private static string Body(string? firstName, LocalDate paidUntil) =>
-        $"""
-        Hi {firstName},
+    private static (string Subject, string Body) Email(EmailRecipient recipient, LocalDate paidUntil) =>
+        recipient.Language == Language.English
+            ? (Subject, $"""
+                Hi {recipient.FirstName},
 
-        We haven't received the payment for your membership after {DatePattern.Format(paidUntil)}.
-        Until it arrives, the card reader at the entrance won't let you in.
+                We haven't received the payment for your membership after {DatePattern.Format(paidUntil)}.
+                Until it arrives, the card reader at the entrance won't let you in.
 
-        If you have already paid, please talk to the staff at the center.
-        """;
+                If you have already paid, please talk to the staff at the center.
+                """)
+            : (SubjectDanish, $"""
+                Hej {recipient.FirstName},
+
+                Vi har ikke modtaget betalingen for dit medlemskab efter {DanishDatePattern.Format(paidUntil)}.
+                Indtil den er kommet, lukker kortlæseren ved indgangen dig ikke ind.
+
+                Hvis du allerede har betalt, så tal med personalet i centret.
+                """);
 }

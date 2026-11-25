@@ -2,6 +2,7 @@ using System.Security.Claims;
 using FitnessCenter.Modules.Identity.Application;
 using FitnessCenter.Modules.Identity.Contracts;
 using FitnessCenter.Modules.Identity.Infrastructure;
+using FitnessCenter.SharedKernel;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -49,7 +50,8 @@ internal static class StaffInviteEndpoints
             ?? throw new InvalidOperationException("An authorized inviter has no account id."));
         var inviterRoles = StaffRoles.All.Where(user.IsInRole).ToList();
         var outcome = await invites.InviteAsync(
-            inviterId, inviterRoles, request.Email, request.Role, context.Request, cancellationToken);
+            inviterId, inviterRoles, request.Email, request.Role,
+            Languages.FromAcceptLanguage(context.Request.Headers.AcceptLanguage), context.Request, cancellationToken);
 
         switch (outcome.Status)
         {
@@ -72,10 +74,11 @@ internal static class StaffInviteEndpoints
     }
 
     private static async Task<Results<NoContent, ValidationProblem, ProblemHttpResult>> AcceptAsync(
-        AcceptStaffInviteRequest request, StaffInvites invites, CancellationToken cancellationToken)
+        AcceptStaffInviteRequest request, StaffInvites invites, HttpContext context, CancellationToken cancellationToken)
     {
         var outcome = await invites.AcceptAsync(
-            request.InviteId, request.Code, request.FirstName, request.LastName, request.Password, cancellationToken);
+            request.InviteId, request.Code, request.FirstName, request.LastName, request.Password,
+            Languages.FromAcceptLanguage(context.Request.Headers.AcceptLanguage), cancellationToken);
 
         return outcome.Status switch
         {

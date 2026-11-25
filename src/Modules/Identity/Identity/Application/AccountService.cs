@@ -1,5 +1,6 @@
 using FitnessCenter.Modules.Identity.Contracts;
 using FitnessCenter.Modules.Identity.Infrastructure;
+using FitnessCenter.SharedKernel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 
@@ -20,7 +21,7 @@ internal sealed class AccountService(
             return CreateAccountResult.Failure(errors);
         }
 
-        var account = NewAccount(newAccount.Email, newAccount.FirstName, newAccount.LastName);
+        var account = NewAccount(newAccount.Email, newAccount.FirstName, newAccount.LastName, newAccount.PreferredLanguage);
         return ToResult(account, await users.CreateAsync(account, newAccount.Password));
     }
 
@@ -50,7 +51,7 @@ internal sealed class AccountService(
         }
 
         // No password: this account logs in with Google. Google verified the email.
-        var account = NewAccount(email, newAccount.FirstName, newAccount.LastName);
+        var account = NewAccount(email, newAccount.FirstName, newAccount.LastName, newAccount.PreferredLanguage);
         account.EmailConfirmed = true;
         var created = await users.CreateAsync(account);
         if (!created.Succeeded)
@@ -94,8 +95,14 @@ internal sealed class AccountService(
         await users.FindByIdAsync(accountId.Value.ToString())
             ?? throw new InvalidOperationException($"Account {accountId.Value} does not exist.");
 
-    private static Account NewAccount(string email, string firstName, string lastName) => new()
+    public async Task<EmailRecipient?> FindEmailRecipientAsync(AccountId accountId, CancellationToken cancellationToken) =>
+        await users.FindByIdAsync(accountId.Value.ToString()) is { } account
+            ? new EmailRecipient(account.FirstName, account.PreferredLanguage)
+            : null;
+
+    private static Account NewAccount(string email, string firstName, string lastName, Language language) => new()
     {
+        PreferredLanguage = language,
         Id = Guid.CreateVersion7(),
         UserName = email,
         Email = email,

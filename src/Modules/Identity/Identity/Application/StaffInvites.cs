@@ -4,6 +4,7 @@ using System.Text;
 using System.Transactions;
 using FitnessCenter.Modules.Identity.Contracts;
 using FitnessCenter.Modules.Identity.Infrastructure;
+using FitnessCenter.SharedKernel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
@@ -30,7 +31,7 @@ internal sealed class StaffInvites(
 
     public async Task<InviteOutcome> InviteAsync(
         Guid inviterId, IReadOnlyCollection<string> inviterRoles, string email, string role,
-        HttpRequest request, CancellationToken cancellationToken)
+        Language requestLanguage, HttpRequest request, CancellationToken cancellationToken)
     {
         email = email.Trim();
         var errors = new Dictionary<string, string[]>();
@@ -86,30 +87,17 @@ internal sealed class StaffInvites(
         }
 
         var link = $"{request.Scheme}://{request.Host}{PagePath}" + QueryString.Create(query);
-        var action = existing is null
-            ? "Follow this link to set your name and password:"
-            : "Log in with your existing account, then follow this link to accept:";
-        await smtp.SendAsync(
-            email,
-            "You're invited to join the staff",
-            $"""
-            Hi,
-
-            You're invited to a staff account with the role {role}.
-            {action}
-            {link}
-
-            The link works for {Lifetime.Days} days and only once.
-            If you weren't expecting this, you can ignore this email.
-            """,
-            cancellationToken);
+        // An existing account gets its own language (D-065). A new email has no account yet,
+        // so the invite is in the language the inviter uses the app in.
+        var (subject, body) = InviteEmail(existing?.PreferredLanguage ?? requestLanguage, role, existing is not null, link);
+        await smtp.SendAsync(email, subject, body, cancellationToken);
 
         return InviteOutcome.Sent(invite);
     }
 
     public async Task<AcceptOutcome> AcceptAsync(
         Guid inviteId, string code, string firstName, string lastName, string password,
-        CancellationToken cancellationToken)
+        Language language, CancellationToken cancellationToken)
     {
         using var transaction = new TransactionScope(
             TransactionScopeOption.Required,
@@ -154,6 +142,8 @@ internal sealed class StaffInvites(
             EmailConfirmed = true,
             FirstName = firstName.Trim(),
             LastName = lastName.Trim(),
+            // The language the person accepts the invite in (D-065).
+            PreferredLanguage = language,
         };
         var created = await users.CreateAsync(account, password);
         if (!created.Succeeded)
@@ -230,6 +220,44 @@ internal sealed class StaffInvites(
 
         transaction.Complete();
         return AcceptOutcome.Accepted;
+    }
+
+    public const string InviteSubjectEnglish = "You're invited to join the staff";
+
+    public const string InviteSubjectDanish = "Du er inviteret som medarbejder";
+
+    private static (string Subject, string Body) InviteEmail(Language language, string role, bool existingAccount, string link)
+    {
+        if (language == Language.English)
+        {
+            var action = existingAccount
+                ? "Log in with your existing account, then follow this link to accept:"
+                : "Follow this link to set your name and password:";
+            return (InviteSubjectEnglish, $"""
+                Hi,
+
+                You're invited to a staff account with the role {role}.
+                {action}
+                {link}
+
+                The link works for {Lifetime.Days} days and only once.
+                If you weren't expecting this, you can ignore this email.
+                """);
+        }
+
+        var handling = existingAccount
+            ? "Log ind med din konto, og følg så dette link for at sige ja:"
+            : "Følg dette link for at vælge dit navn og din adgangskode:";
+        return (InviteSubjectDanish, $"""
+            Hej,
+
+            Du er inviteret til en medarbejderkonto med rollen {role}.
+            {handling}
+            {link}
+
+            Linket virker i {Lifetime.Days} dage og kun én gang.
+            Hvis du ikke ventede denne e-mail, kan du se bort fra den.
+            """);
     }
 
     // Locked, so two requests with the same link take turns and only one accepts it.

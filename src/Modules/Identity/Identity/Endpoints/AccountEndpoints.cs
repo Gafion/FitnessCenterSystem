@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using FitnessCenter.Modules.Identity.Application;
+using FitnessCenter.Modules.Identity.Contracts;
 using FitnessCenter.Modules.Identity.Infrastructure;
+using FitnessCenter.SharedKernel;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -25,6 +27,8 @@ internal static class AccountEndpoints
         group.MapPost("/logout", LogoutAsync).WithName("Logout").RequireAuthorization();
         group.MapGet("/me", GetMeAsync).WithName("GetCurrentAccount").RequireAuthorization()
             .Produces(StatusCodes.Status401Unauthorized);
+        group.MapPut("/me/language", SetLanguageAsync).WithName("SetPreferredLanguage").RequireAuthorization()
+            .Produces(StatusCodes.Status401Unauthorized);
 
         return endpoints;
     }
@@ -39,11 +43,15 @@ internal static class AccountEndpoints
 
     internal sealed record ResendEmailConfirmationRequest(string Email);
 
+    /// <param name="Language">"da" or "en" (D-065).</param>
+    internal sealed record SetLanguageRequest(string Language);
+
+    /// <param name="PreferredLanguage">The language of the account's emails: "da" or "en" (D-065).</param>
     /// <param name="TwoFactorEnabled">The authenticator app is set up (D-059).</param>
     /// <param name="MustSetUpAuthenticator">A staff account without the authenticator: staff endpoints refuse it until it is set up (D-013).</param>
     internal sealed record CurrentAccount(
         Guid AccountId, string Email, string FirstName, string LastName, bool HasGoogleLogin,
-        bool TwoFactorEnabled, bool MustSetUpAuthenticator);
+        bool TwoFactorEnabled, bool MustSetUpAuthenticator, string PreferredLanguage);
 
     private static async Task<Results<NoContent, UnauthorizedHttpResult, ProblemHttpResult>> LoginAsync(
         LoginRequest request, SignInManager<Account> signIn, UserManager<Account> users)
@@ -165,6 +173,36 @@ internal static class AccountEndpoints
             account.Id, account.Email!, account.FirstName, account.LastName,
             logins.Any(login => login.LoginProvider == ExternalLogins.Google),
             account.TwoFactorEnabled,
-            !account.TwoFactorEnabled && await Authenticator.IsStaffAsync(users, account)));
+            !account.TwoFactorEnabled && await Authenticator.IsStaffAsync(users, account),
+            account.PreferredLanguage.Code()));
+    }
+
+    /// <summary>Changes the language of the account's emails (D-065).</summary>
+    private static async Task<Results<NoContent, ValidationProblem, UnauthorizedHttpResult>> SetLanguageAsync(
+        SetLanguageRequest request, ClaimsPrincipal user, UserManager<Account> users)
+    {
+        var account = await users.GetUserAsync(user);
+        if (account is null)
+        {
+            return TypedResults.Unauthorized();
+        }
+
+        if (request.Language is not ("da" or "en"))
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["language"] = ["Language must be \"da\" or \"en\"."],
+            });
+        }
+
+        account.PreferredLanguage = Languages.FromCode(request.Language)!.Value;
+        var updated = await users.UpdateAsync(account);
+        if (!updated.Succeeded)
+        {
+            throw new InvalidOperationException(
+                $"Saving the language failed: {string.Join(", ", updated.Errors.Select(e => e.Code))}");
+        }
+
+        return TypedResults.NoContent();
     }
 }

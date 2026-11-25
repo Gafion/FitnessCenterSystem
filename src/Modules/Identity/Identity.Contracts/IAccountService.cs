@@ -1,3 +1,4 @@
+using FitnessCenter.SharedKernel;
 namespace FitnessCenter.Modules.Identity.Contracts;
 
 /// <summary>
@@ -37,15 +38,25 @@ public interface IAccountService
 
     /// <returns>The account's first name, or null when there is no such account. Members uses it at check-in.</returns>
     Task<string?> FindFirstNameAsync(AccountId accountId, CancellationToken cancellationToken);
+
+    /// <returns>
+    /// Who an email to the account is for: the first name and the language the email is written in
+    /// (D-065). Null when there is no such account.
+    /// </returns>
+    Task<EmailRecipient?> FindEmailRecipientAsync(AccountId accountId, CancellationToken cancellationToken);
 }
 
 public readonly record struct AccountId(Guid Value);
 
 /// <summary>The person's name lives on the account, so staff and members share one identity (data-model.md).</summary>
-public sealed record NewLocalAccount(string Email, string Password, string FirstName, string LastName);
+/// <param name="PreferredLanguage">The language the account's emails are written in (D-065).</param>
+public sealed record NewLocalAccount(
+    string Email, string Password, string FirstName, string LastName, Language PreferredLanguage = Languages.Default);
 
 /// <summary>The names the person confirmed; Google may have suggested them.</summary>
-public sealed record NewExternalAccount(string FirstName, string LastName);
+public sealed record NewExternalAccount(string FirstName, string LastName, Language PreferredLanguage = Languages.Default);
+
+public sealed record EmailRecipient(string FirstName, Language Language);
 
 public sealed record CreateAccountResult(AccountId? AccountId, IReadOnlyList<AccountError> Errors)
 {

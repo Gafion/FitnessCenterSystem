@@ -1,3 +1,5 @@
+using FitnessCenter.Modules.Identity.Contracts;
+using FitnessCenter.SharedKernel;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.AspNetCore.Identity;
@@ -16,18 +18,35 @@ internal sealed class SmtpEmailSender(IConfiguration configuration) : IEmailSend
     // Placeholder sender until the center's domain and provider are chosen (D-038).
     private static readonly MailboxAddress From = new("FitnessCenter", "no-reply@fitnesscenter.invalid");
 
+    public const string ConfirmationSubjectEnglish = "Confirm your email";
+
+    public const string ConfirmationSubjectDanish = "Bekræft din e-mail";
+
+    /// <summary>In the account's language (D-065).</summary>
     public Task SendConfirmationLinkAsync(Account user, string email, string confirmationLink) =>
-        SendAsync(
-            email,
-            "Confirm your email",
-            $"""
-            Hi {user.FirstName},
+        user.PreferredLanguage == Language.English
+            ? SendAsync(
+                email,
+                ConfirmationSubjectEnglish,
+                $"""
+                Hi {user.FirstName},
 
-            Confirm your email to finish signing up:
-            {confirmationLink}
+                Confirm your email to finish signing up:
+                {confirmationLink}
 
-            If you didn't sign up, you can ignore this email.
-            """);
+                If you didn't sign up, you can ignore this email.
+                """)
+            : SendAsync(
+                email,
+                ConfirmationSubjectDanish,
+                $"""
+                Hej {user.FirstName},
+
+                Bekræft din e-mail for at gøre din tilmelding færdig:
+                {confirmationLink}
+
+                Hvis du ikke har tilmeldt dig, kan du se bort fra denne e-mail.
+                """);
 
     // Password reset isn't built yet.
     public Task SendPasswordResetLinkAsync(Account user, string email, string resetLink) =>
