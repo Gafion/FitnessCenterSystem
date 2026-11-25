@@ -182,7 +182,7 @@ public sealed class WaitlistOfferTests
     {
         await using var scope = factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
-        var session = ClassSession.Schedule(ClassType.Spinning, "Test Instructor", startsAt ?? ClassStart, Duration.FromMinutes(45), 1);
+        var session = ClassSession.Schedule(ClassType.Spinning, await TestInstructors.CreateAsync(scope.ServiceProvider), startsAt ?? ClassStart, Duration.FromMinutes(45), 1);
         db.ClassSessions.Add(session);
         await db.SaveChangesAsync();
         return session.Id.Value;

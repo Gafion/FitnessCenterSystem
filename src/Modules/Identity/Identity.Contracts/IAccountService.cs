@@ -44,6 +44,14 @@ public interface IAccountService
     /// (D-065). Null when there is no such account.
     /// </returns>
     Task<EmailRecipient?> FindEmailRecipientAsync(AccountId accountId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The names to show for a batch of accounts, in one query: the first name plus the last
+    /// name's initial, e.g. "Alex E.". Booking uses it to show who teaches a class (D-060).
+    /// </summary>
+    /// <returns>A name per account that exists. Unknown IDs are left out.</returns>
+    Task<IReadOnlyDictionary<AccountId, string>> FindDisplayNamesAsync(
+        IReadOnlyCollection<AccountId> accountIds, CancellationToken cancellationToken);
 }
 
 public readonly record struct AccountId(Guid Value);

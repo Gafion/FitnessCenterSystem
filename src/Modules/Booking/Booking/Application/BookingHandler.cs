@@ -1,5 +1,6 @@
 using FitnessCenter.Modules.Booking.Domain;
 using FitnessCenter.Modules.Booking.Infrastructure;
+using FitnessCenter.Modules.Identity.Contracts;
 using FitnessCenter.Modules.Members.Contracts;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
@@ -38,8 +39,10 @@ internal sealed record OpenOffer(
 /// <summary>
 /// Booking and cancelling class spots (D-022, D-039), and the waitlist of full classes (D-051). A member who has cancelled can't book
 /// classes after their last day of access (D-055); Members answers that through its Contracts (rule 1).
+/// Instructors' names come from Identity's Contracts, one batch per list (D-060).
 /// </summary>
-internal sealed class BookingHandler(BookingDbContext db, IMemberDirectory members, IClock clock, OfferEmails offerEmails)
+internal sealed class BookingHandler(
+    BookingDbContext db, IMemberDirectory members, IAccountService accounts, IClock clock, OfferEmails offerEmails)
 {
     /// <summary>The classes that start within the booking window, soonest first.</summary>
     public async Task<IReadOnlyList<ScheduledClass>> GetScheduleAsync(Guid? accountId, CancellationToken cancellationToken)
@@ -52,6 +55,7 @@ internal sealed class BookingHandler(BookingDbContext db, IMemberDirectory membe
             .OrderBy(s => s.StartsAt)
             .ToListAsync(cancellationToken);
         var names = ClassType.All.ToDictionary(t => t.Id, t => t.Name);
+        var instructors = await InstructorNamesAsync(sessions, cancellationToken);
         var lastDayOfAccess = accountId is { } account
             ? await members.FindLastDayOfAccessAsync(account, cancellationToken)
             : null;
@@ -60,7 +64,7 @@ internal sealed class BookingHandler(BookingDbContext db, IMemberDirectory membe
             .Select(s => new ScheduledClass(
                 s.Id,
                 names[s.ClassTypeId],
-                s.InstructorName,
+                instructors(s),
                 s.StartsAt,
                 s.EndsAt,
                 s.Capacity,
@@ -84,6 +88,7 @@ internal sealed class BookingHandler(BookingDbContext db, IMemberDirectory membe
             .OrderBy(s => s.StartsAt)
             .ToListAsync(cancellationToken);
         var names = ClassType.All.ToDictionary(t => t.Id, t => t.Name);
+        var instructors = await InstructorNamesAsync(sessions, cancellationToken);
 
         return sessions
             .Select(s => (Session: s, Offer: s.OpenOfferOf(accountId, now)))
@@ -91,7 +96,7 @@ internal sealed class BookingHandler(BookingDbContext db, IMemberDirectory membe
             .Select(pair => new OpenOffer(
                 pair.Session.Id,
                 names[pair.Session.ClassTypeId],
-                pair.Session.InstructorName,
+                instructors(pair.Session),
                 pair.Session.StartsAt,
                 pair.Session.EndsAt,
                 pair.Offer!.OfferExpiresAt!.Value))
@@ -109,9 +114,10 @@ internal sealed class BookingHandler(BookingDbContext db, IMemberDirectory membe
             .OrderBy(s => s.StartsAt)
             .ToListAsync(cancellationToken);
         var names = ClassType.All.ToDictionary(t => t.Id, t => t.Name);
+        var instructors = await InstructorNamesAsync(sessions, cancellationToken);
 
         return sessions
-            .Select(s => new BookedClass(s.Id, names[s.ClassTypeId], s.InstructorName, s.StartsAt, s.EndsAt, s.CancelUntil))
+            .Select(s => new BookedClass(s.Id, names[s.ClassTypeId], instructors(s), s.StartsAt, s.EndsAt, s.CancelUntil))
             .ToList();
     }
 
@@ -273,5 +279,19 @@ internal sealed class BookingHandler(BookingDbContext db, IMemberDirectory membe
             cancellationToken);
 
         return await db.ClassSessions.SingleOrDefaultAsync(s => s.Id == sessionId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Looks up the instructors' names for the sessions in one call to Identity (D-060). Every
+    /// instructor account exists: the foreign key keeps an account with classes from being deleted.
+    /// </summary>
+    private async Task<Func<ClassSession, string>> InstructorNamesAsync(
+        IReadOnlyCollection<ClassSession> sessions, CancellationToken cancellationToken)
+    {
+        var ids = sessions.Select(s => new AccountId(s.InstructorAccountId)).Distinct().ToList();
+        var names = ids.Count == 0
+            ? new Dictionary<AccountId, string>()
+            : await accounts.FindDisplayNamesAsync(ids, cancellationToken);
+        return session => names.GetValueOrDefault(new AccountId(session.InstructorAccountId), string.Empty);
     }
 }

@@ -38,10 +38,8 @@ namespace Booking.Infrastructure.Migrations
                     b.Property<Instant>("EndsAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("InstructorName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.Property<Guid>("InstructorAccountId")
+                        .HasColumnType("uuid");
 
                     b.Property<Instant>("StartsAt")
                         .HasColumnType("timestamp with time zone");
@@ -49,6 +47,8 @@ namespace Booking.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ClassTypeId");
+
+                    b.HasIndex("InstructorAccountId");
 
                     b.HasIndex("StartsAt");
 

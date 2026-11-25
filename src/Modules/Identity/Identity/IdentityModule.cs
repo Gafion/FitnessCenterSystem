@@ -144,17 +144,22 @@ public static class IdentityModule
     /// how to set it and seeds nothing. With a key in <c>Identity:DevelopmentStaffAuthenticatorKey</c>,
     /// the accounts also get the authenticator app turned on with that key (FIT-109).
     /// </summary>
-    public static async Task SeedDevelopmentStaffAsync(this IServiceProvider services, CancellationToken cancellationToken)
+    /// <returns>The development instructor's account when it exists, for the development classes (D-060).</returns>
+    public static async Task<AccountId?> SeedDevelopmentStaffAsync(this IServiceProvider services, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         await using var scope = services.CreateAsyncScope();
         var provider = scope.ServiceProvider;
+        var users = provider.GetRequiredService<UserManager<Account>>();
         await DevelopmentStaff.EnsureAsync(
-            provider.GetRequiredService<UserManager<Account>>(),
+            users,
             provider.GetRequiredService<IUserStore<Account>>(),
             provider.GetRequiredService<IConfiguration>()[DevelopmentStaff.PasswordKey],
             provider.GetRequiredService<IConfiguration>()[DevelopmentStaff.AuthenticatorKeyKey],
             provider.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(DevelopmentStaff)));
+        return await users.FindByEmailAsync(DevelopmentStaff.InstructorEmail) is { } instructor
+            ? new AccountId(instructor.Id)
+            : null;
     }
 
     /// <summary>Applies this module's migrations. The host calls it at startup in Development.</summary>

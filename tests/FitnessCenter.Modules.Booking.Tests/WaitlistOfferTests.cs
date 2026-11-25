@@ -279,7 +279,7 @@ public sealed class WaitlistOfferTests
     }
 
     private static ClassSession Session(int capacity) =>
-        ClassSession.Schedule(ClassType.Spinning, "Test Instructor", Start, Duration.FromMinutes(50), capacity);
+        ClassSession.Schedule(ClassType.Spinning, TestInstructor.Id, Start, Duration.FromMinutes(50), capacity);
 
     /// <summary>A clock the test moves by hand.</summary>
     private sealed class FakeClock(Instant now) : IClock

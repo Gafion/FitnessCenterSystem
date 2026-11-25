@@ -34,7 +34,9 @@ internal sealed class BookingDbContext(DbContextOptions<BookingDbContext> option
             session.HasKey(s => s.Id);
             session.Property(s => s.Id).HasConversion(id => id.Value, value => new ClassSessionId(value));
             session.Property(s => s.ClassTypeId).HasConversion(id => id.Value, value => new ClassTypeId(value));
-            session.Property(s => s.InstructorName).HasMaxLength(ClassSession.InstructorNameMaxLength);
+
+            // The FK to identity.AspNetUsers is added by hand in the InstructorAccount migration (D-060).
+            session.HasIndex(s => s.InstructorAccountId);
             session.HasOne<ClassType>().WithMany().HasForeignKey(s => s.ClassTypeId);
             session.HasIndex(s => s.StartsAt);
             session.Ignore(s => s.SpotsLeft);

@@ -2,9 +2,11 @@ using FitnessCenter.Modules.Booking.Application;
 using FitnessCenter.Modules.Booking.Contracts;
 using FitnessCenter.Modules.Booking.Endpoints;
 using FitnessCenter.Modules.Booking.Infrastructure;
+using FitnessCenter.Modules.Identity.Contracts;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NodaTime;
 using Npgsql;
 
@@ -46,13 +48,29 @@ public static class BookingModule
         await db.Database.MigrateAsync(cancellationToken);
     }
 
-    /// <summary>Fills the next 14 days with synthetic classes. Development only (D-022).</summary>
-    public static async Task SeedDevelopmentScheduleAsync(this IServiceProvider services, CancellationToken cancellationToken)
+    /// <summary>
+    /// Fills the next 14 days with synthetic classes taught by <paramref name="instructor"/>.
+    /// Development only (D-022). Every class needs an instructor account (D-060), so without the
+    /// development instructor (D-049) no classes are seeded.
+    /// </summary>
+    public static async Task SeedDevelopmentScheduleAsync(
+        this IServiceProvider services, AccountId? instructor, CancellationToken cancellationToken)
     {
         await using var scope = services.CreateAsyncScope();
+        if (instructor is not { } account)
+        {
+            scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
+                .CreateLogger(typeof(DevelopmentSchedule))
+                .LogInformation(
+                    "No development classes seeded: every class needs an instructor account (D-060). "
+                    + "Set Identity:DevelopmentStaffPassword with dotnet user-secrets to seed the development staff.");
+            return;
+        }
+
         await DevelopmentSchedule.EnsureAsync(
             scope.ServiceProvider.GetRequiredService<BookingDbContext>(),
             scope.ServiceProvider.GetRequiredService<IClock>(),
+            account.Value,
             cancellationToken);
     }
 }

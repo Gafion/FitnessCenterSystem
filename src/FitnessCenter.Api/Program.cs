@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using FitnessCenter.Modules.Access;
 using FitnessCenter.Modules.Booking;
 using FitnessCenter.Modules.Identity;
+using FitnessCenter.Modules.Identity.Contracts;
 using FitnessCenter.Modules.Members;
 using NodaTime;
 
@@ -48,18 +49,20 @@ if (app.Environment.IsDevelopment())
     // Production migrations wait for the deployment decision (SA4).
     await app.Services.MigrateDatabaseAsync();
 
-    // Synthetic classes to click through locally (D-022, D-039). The integration tests turn
-    // this off: they schedule their own classes, and some replace the clock with one that fails.
-    if (app.Configuration.GetValue("Booking:SeedDevelopmentSchedule", defaultValue: true))
-    {
-        await app.Services.SeedDevelopmentScheduleAsync(CancellationToken.None);
-    }
-
     // One synthetic staff account per role (D-049), when a development password is set.
     // The integration tests turn this off, except the ones that test the staff policies.
+    AccountId? developmentInstructor = null;
     if (app.Configuration.GetValue("Identity:SeedDevelopmentStaff", defaultValue: true))
     {
-        await app.Services.SeedDevelopmentStaffAsync(CancellationToken.None);
+        developmentInstructor = await app.Services.SeedDevelopmentStaffAsync(CancellationToken.None);
+    }
+
+    // Synthetic classes to click through locally (D-022, D-039), taught by the development
+    // instructor (D-060), so the staff come first. The integration tests turn this off: they
+    // schedule their own classes, and some replace the clock with one that fails.
+    if (app.Configuration.GetValue("Booking:SeedDevelopmentSchedule", defaultValue: true))
+    {
+        await app.Services.SeedDevelopmentScheduleAsync(developmentInstructor, CancellationToken.None);
     }
 
     app.MapOpenApi();
