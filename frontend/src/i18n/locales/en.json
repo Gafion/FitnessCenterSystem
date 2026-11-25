@@ -74,7 +74,12 @@
     },
     "noMembership": "You have no membership.",
     "membershipFailed": "Your membership could not be loaded. Please try again later.",
-    "bookingsFailed": "Your bookings could not be loaded. Please try again later."
+    "bookingsFailed": "Your bookings could not be loaded. Please try again later.",
+    "emailLanguage": {
+      "label": "Emails from us are in",
+      "saved": "Saved. New emails come in this language.",
+      "failed": "The language could not be saved. Please try again."
+    }
   },
   "errors": {
     "unexpected": "Something went wrong. Please try again.",

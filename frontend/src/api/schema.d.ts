@@ -100,6 +100,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/identity/me/language": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["SetPreferredLanguage"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/identity/login-options": {
         parameters: {
             query?: never;
@@ -536,6 +552,7 @@ export interface components {
             hasGoogleLogin: boolean;
             twoFactorEnabled: boolean;
             mustSetUpAuthenticator: boolean;
+            preferredLanguage: string;
         };
         /** @enum {unknown} */
         DoorOutcome: "welcome" | "unknown-card" | "payment-missing" | "membership-ended";
@@ -663,6 +680,9 @@ export interface components {
             /** Format: date-time */
             cancelUntil: string;
             afterMyMembershipEnds: boolean;
+        };
+        SetLanguageRequest: {
+            language: string;
         };
         SignupRequest: {
             firstName: string;
@@ -868,6 +888,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CurrentAccount"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SetPreferredLanguage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetLanguageRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
             /** @description Unauthorized */

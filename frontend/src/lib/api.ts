@@ -1,9 +1,19 @@
 import createClient from 'openapi-fetch';
 import type { components, paths } from '@/api/schema';
+import { currentLanguage, type Language } from '@/i18n';
 
 // The only way the frontend calls the API (rule 6). Types come from the generated
 // schema; run `bun run api:generate` after the backend's OpenAPI document changes.
 export const api = createClient<paths>();
+
+// Every request names the language the app is in, so texts the API sends back (the terms,
+// the membership type's name) match it, and a signup's emails come in it (D-065).
+api.use({
+  onRequest({ request }) {
+    request.headers.set('Accept-Language', currentLanguage());
+    return request;
+  },
+});
 
 export type Schemas = components['schemas'];
 
@@ -141,4 +151,14 @@ export async function getMyBookings(): Promise<Schemas['MyBooking'][]> {
     throw new Error('Could not load the bookings.');
   }
   return data;
+}
+
+/** Changes the language of the logged-in account's emails (D-065). */
+export async function setPreferredLanguage(language: Language): Promise<void> {
+  const { response } = await api.PUT('/api/identity/me/language', {
+    body: { language },
+  });
+  if (!response.ok) {
+    throw new Error('Could not save the language.');
+  }
 }

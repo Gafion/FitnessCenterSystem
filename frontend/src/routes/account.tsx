@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { Page, PageHeader } from '@/components/shell/page';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { EmailLanguage } from '@/features/account/email-language';
 import { ErrorMessage } from '@/features/account/error-message';
 import { GoogleButton } from '@/features/account/google-button';
 import { TextLink } from '@/features/account/text-link';
@@ -31,6 +32,7 @@ import {
   getMyPayments,
   googleLinkUrl,
   isSimulationEnabled,
+  setPreferredLanguage,
   undoMyCancellation,
 } from '@/lib/api';
 
@@ -273,6 +275,10 @@ function AccountPage() {
               {t('authenticator.setUp')}
             </TextLink>
           )}
+          <EmailLanguage
+            value={account.preferredLanguage}
+            onChange={setPreferredLanguage}
+          />
           <Button
             variant="ghost"
             onClick={logOut}
