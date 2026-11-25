@@ -105,9 +105,16 @@
     "missing": "This invite link doesn't work",
     "missingBody": "Check that you used the whole link from the email.",
     "invite-used": "This invite has already been used. Log in with the email and password you chose.",
-    "invite-expired": "This invite has expired. Ask an admin to send a new one.",
+    "invite-expired": "This invite has expired. Ask an admin or a manager to send a new one.",
     "invalid-invite": "This invite link doesn't work. Check that you used the whole link from the email.",
-    "account-exists": "An account with this email already exists. Ask an admin to invite another email."
+    "account-exists": "An account with this email already exists. Log in to it, then open the link from the email again.",
+    "existingTitle": "Add the staff role to your account",
+    "existingIntro": "You were invited to join the staff with the account you already have. Log in to that account, then accept here. Your membership stays as it is.",
+    "existingSubmit": "Accept invite",
+    "existingDone": "Your account now has the staff role",
+    "existingDoneBody": "Staff pages need the authenticator app. You'll be asked to set it up.",
+    "notLoggedIn": "Log in to the account the invite was sent to, then open the link from the email again.",
+    "invite-for-another-account": "This invite is for another email. Log in with the account the invite was sent to."
   },
   "classes": {
     "title": "Classes",

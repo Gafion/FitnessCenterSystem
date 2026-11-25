@@ -105,9 +105,16 @@
     "missing": "Invitationslinket virker ikke",
     "missingBody": "Tjek, at du brugte hele linket fra e-mailen.",
     "invite-used": "Invitationen er allerede brugt. Log ind med den e-mail og adgangskode, du valgte.",
-    "invite-expired": "Invitationen er udløbet. Bed en administrator om at sende en ny.",
+    "invite-expired": "Invitationen er udløbet. Bed en administrator eller en leder om at sende en ny.",
     "invalid-invite": "Invitationslinket virker ikke. Tjek, at du brugte hele linket fra e-mailen.",
-    "account-exists": "Der findes allerede en konto med denne e-mail. Bed en administrator om at invitere en anden e-mail."
+    "account-exists": "Der findes allerede en konto med denne e-mail. Log ind på den, og åbn linket fra e-mailen igen.",
+    "existingTitle": "Føj personalerollen til din konto",
+    "existingIntro": "Du er inviteret som medarbejder med den konto, du allerede har. Log ind på den konto, og acceptér her. Dit medlemskab forbliver, som det er.",
+    "existingSubmit": "Acceptér invitation",
+    "existingDone": "Din konto har nu personalerollen",
+    "existingDoneBody": "Personalesiderne kræver en autentificeringsapp. Du bliver bedt om at sætte den op.",
+    "notLoggedIn": "Log ind på den konto, invitationen blev sendt til, og åbn linket fra e-mailen igen.",
+    "invite-for-another-account": "Invitationen er til en anden e-mail. Log ind med den konto, invitationen blev sendt til."
   },
   "classes": {
     "title": "Hold",
