@@ -59,6 +59,8 @@ Answers will be recorded here and, where they settle a medium/large decision, in
 | M5 (former row 10) | Collect no health data. | D-053 |
 | D8 (revocation part), D-048 open points | A member may undo a pending cancellation; cancelling sends a confirmation email; a member with a pending cancellation can't book classes after the effective date. Existing bookings after the effective date are still open (FIT-71). | D-055 |
 | U5 (former "Owner decides" row 6) | Danish by default, English available; Danish formats (24-hour time, Monday-first weeks, `dd.mm.yyyy`, `kr.`). Backend texts and emails stay English for now. | D-065 |
+| AU10 | Managers may invite, but only to Front desk and Instructor; admins give any role. | D-063 |
+| AU11 | Yes: an invite to an email with an account adds the role to it after the person logs in and accepts; the membership stays. Staff MFA applies. | D-064 |
 | DB8 | Spike done as a verification (FIT-36). Schema per module, history table per schema, schema-qualified SQL and a non-escalating shared transaction across module DbContexts are proven by `tests/FitnessCenter.IntegrationTests/ModuleSchemaTests.cs`. Default privileges and REFERENCES are confirmed from the PostgreSQL docs but unused while there is one database role (D-015). Details: database-schemas.md, Verification (FIT-36). | D-014, D-015 |
 
 The [stakeholder interview guide](stakeholder-interview-guide.md) is on hold (D-047).
@@ -219,8 +221,6 @@ flowchart LR
 | AU7 | ASVS target: L1 for members, L2 for staff/admin? (Relates to T4.) | authentication |
 | AU8 | MFA mandatory for staff (passkey or TOTP)? Optional for members? | authentication |
 | AU9 | Which service sends the real emails (confirmation links now; booking confirmations and receipts later)? Amazon SES, Postmark, Resend, or the center's own mail system? Needs: what the center uses today, EU hosting, price, and access to the center's DNS for sender verification. Locally, Mailpit catches all email (D-038). (Relates to B2, T2.) | D-038 |
-| AU10 | May managers invite staff too, and which roles may they give? For now only an admin invites (D-058). | D-058 |
-| AU11 | May one person be both a member and staff? Today an email with an account can't be invited, so they need two emails (D-058). Relates to AU6. | D-058 |
 | AU12 | What happens when a staff member loses their authenticator and their recovery codes? Today nobody can reset it (ASVS 6.4.4 asks for re-proofing). Should an admin be able to reset it, and may members turn MFA off again? | D-059 |
 
 ## Tier 4 — How we work (agentic process)
