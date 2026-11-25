@@ -51,6 +51,7 @@ Answers will be recorded here and, where they settle a medium/large decision, in
 | M1, M2, D8, U2 (former "Owner decides" rows 1–2) | Monthly rolling membership, no binding; more types one at a time, "General membership" until then. One month's notice to month-end; members cancel online; access until the effective date; no "save" step. | D-048 |
 | D13, E1 (former row 3) | Four roles: admin, manager, front desk, instructor. Instructors see only their own classes. | D-049 |
 | AU9 (former row 4) | A short research ticket compares Amazon SES, Postmark and Resend; Mailpit stays for local dev. | Research ticket (FIT-52), D-038 |
+| AU9 | Resend free plan over SMTP, no domain (non-commercial proof of concept). Without a domain it delivers only to the Resend account owner's address. EU data storage not required now; needed if it ever goes commercial. Mailpit stays the default locally and in CI. | D-066 |
 | SA4, S8, T2, T3 (former row 5) | No paid hosting. During development the owner's laptop may run the system if hosting is needed. How it is reached from outside is under "Owner decides". | D-050 |
 | Booking window and cancel deadline (former row 6) | Keep D-039: 14-day window, cancel until 12 hours before start, no penalties. | D-039 |
 | U4, D10 (former row 7) | After the MVP: offer with expiry to the next person on the waitlist; no no-show penalties yet. Offer length is under "Owner decides". | D-051 |
@@ -220,7 +221,6 @@ flowchart LR
 | AU6 | One identity store with roles for staff and members, or separate stores? | authentication |
 | AU7 | ASVS target: L1 for members, L2 for staff/admin? (Relates to T4.) | authentication |
 | AU8 | MFA mandatory for staff (passkey or TOTP)? Optional for members? | authentication |
-| AU9 | Which service sends the real emails (confirmation links now; booking confirmations and receipts later)? Amazon SES, Postmark, Resend, or the center's own mail system? Needs: what the center uses today, EU hosting, price, and access to the center's DNS for sender verification. Locally, Mailpit catches all email (D-038). (Relates to B2, T2.) | D-038 |
 | AU12 | What happens when a staff member loses their authenticator and their recovery codes? Today nobody can reset it (ASVS 6.4.4 asks for re-proofing). Should an admin be able to reset it, and may members turn MFA off again? | D-059 |
 
 ## Tier 4 — How we work (agentic process)

@@ -2234,3 +2234,50 @@ Owner decision on FIT-100. Identity already keeps one account per email (`Requir
 - Linear FIT-100: "Owner decisions", item 3
 - [D-058](#d-058-staff-accounts-are-created-by-an-admin-invite-by-email), [D-059](#d-059-staff-mfa-uses-an-authenticator-app-totp)
 - [open-questions.md](open-questions.md) — AU11 (moved to Answered)
+
+## D-066: Resend free plan, without a domain, for the proof of concept
+- **Date:** 2026-11-25
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-25 (FIT-52)
+- **Relates to:** D-038, D-050. Answers AU9, and O1/O2 of the email-provider research.
+
+### Problem statement
+The app sends real email (confirmation links now; booking confirmations, receipts and missing-payment emails later). Locally Mailpit catches everything (D-038), but no provider sends to real inboxes (AU9). The research found that every candidate needs a domain we control (O1) and that only SES keeps data in the EU (O2).
+
+### Options considered
+1. **Resend, free plan** — pros: free (3,000 a month, 100 a day), plain SMTP relay, the owner already has an account. Cons: data stored in the US; real delivery needs a verified domain.
+2. **Amazon SES in an EU region** — pros: EU data, cheap at volume. Cons: sandbox and production-access request; needs a domain for DMARC alignment.
+3. **Postmark** — pros: strong deliverability. Cons: no free plan beyond a test allowance; US hosting.
+
+### Decision
+**Option 1: Resend, through the owner's existing account, free plan, over SMTP.**
+
+- **No domain is bought.** The project is a non-commercial, very thorough proof of concept: built as if commercial, but the owner spends nothing (D-050).
+- **EU data storage is not required** for the proof of concept. It is **needed if it ever goes commercial** (Resend stores data in the US).
+- `SmtpEmailSender` reads `Email:Smtp:Host/Port/Username/Password/UseTls` and `Email:From:Address/Name`. A login always means STARTTLS. Credentials live in user-secrets or the environment, never in git, appsettings or logs.
+- **Mailpit stays the default** locally and in CI. Resend is switched on per machine (`Email:UseMailpit=false` in the AppHost's user-secrets, the Resend settings in the API's); see `CLAUDE.md`, Commands.
+
+```mermaid
+flowchart LR
+  API[API: SmtpEmailSender] -->|default, plain SMTP| MP[Mailpit test mailbox]
+  API -->|"Email:UseMailpit=false, STARTTLS :587, user resend + API key"| RS[smtp.resend.com]
+  RS -->|From onboarding@resend.dev| OWN[Resend account owner's inbox only]
+  RS -.->|any other recipient: refused| X[403 / send fails]
+```
+
+### Consequences (from the research, section 9)
+- Without a verified domain the sender is `onboarding@resend.dev`, and Resend delivers **only to the email address of the Resend account** [EM-309][EM-310]. Every other recipient is refused, so a real signup with another email can't get its confirmation email through Resend.
+- Whether plus-addresses (`owner+x@...`) count as the owner's address is **UNVERIFIED**; Resend's docs don't say.
+- Free-plan limits: 100 emails a day, 3,000 a month [EM-302].
+- Going commercial needs a domain (a yearly cost) and an EU-data review (SES is the verified EU option).
+
+### Reasoning
+Owner decision on FIT-52. Resend was the research's labelled recommendation for the MVP; it costs nothing and the owner already has an account. Without a domain it can only prove real delivery to the owner's own inbox, which is enough for a proof of concept; Mailpit covers every other flow and all tests.
+
+### Sources
+- Linear FIT-52: "Owner decision (2026-11-25)"
+- [docs/research/email-provider.md](research/email-provider.md) — sections 2.3, 7 and 9 (EM-302, EM-303, EM-308 to EM-311)
+- https://resend.com/docs/send-with-smtp
+- https://resend.com/docs/knowledge-base/403-error-resend-dev-domain
+- https://resend.com/docs/api-reference/errors
+- [open-questions.md](open-questions.md) — AU9 (moved to Answered)
