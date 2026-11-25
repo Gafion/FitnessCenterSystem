@@ -21,6 +21,7 @@ import { Route as SignupCheckEmailRouteImport } from './routes/signup_.check-ema
 import { Route as SignupGoogleRouteImport } from './routes/signup_.google'
 import { Route as SimulationCheckInRouteImport } from './routes/simulation.check-in'
 import { Route as SimulationPaymentsRouteImport } from './routes/simulation.payments'
+import { Route as StaffInviteRouteImport } from './routes/staff.invite'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -82,6 +83,11 @@ const SimulationPaymentsRoute = SimulationPaymentsRouteImport.update({
   path: '/simulation/payments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffInviteRoute = StaffInviteRouteImport.update({
+  id: '/staff/invite',
+  path: '/staff/invite',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/signup/google': typeof SignupGoogleRoute
   '/simulation/check-in': typeof SimulationCheckInRoute
   '/simulation/payments': typeof SimulationPaymentsRoute
+  '/staff/invite': typeof StaffInviteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/signup/google': typeof SignupGoogleRoute
   '/simulation/check-in': typeof SimulationCheckInRoute
   '/simulation/payments': typeof SimulationPaymentsRoute
+  '/staff/invite': typeof StaffInviteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/signup_/google': typeof SignupGoogleRoute
   '/simulation/check-in': typeof SimulationCheckInRoute
   '/simulation/payments': typeof SimulationPaymentsRoute
+  '/staff/invite': typeof StaffInviteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/signup/google'
     | '/simulation/check-in'
     | '/simulation/payments'
+    | '/staff/invite'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/signup/google'
     | '/simulation/check-in'
     | '/simulation/payments'
+    | '/staff/invite'
   id:
     | '__root__'
     | '/'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/signup_/google'
     | '/simulation/check-in'
     | '/simulation/payments'
+    | '/staff/invite'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -184,6 +196,7 @@ export interface RootRouteChildren {
   SignupGoogleRoute: typeof SignupGoogleRoute
   SimulationCheckInRoute: typeof SimulationCheckInRoute
   SimulationPaymentsRoute: typeof SimulationPaymentsRoute
+  StaffInviteRoute: typeof StaffInviteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SimulationPaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff/invite': {
+      id: '/staff/invite'
+      path: '/staff/invite'
+      fullPath: '/staff/invite'
+      preLoaderRoute: typeof StaffInviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -288,6 +308,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupGoogleRoute: SignupGoogleRoute,
   SimulationCheckInRoute: SimulationCheckInRoute,
   SimulationPaymentsRoute: SimulationPaymentsRoute,
+  StaffInviteRoute: StaffInviteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
