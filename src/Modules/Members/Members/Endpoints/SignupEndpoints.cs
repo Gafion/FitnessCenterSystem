@@ -53,17 +53,26 @@ internal static class SignupEndpoints
     /// </param>
     internal sealed record SignupResponse(Guid MemberId, bool EmailConfirmationRequired);
 
-    /// <summary>The texts the signup form shows; their versions are sent back with the signup.</summary>
-    private static Ok<SignupTerms> GetTerms() => TypedResults.Ok(new SignupTerms(
-        MembershipType.General.Name,
-        MembershipType.General.MonthlyPrice.Ore,
-        ConsentTexts.TermsVersion,
-        ConsentTexts.Terms,
-        ConsentTexts.EarlyStartVersion,
-        ConsentTexts.EarlyStart));
+    /// <summary>
+    /// The texts the signup form shows, in the language of <c>Accept-Language</c>; Danish when it
+    /// names neither (D-065). Their versions are sent back with the signup.
+    /// </summary>
+    private static Ok<SignupTerms> GetTerms(HttpRequest request)
+    {
+        var language = request.Language();
+        var (termsVersion, terms) = ConsentTexts.TermsIn(language);
+        var (earlyStartVersion, earlyStart) = ConsentTexts.EarlyStartIn(language);
+        return TypedResults.Ok(new SignupTerms(
+            MembershipType.General.NameIn(language),
+            MembershipType.General.MonthlyPrice.Ore,
+            termsVersion,
+            terms,
+            earlyStartVersion,
+            earlyStart));
+    }
 
     private static async Task<Results<Created<SignupResponse>, ValidationProblem>> SignUpAsync(
-        SignupRequest request, SignupHandler handler, CancellationToken cancellationToken)
+        SignupRequest request, SignupHandler handler, HttpRequest http, CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(
             new SignupCommand(
@@ -75,14 +84,16 @@ internal static class SignupEndpoints
                 request.AcceptTerms,
                 request.TermsVersion,
                 request.StartNow,
-                request.EarlyStartVersion),
+                request.EarlyStartVersion,
+                // The account's emails use the language the person signed up in (D-065).
+                http.Language()),
             cancellationToken);
 
         return ToResponse(result);
     }
 
     private static async Task<Results<Created<SignupResponse>, ValidationProblem>> SignUpWithGoogleAsync(
-        GoogleSignupRequest request, SignupHandler handler, CancellationToken cancellationToken)
+        GoogleSignupRequest request, SignupHandler handler, HttpRequest http, CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(
             new GoogleSignupCommand(
@@ -92,7 +103,9 @@ internal static class SignupEndpoints
                 request.AcceptTerms,
                 request.TermsVersion,
                 request.StartNow,
-                request.EarlyStartVersion),
+                request.EarlyStartVersion,
+                // The account's emails use the language the person signed up in (D-065).
+                http.Language()),
             cancellationToken);
 
         return ToResponse(result);

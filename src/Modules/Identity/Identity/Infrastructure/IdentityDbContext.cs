@@ -1,3 +1,5 @@
+using FitnessCenter.Modules.Identity.Contracts;
+using FitnessCenter.SharedKernel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +26,11 @@ internal sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> opti
         {
             account.Property(a => a.FirstName).HasMaxLength(Account.NameMaxLength);
             account.Property(a => a.LastName).HasMaxLength(Account.NameMaxLength);
+
+            // Stored as "da" or "en", the codes the frontend uses (D-065). The migration makes existing accounts Danish.
+            account.Property(a => a.PreferredLanguage)
+                .HasConversion(language => language.Code(), code => Languages.FromCode(code) ?? Languages.Default)
+                .HasMaxLength(2);
         });
 
         builder.Entity<IdentityRole<Guid>>().HasData(StaffRoleSeed.Roles);

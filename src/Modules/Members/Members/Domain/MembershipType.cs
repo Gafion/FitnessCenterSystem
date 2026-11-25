@@ -26,4 +26,11 @@ internal sealed class MembershipType
     public string Name { get; private set; }
 
     public Money MonthlyPrice { get; private set; }
+
+    /// <summary>
+    /// The name in the language asked for (D-065). The stored name is English; the placeholder
+    /// type has a Danish name here (UNVERIFIED wording). A type without one shows the stored name.
+    /// </summary>
+    public string NameIn(Language language) =>
+        language == Language.Danish && Id == General.Id ? "Almindeligt medlemskab" : Name;
 }

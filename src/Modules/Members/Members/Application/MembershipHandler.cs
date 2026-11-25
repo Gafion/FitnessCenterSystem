@@ -42,10 +42,21 @@ internal sealed class MembershipHandler(
 
     public const string UndoneSubject = "Your membership continues";
 
+    // UNVERIFIED: the developer's Danish cancellation wording, for the owner to check (D-065).
+    public const string CancelledSubjectDanish = "Dit medlemskab er opsagt";
+
+    public const string UndoneSubjectDanish = "Dit medlemskab fortsætter";
+
     private static readonly LocalDatePattern DatePattern = LocalDatePattern.Create("d MMMM uuuu", CultureInfo.InvariantCulture);
 
     private static readonly LocalDateTimePattern ClassTimePattern =
         LocalDateTimePattern.Create("d MMMM uuuu 'at' HH:mm", CultureInfo.InvariantCulture);
+
+    // Danish formats (D-065): 23.11.2026 and 18.00.
+    private static readonly LocalDatePattern DanishDatePattern = LocalDatePattern.Create("dd.MM.uuuu", CultureInfo.InvariantCulture);
+
+    private static readonly LocalDateTimePattern DanishClassTimePattern =
+        LocalDateTimePattern.Create("dd.MM.uuuu 'kl.' HH.mm", CultureInfo.InvariantCulture);
 
     /// <summary>Today in Copenhagen, where the undo rule applies (D-055).</summary>
     public LocalDate Today => clock.GetCurrentInstant().InZone(CenterTime.Zone).Date;
@@ -102,22 +113,40 @@ internal sealed class MembershipHandler(
 
         if (outcome == CancellationOutcome.Cancelled)
         {
-            var effectiveOn = DatePattern.Format(member.CancellationEffectiveOn!.Value);
-            var bookingsText = BookingsText(cancelledBookings, effectiveOn);
-            await SendAfterCommitAsync(member.AccountId, CancelledSubject, firstName =>
-                $"""
-                Hi {firstName},
-
-                We have received your cancellation. Your membership ends after {effectiveOn}.
-                You can use the center up to and including that day.
-                {bookingsText}
-                Changed your mind? You can undo the cancellation on your account page until {effectiveOn}.
-                """);
+            var lastDay = member.CancellationEffectiveOn!.Value;
+            await SendAfterCommitAsync(member.AccountId, recipient => CancelledEmail(recipient, lastDay, cancelledBookings));
         }
 
         var membershipType = await db.MembershipTypes.AsNoTracking()
             .SingleAsync(t => t.Id == member.MembershipTypeId, cancellationToken);
         return new CancellationResult(outcome, new MembershipSummary(member, membershipType), cancelledBookings);
+    }
+
+    private static (string Subject, string Body) CancelledEmail(
+        EmailRecipient recipient, LocalDate lastDay, IReadOnlyList<CancelledClassBooking> cancelled)
+    {
+        if (recipient.Language == Language.English)
+        {
+            var effectiveOn = DatePattern.Format(lastDay);
+            return (CancelledSubject, $"""
+                Hi {recipient.FirstName},
+
+                We have received your cancellation. Your membership ends after {effectiveOn}.
+                You can use the center up to and including that day.
+                {BookingsText(cancelled, effectiveOn)}
+                Changed your mind? You can undo the cancellation on your account page until {effectiveOn}.
+                """);
+        }
+
+        var sidsteDag = DanishDatePattern.Format(lastDay);
+        return (CancelledSubjectDanish, $"""
+            Hej {recipient.FirstName},
+
+            Vi har modtaget din opsigelse. Dit medlemskab slutter efter {sidsteDag}.
+            Du kan bruge centret til og med den dag.
+            {DanishBookingsText(cancelled, sidsteDag)}
+            Har du fortrudt? Du kan annullere opsigelsen på din kontoside til og med {sidsteDag}.
+            """);
     }
 
     /// <summary>
@@ -143,6 +172,25 @@ internal sealed class MembershipHandler(
             """;
     }
 
+    private static string DanishBookingsText(IReadOnlyList<CancelledClassBooking> cancelled, string lastDay)
+    {
+        if (cancelled.Count == 0)
+        {
+            return "";
+        }
+
+        var count = cancelled.Count == 1 ? "din holdtilmelding" : $"dine {cancelled.Count} holdtilmeldinger";
+        var lines = cancelled.Select(booking =>
+            $"- {booking.ClassName}, {DanishClassTimePattern.Format(booking.StartsAt.InZone(CenterTime.Zone).LocalDateTime)}");
+        return $"""
+
+            Vi har afmeldt {count} efter {lastDay}, så andre kan få pladserne:
+            {string.Join("\n", lines)}
+            Hvis du annullerer opsigelsen, kommer tilmeldingerne ikke tilbage. Du kan tilmelde dig igen.
+
+            """;
+    }
+
     /// <summary>
     /// Undoes the account's pending cancellation, up to and including its effective date
     /// (D-055). With nothing pending, nothing changes and no email is sent.
@@ -160,12 +208,17 @@ internal sealed class MembershipHandler(
         if (outcome == UndoCancellationOutcome.Undone)
         {
             await db.SaveChangesAsync(cancellationToken);
-            await SendAfterCommitAsync(member.AccountId, UndoneSubject, firstName =>
-                $"""
-                Hi {firstName},
+            await SendAfterCommitAsync(member.AccountId, recipient => recipient.Language == Language.English
+                ? (UndoneSubject, $"""
+                    Hi {recipient.FirstName},
 
-                You have undone your cancellation. Your membership continues as before.
-                """);
+                    You have undone your cancellation. Your membership continues as before.
+                    """)
+                : (UndoneSubjectDanish, $"""
+                    Hej {recipient.FirstName},
+
+                    Du har annulleret din opsigelse. Dit medlemskab fortsætter som før.
+                    """));
         }
 
         var membershipType = await db.MembershipTypes.AsNoTracking()
@@ -177,17 +230,20 @@ internal sealed class MembershipHandler(
     /// Sends a confirmation email once the change is saved. A failed send is logged and does
     /// not reverse the change; the account page still shows it (D-055).
     /// </summary>
-    private async Task SendAfterCommitAsync(Guid accountId, string subject, Func<string?, string> body)
+    private async Task SendAfterCommitAsync(Guid accountId, Func<EmailRecipient, (string Subject, string Body)> email)
     {
         try
         {
             // The change is saved; a client that disconnects now must not stop the email.
-            var firstName = await accounts.FindFirstNameAsync(new AccountId(accountId), CancellationToken.None);
-            await accounts.SendEmailAsync(new AccountId(accountId), subject, body(firstName), CancellationToken.None);
+            // The email is in the account's language (D-065).
+            var recipient = await accounts.FindEmailRecipientAsync(new AccountId(accountId), CancellationToken.None)
+                ?? throw new InvalidOperationException($"Account {accountId} does not exist.");
+            var (subject, body) = email(recipient);
+            await accounts.SendEmailAsync(new AccountId(accountId), subject, body, CancellationToken.None);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            logger.LogError(exception, "Could not send \"{Subject}\" to account {AccountId}", subject, accountId);
+            logger.LogError(exception, "Could not send a membership email to account {AccountId}", accountId);
         }
     }
 }

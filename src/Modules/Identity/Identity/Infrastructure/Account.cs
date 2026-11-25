@@ -1,3 +1,5 @@
+using FitnessCenter.Modules.Identity.Contracts;
+using FitnessCenter.SharedKernel;
 using Microsoft.AspNetCore.Identity;
 
 namespace FitnessCenter.Modules.Identity.Infrastructure;
@@ -13,4 +15,7 @@ internal sealed class Account : IdentityUser<Guid>
     public required string FirstName { get; set; }
 
     public required string LastName { get; set; }
+
+    /// <summary>The language of the account's emails (D-065). Danish unless the person chose English.</summary>
+    public Language PreferredLanguage { get; set; } = Languages.Default;
 }

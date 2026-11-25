@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using FitnessCenter.Modules.Members.Application;
 using FitnessCenter.Modules.Members.Domain;
+using FitnessCenter.SharedKernel;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -50,16 +51,16 @@ internal static class MembershipEndpoints
         bool CanUndoCancellation);
 
     private static async Task<Results<Ok<MyMembership>, NotFound>> GetMyMembershipAsync(
-        ClaimsPrincipal user, MembershipHandler handler, CancellationToken cancellationToken)
+        ClaimsPrincipal user, MembershipHandler handler, HttpRequest request, CancellationToken cancellationToken)
     {
         var accountId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var membership = await handler.GetAsync(accountId, cancellationToken);
-        return membership is null ? TypedResults.NotFound() : TypedResults.Ok(ToResponse(membership, handler.Today));
+        return membership is null ? TypedResults.NotFound() : TypedResults.Ok(ToResponse(membership, handler.Today, request.Language()));
     }
 
     /// <summary>Cancels the membership; 409 when it is already cancelled, which changes nothing (FIT-70).</summary>
     private static async Task<Results<Ok<MyMembership>, NotFound, ProblemHttpResult>> CancelMyMembershipAsync(
-        ClaimsPrincipal user, MembershipHandler handler, CancellationToken cancellationToken)
+        ClaimsPrincipal user, MembershipHandler handler, HttpRequest request, CancellationToken cancellationToken)
     {
         var accountId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var result = await handler.CancelAsync(accountId, cancellationToken);
@@ -68,7 +69,7 @@ internal static class MembershipEndpoints
             null => TypedResults.NotFound(),
             { Outcome: CancellationOutcome.AlreadyCancelled } => TypedResults.Problem(
                 "The membership is already cancelled.", statusCode: StatusCodes.Status409Conflict),
-            _ => TypedResults.Ok(ToResponse(result.Membership, handler.Today)),
+            _ => TypedResults.Ok(ToResponse(result.Membership, handler.Today, request.Language())),
         };
     }
 
@@ -77,7 +78,7 @@ internal static class MembershipEndpoints
     /// membership; 409 after the effective date, when the membership has ended (D-055).
     /// </summary>
     private static async Task<Results<Ok<MyMembership>, NotFound, ProblemHttpResult>> UndoMyCancellationAsync(
-        ClaimsPrincipal user, MembershipHandler handler, CancellationToken cancellationToken)
+        ClaimsPrincipal user, MembershipHandler handler, HttpRequest request, CancellationToken cancellationToken)
     {
         var accountId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var result = await handler.UndoCancellationAsync(accountId, cancellationToken);
@@ -86,12 +87,13 @@ internal static class MembershipEndpoints
             null => TypedResults.NotFound(),
             { Outcome: UndoCancellationOutcome.AlreadyEffective } => TypedResults.Problem(
                 "The cancellation has taken effect; the membership has ended.", statusCode: StatusCodes.Status409Conflict),
-            _ => TypedResults.Ok(ToResponse(result.Membership, handler.Today)),
+            _ => TypedResults.Ok(ToResponse(result.Membership, handler.Today, request.Language())),
         };
     }
 
-    private static MyMembership ToResponse(MembershipSummary membership, NodaTime.LocalDate today) => new(
-        membership.MembershipType.Name,
+    /// <param name="language">From <c>Accept-Language</c>: the membership type's name is in it (D-065).</param>
+    private static MyMembership ToResponse(MembershipSummary membership, NodaTime.LocalDate today, Language language) => new(
+        membership.MembershipType.NameIn(language),
         membership.MembershipType.MonthlyPrice.Ore,
         membership.Member.Status.ToString(),
         membership.Member.MemberSince.ToDateOnly(),

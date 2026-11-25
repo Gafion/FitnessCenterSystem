@@ -18,7 +18,8 @@ internal sealed record SignupCommand(
     bool AcceptTerms,
     string TermsVersion,
     bool StartNow,
-    string EarlyStartVersion);
+    string EarlyStartVersion,
+    Language Language = Languages.Default);
 
 /// <summary>
 /// Signup that started with Google: the email and login come from Google (D-037). The date
@@ -31,7 +32,8 @@ internal sealed record GoogleSignupCommand(
     bool AcceptTerms,
     string TermsVersion,
     bool StartNow,
-    string EarlyStartVersion);
+    string EarlyStartVersion,
+    Language Language = Languages.Default);
 
 /// <param name="SignedIn">
 /// True when the member is logged in now (Google). False when they must confirm their
@@ -55,7 +57,7 @@ internal sealed class SignupHandler(
             new SignupConsents(command.AcceptTerms, command.TermsVersion, command.StartNow, command.EarlyStartVersion),
             command.DateOfBirth,
             () => accounts.CreateLocalAccountAsync(
-                new NewLocalAccount(command.Email, command.Password, command.FirstName, command.LastName),
+                new NewLocalAccount(command.Email, command.Password, command.FirstName, command.LastName, command.Language),
                 cancellationToken),
             SendEmailConfirmationAsync,
             cancellationToken);
@@ -65,7 +67,7 @@ internal sealed class SignupHandler(
             new SignupConsents(command.AcceptTerms, command.TermsVersion, command.StartNow, command.EarlyStartVersion),
             command.DateOfBirth,
             () => accounts.CreateExternalAccountAsync(
-                new NewExternalAccount(command.FirstName, command.LastName), cancellationToken),
+                new NewExternalAccount(command.FirstName, command.LastName, command.Language), cancellationToken),
             // Google verified the email, so the member is logged in straight away.
             async (accountId, ct) =>
             {
@@ -162,12 +164,12 @@ internal sealed class SignupHandler(
         {
             errors["acceptTerms"] = ["You must accept the terms to sign up."];
         }
-        else if (consents.TermsVersion != ConsentTexts.TermsVersion)
+        else if (!ConsentTexts.IsCurrentTermsVersion(consents.TermsVersion))
         {
             errors["termsVersion"] = ["The terms have changed. Reload the page and read them again."];
         }
 
-        if (consents.EarlyStartRequested && consents.EarlyStartVersion != ConsentTexts.EarlyStartVersion)
+        if (consents.EarlyStartRequested && !ConsentTexts.IsCurrentEarlyStartVersion(consents.EarlyStartVersion))
         {
             errors["earlyStartVersion"] = ["The early-start text has changed. Reload the page and read it again."];
         }

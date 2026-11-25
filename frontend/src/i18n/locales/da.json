@@ -74,7 +74,12 @@
     },
     "noMembership": "Du har ikke noget medlemskab.",
     "membershipFailed": "Dit medlemskab kunne ikke hentes. Prøv igen senere.",
-    "bookingsFailed": "Dine bookinger kunne ikke hentes. Prøv igen senere."
+    "bookingsFailed": "Dine bookinger kunne ikke hentes. Prøv igen senere.",
+    "emailLanguage": {
+      "label": "E-mails fra os er på",
+      "saved": "Gemt. Nye e-mails kommer på dette sprog.",
+      "failed": "Sproget kunne ikke gemmes. Prøv igen."
+    }
   },
   "errors": {
     "unexpected": "Noget gik galt. Prøv igen.",

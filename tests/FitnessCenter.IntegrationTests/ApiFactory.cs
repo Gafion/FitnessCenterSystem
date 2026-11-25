@@ -49,4 +49,15 @@ public sealed class ApiFactory(
             builder.ConfigureTestServices(configureServices);
         }
     }
+
+    /// <summary>
+    /// Test clients ask for English, the language these tests' texts are written in, like a
+    /// browser where the person chose English. Danish is the default without the header (D-065);
+    /// LanguageTests remove the header or ask for Danish.
+    /// </summary>
+    protected override void ConfigureClient(HttpClient client)
+    {
+        base.ConfigureClient(client);
+        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("en");
+    }
 }
