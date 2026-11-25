@@ -12,7 +12,8 @@ using NodaTime;
 namespace FitnessCenter.IntegrationTests;
 
 /// <summary>
-/// Staff accounts come from an admin's invite by email (D-058, FIT-75). Each test creates its
+/// Staff accounts come from an invite by email (D-058, FIT-75). Managers invite too (D-063),
+/// and an invite to an existing account adds the role to it (D-064, FIT-100). Each test creates its
 /// own synthetic staff accounts directly, so parallel tests don't share or race over them.
 /// </summary>
 [TestClass]
@@ -27,8 +28,13 @@ public sealed partial class StaffInviteTests
 
     private static ApiFactory Factory => _factory ?? throw new InvalidOperationException("Not initialized.");
 
-    public static IEnumerable<object[]> NonAdminRoles =>
-        [[StaffRoles.Manager], [StaffRoles.FrontDesk], [StaffRoles.Instructor]];
+    // Roles that may not invite at all (D-063): only admins and managers invite.
+    public static IEnumerable<object[]> NonInvitingRoles => [[StaffRoles.FrontDesk], [StaffRoles.Instructor]];
+
+    // The roles a manager may give (D-063), and the ones only an admin may give.
+    public static IEnumerable<object[]> ManagerMayGive => [[StaffRoles.FrontDesk], [StaffRoles.Instructor]];
+
+    public static IEnumerable<object[]> OnlyAdminMayGive => [[StaffRoles.Manager], [StaffRoles.Admin]];
 
     [ClassInitialize]
     public static void Initialize(TestContext _) => _factory = new ApiFactory();
@@ -121,8 +127,8 @@ public sealed partial class StaffInviteTests
     }
 
     [TestMethod]
-    [DynamicData(nameof(NonAdminRoles))]
-    public async Task Non_admin_staff_cannot_invite(string role)
+    [DynamicData(nameof(NonInvitingRoles))]
+    public async Task Front_desk_and_instructor_cannot_invite(string role)
     {
         using var staff = await LoggedInStaffAsync(Factory, role);
         var email = SyntheticStaffEmail();
@@ -130,6 +136,36 @@ public sealed partial class StaffInviteTests
         using var invite = await InviteAsync(staff, email, StaffRoles.Instructor);
 
         Assert.AreEqual(HttpStatusCode.Forbidden, invite.StatusCode);
+        Assert.AreEqual(0, await TestMailbox.CountToAsync(email, InviteSubject));
+    }
+
+    [TestMethod]
+    [DynamicData(nameof(ManagerMayGive))]
+    public async Task Manager_invites_front_desk_and_instructor(string role)
+    {
+        using var manager = await LoggedInStaffAsync(Factory, StaffRoles.Manager);
+        var email = SyntheticStaffEmail();
+
+        using var invite = await InviteAsync(manager, email, role);
+        Assert.AreEqual(HttpStatusCode.Created, invite.StatusCode, await invite.Content.ReadAsStringAsync());
+
+        using var browser = Factory.CreateClient();
+        using var accept = await AcceptAsync(browser, await InviteLinkForAsync(email));
+        Assert.AreEqual(HttpStatusCode.NoContent, accept.StatusCode, await accept.Content.ReadAsStringAsync());
+        CollectionAssert.AreEqual(new[] { role }, (await RolesOfAsync(Factory, email)).ToArray());
+    }
+
+    [TestMethod]
+    [DynamicData(nameof(OnlyAdminMayGive))]
+    public async Task Manager_cannot_give_manager_or_admin(string role)
+    {
+        using var manager = await LoggedInStaffAsync(Factory, StaffRoles.Manager);
+        var email = SyntheticStaffEmail();
+
+        using var invite = await InviteAsync(manager, email, role);
+
+        Assert.AreEqual(HttpStatusCode.Forbidden, invite.StatusCode);
+        Assert.Contains("role-not-allowed", await invite.Content.ReadAsStringAsync());
         Assert.AreEqual(0, await TestMailbox.CountToAsync(email, InviteSubject));
     }
 
@@ -193,7 +229,52 @@ public sealed partial class StaffInviteTests
     }
 
     [TestMethod]
-    public async Task Invite_to_an_email_that_has_an_account_is_refused()
+    public async Task Member_accepts_an_invite_keeps_the_membership_and_gains_the_role()
+    {
+        using var admin = await LoggedInStaffAsync(Factory, StaffRoles.Admin);
+        var memberEmail = TestAccounts.SyntheticEmail();
+        using var member = Factory.CreateClient();
+        await TestAccounts.SignUpConfirmedAndLoggedInAsync(member, memberEmail);
+        var membershipBefore = await MembershipAsync(member);
+
+        using var invite = await InviteAsync(admin, memberEmail, StaffRoles.FrontDesk);
+        Assert.AreEqual(HttpStatusCode.Created, invite.StatusCode, await invite.Content.ReadAsStringAsync());
+        var link = await InviteLinkForAsync(memberEmail);
+        Assert.IsTrue(link.ForExistingAccount, "the link asks an existing account to log in and accept");
+
+        using var accept = await AcceptForAccountAsync(member, link);
+        Assert.AreEqual(HttpStatusCode.NoContent, accept.StatusCode, await accept.Content.ReadAsStringAsync());
+
+        CollectionAssert.AreEqual(new[] { StaffRoles.FrontDesk }, (await RolesOfAsync(Factory, memberEmail)).ToArray());
+        Assert.AreEqual(membershipBefore, await MembershipAsync(member), "the membership stays as it was");
+        using var again = Factory.CreateClient();
+        using var login = await TestAccounts.LogInAsync(again, memberEmail);
+        Assert.AreEqual(HttpStatusCode.NoContent, login.StatusCode, "the password stays as it was");
+    }
+
+    [TestMethod]
+    public async Task Member_turned_staff_must_set_up_the_authenticator_before_using_staff_endpoints()
+    {
+        using var admin = await LoggedInStaffAsync(Factory, StaffRoles.Admin);
+        var memberEmail = TestAccounts.SyntheticEmail();
+        using var member = Factory.CreateClient();
+        await TestAccounts.SignUpConfirmedAndLoggedInAsync(member, memberEmail);
+        using var invite = await InviteAsync(admin, memberEmail, StaffRoles.Manager);
+        Assert.AreEqual(HttpStatusCode.Created, invite.StatusCode, await invite.Content.ReadAsStringAsync());
+        using var accept = await AcceptForAccountAsync(member, await InviteLinkForAsync(memberEmail));
+        Assert.AreEqual(HttpStatusCode.NoContent, accept.StatusCode, await accept.Content.ReadAsStringAsync());
+
+        // Inviting needs the Manager policy, so it shows whether the staff gate lets them in.
+        using var before = await InviteAsync(member, SyntheticStaffEmail(), StaffRoles.FrontDesk);
+        Assert.AreEqual(HttpStatusCode.Forbidden, before.StatusCode, "no authenticator yet");
+
+        await TestAuthenticator.SetUpAsync(member);
+        using var after = await InviteAsync(member, SyntheticStaffEmail(), StaffRoles.FrontDesk);
+        Assert.AreEqual(HttpStatusCode.Created, after.StatusCode, await after.Content.ReadAsStringAsync());
+    }
+
+    [TestMethod]
+    public async Task Existing_account_cannot_accept_by_setting_a_password()
     {
         using var admin = await LoggedInStaffAsync(Factory, StaffRoles.Admin);
         var memberEmail = TestAccounts.SyntheticEmail();
@@ -203,9 +284,64 @@ public sealed partial class StaffInviteTests
         }
 
         using var invite = await InviteAsync(admin, memberEmail, StaffRoles.FrontDesk);
+        Assert.AreEqual(HttpStatusCode.Created, invite.StatusCode, await invite.Content.ReadAsStringAsync());
+        using var browser = Factory.CreateClient();
+        using var accept = await AcceptAsync(browser, await InviteLinkForAsync(memberEmail));
 
-        Assert.AreEqual(HttpStatusCode.Conflict, invite.StatusCode);
-        Assert.Contains("account-exists", await invite.Content.ReadAsStringAsync());
+        Assert.AreEqual(HttpStatusCode.Conflict, accept.StatusCode);
+        Assert.Contains("account-exists", await accept.Content.ReadAsStringAsync());
+        Assert.AreEqual(0, (await RolesOfAsync(Factory, memberEmail)).Count);
+    }
+
+    [TestMethod]
+    public async Task Invite_cannot_be_accepted_by_another_account()
+    {
+        using var admin = await LoggedInStaffAsync(Factory, StaffRoles.Admin);
+        var invitedEmail = TestAccounts.SyntheticEmail();
+        using (var invited = Factory.CreateClient())
+        {
+            await TestAccounts.SignUpAsync(invited, invitedEmail);
+        }
+
+        using var invite = await InviteAsync(admin, invitedEmail, StaffRoles.Instructor);
+        Assert.AreEqual(HttpStatusCode.Created, invite.StatusCode, await invite.Content.ReadAsStringAsync());
+        var otherEmail = TestAccounts.SyntheticEmail();
+        using var other = Factory.CreateClient();
+        await TestAccounts.SignUpConfirmedAndLoggedInAsync(other, otherEmail);
+
+        using var accept = await AcceptForAccountAsync(other, await InviteLinkForAsync(invitedEmail));
+
+        Assert.AreEqual(HttpStatusCode.Forbidden, accept.StatusCode);
+        Assert.Contains("invite-for-another-account", await accept.Content.ReadAsStringAsync());
+        Assert.AreEqual(0, (await RolesOfAsync(Factory, otherEmail)).Count);
+        Assert.AreEqual(0, (await RolesOfAsync(Factory, invitedEmail)).Count);
+    }
+
+    [TestMethod]
+    public async Task Accepting_for_an_account_requires_login()
+    {
+        using var anonymous = Factory.CreateClient();
+
+        using var accept = await AcceptForAccountAsync(anonymous, new InviteLink(Guid.NewGuid(), "code", true));
+
+        Assert.AreEqual(HttpStatusCode.Unauthorized, accept.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Invite_to_an_account_that_has_the_role_is_refused()
+    {
+        using var admin = await LoggedInStaffAsync(Factory, StaffRoles.Admin);
+        var email = SyntheticStaffEmail();
+        using var first = await InviteAsync(admin, email, StaffRoles.Instructor);
+        Assert.AreEqual(HttpStatusCode.Created, first.StatusCode, await first.Content.ReadAsStringAsync());
+        using var browser = Factory.CreateClient();
+        using var accept = await AcceptAsync(browser, await InviteLinkForAsync(email));
+        Assert.AreEqual(HttpStatusCode.NoContent, accept.StatusCode, await accept.Content.ReadAsStringAsync());
+
+        using var second = await InviteAsync(admin, email, StaffRoles.Instructor);
+
+        Assert.AreEqual(HttpStatusCode.Conflict, second.StatusCode);
+        Assert.Contains("already-has-role", await second.Content.ReadAsStringAsync());
     }
 
     [TestMethod]
@@ -245,7 +381,22 @@ public sealed partial class StaffInviteTests
         var match = InviteLinkPattern().Match(text);
         Assert.IsTrue(match.Success, $"No invite link in: {text}");
         var query = QueryHelpers.ParseQuery(new Uri(match.Value).Query);
-        return new InviteLink(Guid.Parse(query["invite"]!), query["code"].ToString());
+        return new InviteLink(
+            Guid.Parse(query["invite"]!), query["code"].ToString(), query.TryGetValue("account", out var account) && account == "existing");
+    }
+
+    private static Task<HttpResponseMessage> AcceptForAccountAsync(HttpClient client, InviteLink link) =>
+        client.PostAsJsonAsync("/api/identity/staff-invites/accept-existing", new
+        {
+            inviteId = link.InviteId,
+            code = link.Code,
+        });
+
+    private static async Task<string> MembershipAsync(HttpClient member)
+    {
+        using var response = await member.GetAsync(new Uri("/api/members/me", UriKind.Relative));
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode, await response.Content.ReadAsStringAsync());
+        return await response.Content.ReadAsStringAsync();
     }
 
     /// <summary>A confirmed staff account with <paramref name="role"/>, logged in on a new client.</summary>
@@ -290,7 +441,7 @@ public sealed partial class StaffInviteTests
     [GeneratedRegex(@"\S+/accept-invite\?\S+")]
     private static partial Regex InviteLinkPattern();
 
-    private sealed record InviteLink(Guid InviteId, string Code);
+    private sealed record InviteLink(Guid InviteId, string Code, bool ForExistingAccount = false);
 
     private sealed class MovableClock(Instant now) : IClock
     {

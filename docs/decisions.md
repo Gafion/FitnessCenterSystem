@@ -1927,7 +1927,7 @@ Owner decision on FIT-97's options comment. A is atomic, has a precedent in sign
 
 ## D-058: Staff accounts are created by an admin invite by email
 - **Date:** 2026-11-24
-- **Status:** Accepted
+- **Status:** Accepted; partly superseded by D-063 (managers invite too) and D-064 (invites to existing accounts)
 - **Decided by:** Owner, 2026-11-24 (FIT-75)
 - **Relates to:** D-013, D-026, D-038, D-049. Open points: AU10, AU11.
 
@@ -2079,3 +2079,138 @@ Owner decision on the recommended default. Danish dates are traditionally DD.MM.
 - [open-questions.md](open-questions.md) — "Owner decides" row 6 (U5)
 - Linear FIT-83 — "Owner decision (2026-11-24)" and "Brief"
 - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat — locale-aware date and time formatting
+
+---
+
+## D-062: Staff roles stack, except Instructor
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-24 (FIT-100)
+- **Relates to:** D-049, D-059. Changes the "no hierarchy" rule in `StaffPolicies` (FIT-73).
+
+### Problem statement
+D-049 names four staff roles but no order between them, so each role's policy admitted that role only: an admin was refused by the Manager policy. A staff feature for managers would then have to list Admin too, every time.
+
+### Options considered
+1. **No hierarchy (as built).** Pros: each role is explicit. Cons: every endpoint must list all the roles that may use it; easy to forget Admin.
+2. **Roles stack: Admin ⊃ Manager ⊃ Front desk; Instructor separate.** Pros: an endpoint names the lowest role that may use it; matches how a center's staff work. Cons: a manager can do everything front desk can, with no way to say otherwise.
+3. **All four in one line, Instructor at the bottom.** Pros: simplest. Cons: makes every admin, manager and front desk worker an instructor, which D-049's "instructors see only their own classes" doesn't fit.
+
+### Decision
+**Option 2.**
+
+- The **Manager** policy admits Manager and Admin. The **FrontDesk** policy admits Front desk, Manager and Admin.
+- The **Instructor** policy admits Instructor only. An admin or manager is not an instructor unless they have that role too.
+- **Admin** and **AnyStaff** don't change. Every staff policy still needs the authenticator app (D-059).
+
+```mermaid
+flowchart BT
+  F[Front desk] --> M[Manager] --> A[Admin]
+  I[Instructor]
+  classDef apart stroke-dasharray: 4 4
+  class I apart
+```
+
+An arrow points to the role that includes the one below it. Instructor stands apart.
+
+| Role \ policy | Admin | Manager | FrontDesk | Instructor | AnyStaff |
+|---|---|---|---|---|---|
+| Admin | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Manager | ❌ | ✅ | ✅ | ❌ | ✅ |
+| Front desk | ❌ | ❌ | ✅ | ❌ | ✅ |
+| Instructor | ❌ | ❌ | ❌ | ✅ | ✅ |
+
+### Reasoning
+Owner decision on FIT-100. ASP.NET Core's role policies admit a user who has any of the listed roles, so stacking is the list of the role and the roles above it (`StaffRoleRules.AdmittedBy`). The matrix above is tested role by role in `StaffRoleTests`.
+
+### Sources
+- Linear FIT-100: "Owner decisions", item 1
+- https://learn.microsoft.com/en-us/aspnet/core/security/authorization/roles — `RequireRole` with several roles admits a user in any one of them
+- [D-049](#d-049-four-staff-roles-instructors-see-only-their-own-classes) — the four roles
+
+---
+
+## D-063: Managers may invite front desk and instructors
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-24 (FIT-100)
+- **Relates to:** D-058, D-062. Answers AU10. Supersedes D-058's "only an admin invites".
+
+### Problem statement
+D-058 lets only an admin invite staff and left open whether managers may invite too, and which roles they may give (AU10).
+
+### Options considered
+1. **Only admins invite (as built).** Pros: one person controls every staff account. Cons: the admin must handle every new front desk worker and instructor.
+2. **Managers invite, but only to Front desk and Instructor.** Pros: day-to-day hiring doesn't wait for the admin; a manager can't create another manager or an admin. Cons: one more rule to test.
+3. **Managers invite to any role.** Pros: simplest. Cons: a manager could make new admins.
+
+### Decision
+**Option 2.**
+
+- The invite endpoint needs the **Manager** policy, which admits admins too (D-062).
+- An **admin** may give any of the four roles. A **manager** may give **Front desk** or **Instructor**; asking for Manager or Admin answers 403 `role-not-allowed` and sends no email.
+
+```mermaid
+flowchart LR
+  A[Admin] -->|any role| INV[Invite]
+  M[Manager] -->|Front desk or Instructor| INV
+  M -.->|Manager or Admin: 403 role-not-allowed| X[Refused]
+```
+
+### Reasoning
+Owner decision on FIT-100. The rule is `StaffRoleRules.MayGive`, tested in `StaffInviteTests` for both allowed and refused roles.
+
+### Sources
+- Linear FIT-100: "Owner decisions", item 2
+- [D-058](#d-058-staff-accounts-are-created-by-an-admin-invite-by-email) — invites
+- [open-questions.md](open-questions.md) — AU10 (moved to Answered)
+
+---
+
+## D-064: One account can be both member and staff
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-24 (FIT-100)
+- **Relates to:** D-013, D-058, D-059, AU6. Answers AU11. Supersedes D-058's "an email that already has an account can't be invited".
+
+### Problem statement
+D-058 refused (409 `account-exists`) an invite to an email that already had an account, so a member who also works at the center needed a second email (AU11).
+
+### Options considered
+1. **Refuse, two emails (as built).** Pros: staff and member data stay apart. Cons: the person juggles two logins.
+2. **The invite adds the role to the existing account.** Pros: one login; the person keeps their membership. Cons: a member account becomes subject to staff rules, so the staff MFA gate must hold for it too.
+
+### Decision
+**Option 2.**
+
+- An invite to an email that has an account is **sent**, not refused. The email asks the person to log in and follow the link; the link carries `account=existing`.
+- The person **logs in to that account and accepts** (`POST /api/identity/staff-invites/accept-existing` with the invite and code). No new password, no new name. The role is added; **the membership is untouched**.
+- The invite must be for the **logged-in account's email**; otherwise 403 `invite-for-another-account`.
+- Accepting with a name and password (the new-account form) for such an email still answers 409 `account-exists`.
+- An invite to an account that **already has that role** answers 409 `already-has-role`.
+- **Staff rules apply**: the account needs the authenticator app before any staff endpoint (D-059). As a member, MFA stays optional (D-013).
+
+```mermaid
+sequenceDiagram
+  actor IN as Admin or manager
+  participant API as API (Identity)
+  actor P as Member
+  IN->>API: POST /api/identity/staff-invites {email, role}
+  API-->>P: email: log in, then follow the link (account=existing)
+  P->>API: POST /api/identity/login
+  P->>API: POST /api/identity/staff-invites/accept-existing {invite, code}
+  alt invite for another email
+    API-->>P: 403 invite-for-another-account
+  else ok
+    API-->>P: 204, role added, login cookie renewed
+  end
+  Note over API: Staff endpoints answer 403 until the authenticator is on (D-059)
+```
+
+### Reasoning
+Owner decision on FIT-100. Identity already keeps one account per email (`RequireUniqueEmail`), and roles are separate rows, so adding a role leaves the account and its membership as they are. Logging in first proves the person owns the account, and the code proves they got the email. The cookie carries the roles, so it is renewed after accepting.
+
+### Sources
+- Linear FIT-100: "Owner decisions", item 3
+- [D-058](#d-058-staff-accounts-are-created-by-an-admin-invite-by-email), [D-059](#d-059-staff-mfa-uses-an-authenticator-app-totp)
+- [open-questions.md](open-questions.md) — AU11 (moved to Answered)

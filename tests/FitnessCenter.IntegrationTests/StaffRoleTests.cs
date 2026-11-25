@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace FitnessCenter.IntegrationTests;
 
 /// <summary>
-/// The four staff roles and their policies (D-049, FIT-73). Staff come from the development
+/// The four staff roles and their policies (D-049, FIT-73), which stack (D-062, FIT-100). Staff come from the development
 /// seed with a synthetic password; endpoints that require each policy are added for the test,
 /// because no staff feature uses them yet.
 /// </summary>
@@ -84,16 +84,48 @@ public sealed class StaffRoleTests
         Assert.AreEqual(HttpStatusCode.OK, await ProbeAsync(client, StaffPolicies.AnyStaff), role);
     }
 
+    /// <summary>
+    /// Every role against every policy (D-062). Roles stack: Admin includes Manager, and
+    /// Manager includes Front desk; Instructor stands apart. Written out by hand, not derived
+    /// from the code under test.
+    /// </summary>
+    public static IEnumerable<object[]> StackingMatrix
+    {
+        get
+        {
+            //                                          Admin  Manager FrontDesk Instructor Any
+            var matrix = new Dictionary<string, bool[]>
+            {
+                ["dev-admin@example.com"] = [true, true, true, false, true],
+                ["dev-manager@example.com"] = [false, true, true, false, true],
+                ["dev-frontdesk@example.com"] = [false, false, true, false, true],
+                ["dev-instructor@example.com"] = [false, false, false, true, true],
+            };
+            string[] policies =
+            [
+                StaffPolicies.Admin, StaffPolicies.Manager, StaffPolicies.FrontDesk,
+                StaffPolicies.Instructor, StaffPolicies.AnyStaff,
+            ];
+            foreach (var (email, admitted) in matrix)
+            {
+                for (var i = 0; i < policies.Length; i++)
+                {
+                    yield return [email, policies[i], admitted[i]];
+                }
+            }
+        }
+    }
+
     [TestMethod]
-    [DynamicData(nameof(Staff))]
-    public async Task Role_policy_refuses_the_other_staff_roles(string role, string email, string policy)
+    [DynamicData(nameof(StackingMatrix))]
+    public async Task Roles_stack_except_instructor(string email, string policy, bool admitted)
     {
         using var client = await LogInAsync(email, StaffPassword);
 
-        foreach (var other in Staff.Select(s => (string)s[2]).Where(p => p != policy))
-        {
-            Assert.AreEqual(HttpStatusCode.Forbidden, await ProbeAsync(client, other), $"{role} on {other}");
-        }
+        Assert.AreEqual(
+            admitted ? HttpStatusCode.OK : HttpStatusCode.Forbidden,
+            await ProbeAsync(client, policy),
+            $"{email} on {policy}");
     }
 
     [TestMethod]
