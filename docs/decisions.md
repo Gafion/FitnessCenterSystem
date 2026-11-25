@@ -2100,6 +2100,20 @@ flowchart LR
 
 Sources: Linear FIT-101 ("What to build"); D-065 above.
 
+### Amendment (FIT-76, 2026-11-25): the inviter picks the invite's language
+Owner decision on FIT-76, recorded in FIT-105. Changes "an invite to a new email … uses the inviter's language" in the FIT-101 amendment above. As built in PR #50:
+- **The person sending a staff invite picks the email's language**, `da` or `en`, on the invite screen (`language` in `POST /api/identity/staff-invites`). It defaults to the language the inviter uses the app in (`Accept-Language`). Any other value is refused with 400.
+- **An email that already has an account keeps that account's own language**, whatever the inviter picked.
+
+```mermaid
+flowchart LR
+  I["Inviter picks da / en<br/>(default: app language)"] --> Q{Email has an account?}
+  Q -- no --> P[Email in the picked language]
+  Q -- yes --> A["Email in the account's<br/>PreferredLanguage"]
+```
+
+Sources: Linear FIT-105 ("What to build"), FIT-76; `InviteStaffRequest` in `src/Modules/Identity/Identity/Endpoints/StaffInviteEndpoints.cs`; `StaffInviteTests.Invite_to_a_new_email_is_in_the_language_the_inviter_picked` and `Invite_with_an_unknown_language_is_refused`.
+
 ---
 
 ## D-062: Staff roles stack, except Instructor
