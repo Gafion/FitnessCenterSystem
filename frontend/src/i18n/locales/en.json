@@ -237,8 +237,7 @@
     "title": "A spot is free for you",
     "text": "{{className}}, {{start}}–{{end}}, Danish time. Accept by {{expires}}, or it goes to the next person on the waitlist.",
     "accept": "Accept spot",
-    "decline": "Decline",
-    "failed": "Your offers could not be loaded. Please try again later."
+    "decline": "Decline"
   },
   "shell": {
     "home": "FitnessCenter home",

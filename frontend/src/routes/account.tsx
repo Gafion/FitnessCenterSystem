@@ -61,7 +61,7 @@ export const Route = createFileRoute('/account')({
         api.GET('/api/access/cards/mine'),
         getMyMembership().catch(() => 'failed' as const),
         getMyBookings().catch(() => 'failed' as const),
-        getMyOffers().catch(() => 'failed' as const),
+        getMyOffers().catch(() => []),
         getMyPayments().catch(() => 'failed' as const),
         // One flag for every simulated page (D-041).
         isSimulationEnabled().catch(() => false),
@@ -194,15 +194,13 @@ function AccountPage() {
     <Page width="wide">
       <PageHeader title={t('account.welcome', { name: account.firstName })} />
       <ErrorMessage code={error} />
-      {offers === 'failed' ? (
-        <LoadFailed>{t('offers.failed')}</LoadFailed>
-      ) : (
-        <WaitlistOffers
-          offers={offers}
-          onAccept={(classId) => answerOffer('POST', classId)}
-          onDecline={(classId) => answerOffer('DELETE', classId)}
-        />
-      )}
+      {/* D-067: a spot held from a waitlist. If the offers fail to load, the notice is left
+          out rather than shown as an error: the email and the classes page show it too. */}
+      <WaitlistOffers
+        offers={offers}
+        onAccept={(classId) => answerOffer('POST', classId)}
+        onDecline={(classId) => answerOffer('DELETE', classId)}
+      />
       <div className="grid gap-4 md:grid-cols-2 md:gap-6">
         <AccountSection
           id="membership"

@@ -237,8 +237,7 @@
     "title": "Der er en plads til dig",
     "text": "{{className}}, {{start}}–{{end}}, dansk tid. Tag imod den senest {{expires}}, ellers går den til den næste på ventelisten.",
     "accept": "Tag imod plads",
-    "decline": "Afslå",
-    "failed": "Dine tilbud kunne ikke hentes. Prøv igen senere."
+    "decline": "Afslå"
   },
   "shell": {
     "home": "FitnessCenter forside",
