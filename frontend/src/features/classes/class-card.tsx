@@ -150,21 +150,20 @@ export function ClassCard({
               {t('classes.leaveWaitlist')}
             </Button>
           )}
-          <Button
-            // A class that can't be booked gets a dashed, flat button with a
-            // "no" sign, so it never reads as a working Book button.
-            variant={
-              (canJoinWaitlist && onJoinWaitlist) || waiting
-                ? 'outline'
-                : undefined
-            }
-            className="w-full data-disabled:border-dashed data-disabled:border-border-strong"
-            disabled={busy || !bookable}
-            onClick={() => run(onBook)}
-          >
-            {!bookable && <BanIcon aria-hidden="true" />}
-            {t('classes.book')}
-          </Button>
+          {/* D-051, FIT-80: a full class offers only the waitlist, no Book button. */}
+          {!full && (
+            <Button
+              // A class that can't be booked gets a dashed, flat button with a
+              // "no" sign, so it never reads as a working Book button.
+              variant={waiting ? 'outline' : undefined}
+              className="w-full data-disabled:border-dashed data-disabled:border-border-strong"
+              disabled={busy || !bookable}
+              onClick={() => run(onBook)}
+            >
+              {!bookable && <BanIcon aria-hidden="true" />}
+              {t('classes.book')}
+            </Button>
+          )}
         </div>
       )}
     </article>

@@ -78,9 +78,13 @@ test('the landing page links to the schedule, grouped by Copenhagen day', async 
   });
   await expect(wednesday.getByText('07:00–08:00')).toBeVisible();
   await expect(wednesday.getByText('This class is full.')).toBeVisible();
+  // D-051: a full class offers only the waitlist; there is no Book button.
+  await expect(
+    wednesday.getByRole('button', { name: 'Join waitlist' }),
+  ).toBeEnabled();
   await expect(
     wednesday.getByRole('button', { name: 'Book', exact: true }),
-  ).toBeDisabled();
+  ).toHaveCount(0);
 });
 
 test('a visitor who is not logged in is sent to login to book', async ({
@@ -164,9 +168,13 @@ test('a class that filled up meanwhile says it is full', async ({ page }) => {
   await expect(page.getByRole('alert')).toHaveText('This class is full.');
   // The schedule reloaded: the class now shows as full, and the message stays.
   await expect(page.getByText('0 spots left')).toBeVisible();
+  // D-051: a full class offers only the waitlist; there is no Book button.
+  await expect(
+    page.getByRole('button', { name: 'Join waitlist' }),
+  ).toBeEnabled();
   await expect(
     page.getByRole('button', { name: 'Book', exact: true }),
-  ).toBeDisabled();
+  ).toHaveCount(0);
   await expect(page.getByRole('alert')).toHaveText('This class is full.');
 });
 
