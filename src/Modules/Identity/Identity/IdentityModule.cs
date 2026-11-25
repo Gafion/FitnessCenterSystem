@@ -76,6 +76,7 @@ public static class IdentityModule
 
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<StaffInvites>();
+        services.AddScoped<IAuthorizationHandler, AuthenticatorSetUpHandler>();
         services.AddSingleton<SmtpEmailSender>();
         services.AddSingleton<IEmailSender<Account>>(provider => provider.GetRequiredService<SmtpEmailSender>());
         services.AddHealthChecks().AddDbContextCheck<IdentityDbContext>("identity-db");
@@ -85,18 +86,25 @@ public static class IdentityModule
 
     public static IEndpointRouteBuilder MapIdentityEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        return endpoints.MapAccountEndpoints().MapExternalLoginEndpoints().MapStaffInviteEndpoints();
+        return endpoints.MapAccountEndpoints().MapExternalLoginEndpoints().MapStaffInviteEndpoints()
+            .MapAuthenticatorEndpoints();
     }
 
-    /// <summary>One policy per staff role, plus one for any staff role (D-049). Members match none.</summary>
+    /// <summary>
+    /// One policy per staff role, plus one for any staff role (D-049). Members match none.
+    /// Every staff policy also needs the authenticator app set up (D-013, D-059).
+    /// </summary>
     private static void AddStaffPolicies(AuthorizationOptions options)
     {
-        options.AddPolicy(StaffPolicies.Admin, policy => policy.RequireRole(StaffRoles.Admin));
-        options.AddPolicy(StaffPolicies.Manager, policy => policy.RequireRole(StaffRoles.Manager));
-        options.AddPolicy(StaffPolicies.FrontDesk, policy => policy.RequireRole(StaffRoles.FrontDesk));
-        options.AddPolicy(StaffPolicies.Instructor, policy => policy.RequireRole(StaffRoles.Instructor));
-        options.AddPolicy(StaffPolicies.AnyStaff, policy => policy.RequireRole(StaffRoles.All));
+        options.AddPolicy(StaffPolicies.Admin, policy => StaffPolicy(policy, StaffRoles.Admin));
+        options.AddPolicy(StaffPolicies.Manager, policy => StaffPolicy(policy, StaffRoles.Manager));
+        options.AddPolicy(StaffPolicies.FrontDesk, policy => StaffPolicy(policy, StaffRoles.FrontDesk));
+        options.AddPolicy(StaffPolicies.Instructor, policy => StaffPolicy(policy, StaffRoles.Instructor));
+        options.AddPolicy(StaffPolicies.AnyStaff, policy => StaffPolicy(policy, [.. StaffRoles.All]));
     }
+
+    private static void StaffPolicy(AuthorizationPolicyBuilder policy, params string[] roles) =>
+        policy.RequireRole(roles).AddRequirements(new AuthenticatorSetUpRequirement());
 
     /// <summary>
     /// Google login (D-011), only when a client is configured: locally from user-secrets

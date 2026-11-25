@@ -221,6 +221,7 @@ flowchart LR
 | AU9 | Which service sends the real emails (confirmation links now; booking confirmations and receipts later)? Amazon SES, Postmark, Resend, or the center's own mail system? Needs: what the center uses today, EU hosting, price, and access to the center's DNS for sender verification. Locally, Mailpit catches all email (D-038). (Relates to B2, T2.) | D-038 |
 | AU10 | May managers invite staff too, and which roles may they give? For now only an admin invites (D-058). | D-058 |
 | AU11 | May one person be both a member and staff? Today an email with an account can't be invited, so they need two emails (D-058). Relates to AU6. | D-058 |
+| AU12 | What happens when a staff member loses their authenticator and their recovery codes? Today nobody can reset it (ASVS 6.4.4 asks for re-proofing). Should an admin be able to reset it, and may members turn MFA off again? | D-059 |
 
 ## Tier 4 — How we work (agentic process)
 

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AccountRouteImport } from './routes/account'
+import { Route as AuthenticatorRouteImport } from './routes/authenticator'
 import { Route as ClassesRouteImport } from './routes/classes'
 import { Route as ConfirmEmailRouteImport } from './routes/confirm-email'
 import { Route as LoginRouteImport } from './routes/login'
@@ -34,6 +35,11 @@ const AcceptInviteRoute = AcceptInviteRouteImport.update({
 const AccountRoute = AccountRouteImport.update({
   id: '/account',
   path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatorRoute = AuthenticatorRouteImport.update({
+  id: '/authenticator',
+  path: '/authenticator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClassesRoute = ClassesRouteImport.update({
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
   '/account': typeof AccountRoute
+  '/authenticator': typeof AuthenticatorRoute
   '/classes': typeof ClassesRoute
   '/confirm-email': typeof ConfirmEmailRoute
   '/login': typeof LoginRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
   '/account': typeof AccountRoute
+  '/authenticator': typeof AuthenticatorRoute
   '/classes': typeof ClassesRoute
   '/confirm-email': typeof ConfirmEmailRoute
   '/login': typeof LoginRoute
@@ -108,6 +116,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
   '/account': typeof AccountRoute
+  '/authenticator': typeof AuthenticatorRoute
   '/classes': typeof ClassesRoute
   '/confirm-email': typeof ConfirmEmailRoute
   '/login': typeof LoginRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accept-invite'
     | '/account'
+    | '/authenticator'
     | '/classes'
     | '/confirm-email'
     | '/login'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accept-invite'
     | '/account'
+    | '/authenticator'
     | '/classes'
     | '/confirm-email'
     | '/login'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accept-invite'
     | '/account'
+    | '/authenticator'
     | '/classes'
     | '/confirm-email'
     | '/login'
@@ -163,6 +175,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcceptInviteRoute: typeof AcceptInviteRoute
   AccountRoute: typeof AccountRoute
+  AuthenticatorRoute: typeof AuthenticatorRoute
   ClassesRoute: typeof ClassesRoute
   ConfirmEmailRoute: typeof ConfirmEmailRoute
   LoginRoute: typeof LoginRoute
@@ -194,6 +207,13 @@ declare module '@tanstack/react-router' {
       path: '/account'
       fullPath: '/account'
       preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/authenticator': {
+      id: '/authenticator'
+      path: '/authenticator'
+      fullPath: '/authenticator'
+      preLoaderRoute: typeof AuthenticatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/classes': {
@@ -259,6 +279,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcceptInviteRoute: AcceptInviteRoute,
   AccountRoute: AccountRoute,
+  AuthenticatorRoute: AuthenticatorRoute,
   ClassesRoute: ClassesRoute,
   ConfirmEmailRoute: ConfirmEmailRoute,
   LoginRoute: LoginRoute,

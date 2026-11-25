@@ -44,6 +44,10 @@ export const Route = createFileRoute('/account')({
     if (!data) {
       throw new Error('Could not load the account.');
     }
+    // Staff must set up the authenticator app before anything else (D-013, D-059).
+    if (data.mustSetUpAuthenticator) {
+      throw redirect({ to: '/authenticator' });
+    }
     // A failed call for one section must not take the rest of the account page with it.
     const [options, card, membership, bookings, payments, simulation] =
       await Promise.all([
@@ -258,6 +262,16 @@ function AccountPage() {
                 className="sm:w-auto sm:self-start"
               />
             )
+          )}
+          {account.twoFactorEnabled ? (
+            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CheckIcon aria-hidden="true" className="size-4 text-success" />
+              {t('authenticator.on')}
+            </p>
+          ) : (
+            <TextLink to="/authenticator" className="self-start text-sm">
+              {t('authenticator.setUp')}
+            </TextLink>
           )}
           <Button
             variant="ghost"

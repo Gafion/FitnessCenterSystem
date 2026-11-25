@@ -230,5 +230,34 @@
   },
   "auth": {
     "or": "eller"
+  },
+  "loginCode": {
+    "intro": "Åbn din autentificeringsapp, og skriv den 6-cifrede kode, den viser for FitnessCenter.",
+    "recoveryIntro": "Skriv en af de gendannelseskoder, du gemte, da du satte appen op. Hver kode virker én gang.",
+    "code": "Kode fra appen",
+    "recoveryCode": "Gendannelseskode",
+    "submit": "Fortsæt",
+    "failed": "Koden virkede ikke. Prøv den nyeste kode, eller log ind igen.",
+    "useRecovery": "Brug en gendannelseskode i stedet",
+    "useApp": "Brug appens kode i stedet"
+  },
+  "authenticator": {
+    "title": "Autentificeringsapp",
+    "required": "Personalekonti skal have en autentificeringsapp, før de kan bruge personalesiderne.",
+    "stepApp": "Åbn en autentificeringsapp, fx Google Authenticator, Microsoft Authenticator eller 1Password.",
+    "stepScan": "Scan denne QR-kode med appen.",
+    "qrAlt": "QR-kode til autentificeringsappen",
+    "keyIntro": "Kan du ikke scanne den? Tilføj kontoen manuelt med denne opsætningsnøgle:",
+    "stepCode": "Skriv den 6-cifrede kode, som appen nu viser.",
+    "code": "Kode fra appen",
+    "confirm": "Slå til",
+    "wrongCode": "Koden passer ikke. Tjek, at telefonens ur går rigtigt, og skriv den kode, appen viser nu.",
+    "done": "Autentificeringsappen er slået til. Fremover skal du skrive en kode fra den, når du logger ind.",
+    "recoveryIntro": "Gem disse gendannelseskoder et sikkert sted, fx i din adgangskodeadministrator. Hver kode logger dig ind én gang, hvis du mister din telefon. De vises kun nu.",
+    "recoveryCodes": "Gendannelseskoder",
+    "continue": "Jeg har gemt dem",
+    "alreadyOn": "Autentificeringsappen er allerede slået til for din konto.",
+    "on": "Autentificeringsapp: slået til.",
+    "setUp": "Sæt en autentificeringsapp op"
   }
 }

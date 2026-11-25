@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/identity/login/two-factor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["LoginWithCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/identity/confirm-email": {
         parameters: {
             query?: never;
@@ -206,6 +222,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["AcceptStaffInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/identity/authenticator": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetAuthenticatorSetup"];
+        put?: never;
+        post: operations["EnableAuthenticator"];
         delete?: never;
         options?: never;
         head?: never;
@@ -464,6 +496,11 @@ export interface components {
             lastName: string;
             password: string;
         };
+        AuthenticatorSetup: {
+            enabled: boolean;
+            sharedKey: null | string;
+            authenticatorUri: null | string;
+        };
         ConfirmEmailRequest: {
             /** Format: uuid */
             accountId: string;
@@ -476,9 +513,14 @@ export interface components {
             firstName: string;
             lastName: string;
             hasGoogleLogin: boolean;
+            twoFactorEnabled: boolean;
+            mustSetUpAuthenticator: boolean;
         };
         /** @enum {unknown} */
         DoorOutcome: "welcome" | "unknown-card" | "payment-missing" | "membership-ended";
+        EnableAuthenticatorRequest: {
+            code: string;
+        };
         GoogleSignupRequest: {
             firstName: string;
             lastName: string;
@@ -510,6 +552,10 @@ export interface components {
         LoginRequest: {
             email: string;
             password: string;
+        };
+        LoginWithCodeRequest: {
+            code: string;
+            isRecoveryCode: boolean;
         };
         MyBooking: {
             /** Format: uuid */
@@ -572,6 +618,9 @@ export interface components {
             status?: null | number;
             detail?: null | string;
             instance?: null | string;
+        };
+        RecoveryCodes: {
+            codes: string[];
         };
         ResendEmailConfirmationRequest: {
             email: string;
@@ -688,6 +737,35 @@ export interface operations {
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
+            };
+        };
+    };
+    LoginWithCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginWithCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -974,6 +1052,64 @@ export interface operations {
                 content: {
                     "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
+            };
+        };
+    };
+    GetAuthenticatorSetup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthenticatorSetup"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    EnableAuthenticator: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnableAuthenticatorRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodes"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

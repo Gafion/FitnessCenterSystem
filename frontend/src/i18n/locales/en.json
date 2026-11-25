@@ -222,6 +222,35 @@
     },
     "footer": "PLACEHOLDER: the name and logo are placeholders until the product is named."
   },
+  "loginCode": {
+    "intro": "Open your authenticator app and type the 6-digit code it shows for FitnessCenter.",
+    "recoveryIntro": "Type one of the recovery codes you saved when you set up the app. Each code works once.",
+    "code": "Code from the app",
+    "recoveryCode": "Recovery code",
+    "submit": "Continue",
+    "failed": "That code didn't work. Try the newest code, or log in again.",
+    "useRecovery": "Use a recovery code instead",
+    "useApp": "Use the app's code instead"
+  },
+  "authenticator": {
+    "title": "Authenticator app",
+    "required": "Staff accounts need an authenticator app before they can use staff pages.",
+    "stepApp": "Open an authenticator app, such as Google Authenticator, Microsoft Authenticator or 1Password.",
+    "stepScan": "Scan this QR code with the app.",
+    "qrAlt": "QR code for the authenticator app",
+    "keyIntro": "Can't scan it? Add the account by hand with this setup key:",
+    "stepCode": "Type the 6-digit code the app now shows.",
+    "code": "Code from the app",
+    "confirm": "Turn on",
+    "wrongCode": "That code doesn't match. Check that your phone's clock is right and type the code the app shows now.",
+    "done": "The authenticator app is on. From now on you'll enter a code from it when you log in.",
+    "recoveryIntro": "Save these recovery codes somewhere safe, such as your password manager. Each one logs you in once if you lose your phone. They are shown only now.",
+    "recoveryCodes": "Recovery codes",
+    "continue": "I've saved them",
+    "alreadyOn": "The authenticator app is already on for your account.",
+    "on": "Authenticator app: on.",
+    "setUp": "Set up an authenticator app"
+  },
   "states": {
     "loading": "Loading…",
     "errorTitle": "This page could not be loaded",

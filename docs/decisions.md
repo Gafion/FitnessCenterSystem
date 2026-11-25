@@ -1979,6 +1979,65 @@ Owner decision on FIT-75. Invites keep staff accounts apart from member signup a
 - [D-013](#d-013-login-providers-and-mfa-policy) — MFA mandatory for staff
 - [D-049](#d-049-four-staff-roles-instructors-see-only-their-own-classes) — the four roles
 
+## D-059: Staff MFA uses an authenticator app (TOTP)
+- **Date:** 2026-11-24
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-24 (FIT-74)
+- **Relates to:** D-013, D-026, D-049, D-058. Open point: AU12.
+
+### Problem statement
+D-013 makes MFA mandatory for staff and optional for members, but doesn't say which second factor. D-058 leaves the "set up MFA before staff endpoints" gate to FIT-74. The MVP had no MFA method yet, so one had to be chosen.
+
+### Options considered
+1. **Authenticator app with time-based one-time codes (TOTP).** Pros: an open standard (RFC 6238), so any app works (Google Authenticator, Microsoft Authenticator, 1Password); built into ASP.NET Core Identity (D-026); no cost and no extra data processor. Cons: the person needs an app; a lost phone needs recovery codes or an admin reset (AU12).
+2. **SMS code.** Pros: no app. Cons: Microsoft's ASP.NET Core MFA docs say SMS "is no longer recommended" as a second factor; needs a paid SMS provider (a new data processor); ASVS 5.0 puts SMS/out-of-band codes under extra rules (6.6.1–6.6.3); phone numbers are extra personal data.
+3. **Email code.** Pros: no app, Mailpit already catches mail locally (D-038). Cons: the email inbox is usually what a password reset also uses, so it adds little as a second factor (**UNVERIFIED** as a formal finding; judgement).
+
+### Decision
+**Option 1, authenticator app (TOTP)**, through ASP.NET Core Identity's built-in authenticator token provider.
+
+- **Only standard pieces**: a QR code of the `otpauth://totp/FitnessCenter:<email>?secret=…&issuer=FitnessCenter&digits=6` key URI, and the same Base32 setup key in groups of four for typing by hand. Nothing app-specific, so 1Password works as well as Google Authenticator (owner's requirement).
+- The QR code is drawn **in the browser** (npm `qrcode` 1.5.4), so the key never goes to a QR service.
+- **Setup:** scan or type the key, confirm one code, then see **10 recovery codes once**. Each recovery code logs in once.
+- **Login:** password first; if the account has the authenticator on, the API answers 403 `two-factor-required` and the code goes to `POST /api/identity/login/two-factor`. Google logins go to the same code step. Wrong codes count towards lockout, as wrong passwords do.
+- **Staff gate:** every staff policy (D-049) also requires the authenticator to be on, read from the database on each request. A new staff member (D-058) can log in with the password alone, but only to set up the app; staff endpoints answer 403 until then. The SPA sends them to the setup page.
+- **Members:** may turn it on from the account page; then they need a code at each login too. It stays optional (D-013). Turning it off again and admin resets are not built yet (AU12).
+
+```mermaid
+sequenceDiagram
+  actor S as Staff member
+  participant SPA
+  participant API as API (Identity)
+  S->>SPA: email + password
+  SPA->>API: POST /api/identity/login
+  alt authenticator on
+    API-->>SPA: 403 two-factor-required
+    S->>SPA: 6-digit code (or recovery code)
+    SPA->>API: POST /api/identity/login/two-factor
+    API-->>SPA: 204, logged in
+  else not set up yet (new staff)
+    API-->>SPA: 204, logged in
+    SPA->>API: GET /api/identity/me → mustSetUpAuthenticator
+    SPA->>S: setup page: QR code + setup key
+    S->>SPA: code from the app
+    SPA->>API: POST /api/identity/authenticator
+    API-->>SPA: 200, recovery codes (shown once)
+  end
+  Note over API: Staff endpoints refuse (403) until the authenticator is on
+```
+
+### Reasoning
+Owner decision on FIT-74. TOTP is the standard every authenticator app implements (RFC 6238), and ASP.NET Core Identity already has it, so no new service, cost or data processor is added. This also settles D-026's UNVERIFIED note on Identity's TOTP support: the integration tests (`AuthenticatorTests`) generate codes with a separate RFC 6238 implementation from the setup key the API shows, and Identity accepts them.
+
+### Sources
+- Linear FIT-74: "Owner decision (2026-11-24): authenticator app (TOTP)"
+- https://datatracker.ietf.org/doc/html/rfc6238 — TOTP: Time-Based One-Time Password Algorithm
+- https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity-enable-qrcodes — Identity supports authenticator apps (TOTP); the QR code is built from the authenticator URI, and the templates leave QR generation to the app (hence the `qrcode` package)
+- https://learn.microsoft.com/en-us/aspnet/core/security/authentication/mfa — TOTP MFA "is supported by default when using ASP.NET Core Identity"; SMS "is no longer recommended"
+- https://github.com/google/google-authenticator/wiki/Key-Uri-Format — the `otpauth://TYPE/LABEL?PARAMETERS` format with `secret`, `issuer` and `digits` (an archived wiki page, not a formal spec, but the format apps read)
+- [research/authentication.md](research/authentication.md) — ASVS L2 table (6.3.3 MFA, 6.4.4 MFA-loss re-proofing, 6.5.x OTP/TOTP, 6.6.x SMS/OOB) and open question 8
+- [D-013](#d-013-login-providers-and-mfa-policy), [D-026](#d-026-own-login-with-aspnet-core-identity), [D-058](#d-058-staff-accounts-are-created-by-an-admin-invite-by-email)
+
 ## D-065: Danish by default, English available
 - **Date:** 2026-11-24
 - **Status:** Accepted
