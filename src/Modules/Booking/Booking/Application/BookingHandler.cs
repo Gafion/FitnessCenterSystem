@@ -12,6 +12,7 @@ namespace FitnessCenter.Modules.Booking.Application;
 /// they can't book it (D-055 option A).
 /// </param>
 /// <param name="MyWaitlistPlace">The account's place in the class's waitlist (D-051), or null.</param>
+/// <param name="MyOfferExpiresAt">When the spot held for the account runs out (D-067), or null without an open offer.</param>
 internal sealed record ScheduledClass(
     ClassSessionId Id,
     string ClassName,
@@ -23,17 +24,22 @@ internal sealed record ScheduledClass(
     bool BookedByMe,
     Instant CancelUntil,
     bool AfterMyMembershipEnds,
-    int? MyWaitlistPlace);
+    int? MyWaitlistPlace,
+    Instant? MyOfferExpiresAt);
 
 /// <summary>A class the account has booked.</summary>
 internal sealed record BookedClass(
     ClassSessionId Id, string ClassName, string InstructorName, Instant StartsAt, Instant EndsAt, Instant CancelUntil);
 
+/// <summary>A spot held for the account from the waitlist, as the account page shows it (D-067).</summary>
+internal sealed record OpenOffer(
+    ClassSessionId Id, string ClassName, string InstructorName, Instant StartsAt, Instant EndsAt, Instant ExpiresAt);
+
 /// <summary>
 /// Booking and cancelling class spots (D-022, D-039), and the waitlist of full classes (D-051). A member who has cancelled can't book
 /// classes after their last day of access (D-055); Members answers that through its Contracts (rule 1).
 /// </summary>
-internal sealed class BookingHandler(BookingDbContext db, IMemberDirectory members, IClock clock)
+internal sealed class BookingHandler(BookingDbContext db, IMemberDirectory members, IClock clock, OfferEmails offerEmails)
 {
     /// <summary>The classes that start within the booking window, soonest first.</summary>
     public async Task<IReadOnlyList<ScheduledClass>> GetScheduleAsync(Guid? accountId, CancellationToken cancellationToken)
@@ -62,7 +68,33 @@ internal sealed class BookingHandler(BookingDbContext db, IMemberDirectory membe
                 accountId is { } id && s.IsBookedBy(id),
                 s.CancelUntil,
                 s.StartsAfter(lastDayOfAccess),
-                accountId is { } waiting ? s.WaitlistPlaceOf(waiting) : null))
+                accountId is { } waiting ? s.WaitlistPlaceOf(waiting) : null,
+                accountId is { } offered ? s.OpenOfferOf(offered, now)?.OfferExpiresAt : null))
+            .ToList();
+    }
+
+    /// <summary>The spots held for the account that it can still accept, soonest class first (D-067).</summary>
+    public async Task<IReadOnlyList<OpenOffer>> GetOpenOffersAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        var now = clock.GetCurrentInstant();
+        var sessions = await db.ClassSessions
+            .AsNoTracking()
+            .Where(s => s.StartsAt > now
+                && s.Waitlist.Any(e => e.AccountId == accountId && e.Status == WaitlistEntryStatus.Offered && e.OfferExpiresAt > now))
+            .OrderBy(s => s.StartsAt)
+            .ToListAsync(cancellationToken);
+        var names = ClassType.All.ToDictionary(t => t.Id, t => t.Name);
+
+        return sessions
+            .Select(s => (Session: s, Offer: s.OpenOfferOf(accountId, now)))
+            .Where(pair => pair.Offer is not null)
+            .Select(pair => new OpenOffer(
+                pair.Session.Id,
+                names[pair.Session.ClassTypeId],
+                pair.Session.InstructorName,
+                pair.Session.StartsAt,
+                pair.Session.EndsAt,
+                pair.Offer!.OfferExpiresAt!.Value))
             .ToList();
     }
 
@@ -119,32 +151,127 @@ internal sealed class BookingHandler(BookingDbContext db, IMemberDirectory membe
             LeaveWaitlistOutcome.Left,
             cancellationToken);
 
-    private async Task<TOutcome?> ChangeAsync<TOutcome>(
-        ClassSessionId sessionId, Func<ClassSession, TOutcome> change, TOutcome success, CancellationToken cancellationToken)
-        where TOutcome : struct, Enum
+    /// <returns>The outcome, or null when there is no such class.</returns>
+    public async Task<AcceptOfferOutcome?> AcceptOfferAsync(
+        ClassSessionId sessionId, Guid accountId, CancellationToken cancellationToken)
     {
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        var lastDayOfAccess = await members.FindLastDayOfAccessAsync(accountId, cancellationToken);
+        return await ChangeAsync(
+            sessionId,
+            session => session.AcceptOffer(accountId, clock.GetCurrentInstant(), lastDayOfAccess),
+            AcceptOfferOutcome.Booked,
+            cancellationToken);
+    }
 
-        // Lock the class row first, so two requests for the last spot take turns: the second
-        // one sees the first one's booking and gets "full" (D-039). The same lock keeps the
-        // waitlist in order and stops a booking and a queue entry racing (D-051).
-        await db.Database.ExecuteSqlAsync(
-            $"""SELECT 1 FROM booking.class_sessions WHERE "Id" = {sessionId.Value} FOR UPDATE""",
+    /// <returns>The outcome, or null when there is no such class.</returns>
+    public Task<DeclineOfferOutcome?> DeclineOfferAsync(
+        ClassSessionId sessionId, Guid accountId, CancellationToken cancellationToken) =>
+        ChangeAsync(
+            sessionId,
+            session => session.DeclineOffer(accountId, clock.GetCurrentInstant()),
+            DeclineOfferOutcome.Declined,
             cancellationToken);
 
-        var session = await db.ClassSessions.SingleOrDefaultAsync(s => s.Id == sessionId, cancellationToken);
-        if (session is null)
+    /// <summary>
+    /// Expires the offers that ran out and offers free spots to the next in each queue, in every
+    /// class that hasn't started and has a waitlist (D-067). <see cref="WaitlistOfferJob"/> runs it.
+    /// </summary>
+    /// <returns>How many offers were made.</returns>
+    public async Task<int> UpdateOffersAsync(CancellationToken cancellationToken)
+    {
+        var now = clock.GetCurrentInstant();
+        var sessionIds = await db.ClassSessions
+            .AsNoTracking()
+            .Where(s => s.StartsAt > now
+                && s.Waitlist.Any(e => e.Status == WaitlistEntryStatus.Waiting || e.Status == WaitlistEntryStatus.Offered))
+            .OrderBy(s => s.StartsAt)
+            .Select(s => s.Id)
+            .ToListAsync(cancellationToken);
+
+        var offered = 0;
+        foreach (var sessionId in sessionIds)
         {
-            return null;
+            offered += await UpdateOffersAsync(sessionId, cancellationToken);
+            db.ChangeTracker.Clear();
         }
 
-        var outcome = change(session);
-        if (EqualityComparer<TOutcome>.Default.Equals(outcome, success))
+        return offered;
+    }
+
+    private async Task<int> UpdateOffersAsync(ClassSessionId sessionId, CancellationToken cancellationToken)
+    {
+        var offers = new List<NewOffer>();
+        await using (var transaction = await db.Database.BeginTransactionAsync(cancellationToken))
         {
+            var session = await LockAsync(sessionId, cancellationToken);
+            if (session is null)
+            {
+                return 0;
+            }
+
+            offers.AddRange(Offers(session, session.UpdateOffers(clock.GetCurrentInstant())));
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
 
+        await offerEmails.SendAsync(offers);
+        return offers.Count;
+    }
+
+    /// <summary>
+    /// Applies one change to a class under its row lock (D-039). Before the change, the class's
+    /// offers are brought up to date, so an expired offer can't be accepted and a held spot
+    /// can't be booked by someone else. After it, a spot the change freed is offered to the
+    /// next person (D-051). Members who got an offer are emailed once it is saved (D-067).
+    /// </summary>
+    private async Task<TOutcome?> ChangeAsync<TOutcome>(
+        ClassSessionId sessionId, Func<ClassSession, TOutcome> change, TOutcome success, CancellationToken cancellationToken)
+        where TOutcome : struct, Enum
+    {
+        var offers = new List<NewOffer>();
+        TOutcome outcome;
+        await using (var transaction = await db.Database.BeginTransactionAsync(cancellationToken))
+        {
+            var session = await LockAsync(sessionId, cancellationToken);
+            if (session is null)
+            {
+                return null;
+            }
+
+            offers.AddRange(Offers(session, session.UpdateOffers(clock.GetCurrentInstant())));
+            outcome = change(session);
+            if (EqualityComparer<TOutcome>.Default.Equals(outcome, success))
+            {
+                offers.AddRange(Offers(session, session.UpdateOffers(clock.GetCurrentInstant())));
+            }
+
+            // Saved even when the change is refused: the offers may have moved on.
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+
+        await offerEmails.SendAsync(offers);
         return outcome;
+    }
+
+    private static IEnumerable<NewOffer> Offers(ClassSession session, IReadOnlyList<WaitlistEntry> entries)
+    {
+        var name = ClassType.All.Single(t => t.Id == session.ClassTypeId).Name;
+        return entries
+            .Select(entry => new NewOffer(entry.AccountId, name, session.StartsAt, entry.OfferExpiresAt!.Value))
+            .ToList();
+    }
+
+    private async Task<ClassSession?> LockAsync(ClassSessionId sessionId, CancellationToken cancellationToken)
+    {
+        // Lock the class row first, so two requests for the last spot take turns: the second
+        // one sees the first one's booking and gets "full" (D-039). The same lock keeps the
+        // waitlist in order, stops a booking and a queue entry racing (D-051), and stops the
+        // offer sweep and a request offering the same spot twice (D-067).
+        await db.Database.ExecuteSqlAsync(
+            $"""SELECT 1 FROM booking.class_sessions WHERE "Id" = {sessionId.Value} FOR UPDATE""",
+            cancellationToken);
+
+        return await db.ClassSessions.SingleOrDefaultAsync(s => s.Id == sessionId, cancellationToken);
     }
 }

@@ -10,7 +10,8 @@ public interface IMemberBookings
 {
     /// <summary>
     /// Cancels the account's bookings in classes that start on a Copenhagen day after
-    /// <paramref name="lastDayOfAccess"/>, so other members can take the spots (D-055).
+    /// <paramref name="lastDayOfAccess"/>, so other members can take the spots (D-055), and takes
+    /// the account off the waitlists of those classes, including any spot held for it (FIT-80).
     /// Classes on the last day itself keep their bookings. The 12-hour cut-off (D-039) does
     /// not apply: the system cancels, not the member. Runs inside the caller's transaction
     /// when there is one (D-015), so if the caller rolls back, the bookings stay.

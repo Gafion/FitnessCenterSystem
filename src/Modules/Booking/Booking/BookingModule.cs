@@ -24,6 +24,8 @@ public static class BookingModule
                 npgsql.MigrationsHistoryTable("__EFMigrationsHistory", BookingDbContext.Schema).UseNodaTime()));
 
         services.AddScoped<BookingHandler>();
+        services.AddScoped<OfferEmails>();
+        services.AddHostedService<WaitlistOfferJob>();
         services.AddScoped<IMemberBookings, MemberBookings>();
 
         services.AddHealthChecks().AddDbContextCheck<BookingDbContext>("booking-db");

@@ -25,6 +25,12 @@ internal static class ClassEndpoints
             .Produces(StatusCodes.Status401Unauthorized);
         group.MapDelete("/classes/{classId:guid}/waitlist", LeaveWaitlistAsync).WithName("LeaveWaitlist").RequireAuthorization()
             .Produces(StatusCodes.Status401Unauthorized);
+        group.MapGet("/my-offers", GetMyOffersAsync).WithName("GetMyOffers").RequireAuthorization()
+            .Produces(StatusCodes.Status401Unauthorized);
+        group.MapPost("/classes/{classId:guid}/offer", AcceptOfferAsync).WithName("AcceptOffer").RequireAuthorization()
+            .Produces(StatusCodes.Status401Unauthorized);
+        group.MapDelete("/classes/{classId:guid}/offer", DeclineOfferAsync).WithName("DeclineOffer").RequireAuthorization()
+            .Produces(StatusCodes.Status401Unauthorized);
 
         return endpoints;
     }
@@ -38,6 +44,10 @@ internal static class ClassEndpoints
     /// The logged-in account's place in the waitlist, counting from 1 (D-051). Null when it
     /// isn't waiting or is logged out.
     /// </param>
+    /// <param name="MyOfferExpiresAt">
+    /// A spot in this full class is held for the logged-in account until this moment (D-067);
+    /// accepting books it. Null without an open offer or when logged out.
+    /// </param>
     internal sealed record ScheduleEntry(
         Guid ClassId,
         string ClassName,
@@ -49,7 +59,63 @@ internal static class ClassEndpoints
         bool BookedByMe,
         DateTimeOffset CancelUntil,
         bool AfterMyMembershipEnds,
-        int? MyWaitlistPlace);
+        int? MyWaitlistPlace,
+        DateTimeOffset? MyOfferExpiresAt);
+
+    /// <param name="ExpiresAt">The spot is held until this moment; then it goes to the next person (D-067).</param>
+    internal sealed record MyOffer(
+        Guid ClassId,
+        string ClassName,
+        string InstructorName,
+        DateTimeOffset StartsAt,
+        DateTimeOffset EndsAt,
+        DateTimeOffset ExpiresAt);
+
+    /// <summary>The spots held for the logged-in account from a waitlist, soonest class first (D-067).</summary>
+    private static async Task<Ok<MyOffer[]>> GetMyOffersAsync(
+        ClaimsPrincipal user, BookingHandler handler, CancellationToken cancellationToken)
+    {
+        var offers = await handler.GetOpenOffersAsync(AccountIdOf(user)!.Value, cancellationToken);
+        return TypedResults.Ok(offers
+            .Select(o => new MyOffer(
+                o.Id.Value,
+                o.ClassName,
+                o.InstructorName,
+                o.StartsAt.ToDateTimeOffset(),
+                o.EndsAt.ToDateTimeOffset(),
+                o.ExpiresAt.ToDateTimeOffset()))
+            .ToArray());
+    }
+
+    /// <summary>Books the spot held for the logged-in account (D-051).</summary>
+    private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> AcceptOfferAsync(
+        Guid classId, ClaimsPrincipal user, BookingHandler handler, CancellationToken cancellationToken)
+    {
+        var outcome = await handler.AcceptOfferAsync(new ClassSessionId(classId), AccountIdOf(user)!.Value, cancellationToken);
+        return outcome switch
+        {
+            null or AcceptOfferOutcome.NoOffer => TypedResults.NotFound(),
+            AcceptOfferOutcome.Booked => TypedResults.NoContent(),
+            AcceptOfferOutcome.Expired => Conflict(
+                "offer-expired", "The offer has run out, so the spot went to the next person."),
+            AcceptOfferOutcome.AfterMembershipEnds => Conflict(
+                "after-membership-ends", "Your membership ends before this class, so you can't book it."),
+            _ => throw new InvalidOperationException($"Unknown outcome {outcome}."),
+        };
+    }
+
+    /// <summary>Gives the held spot up, so the next person on the waitlist gets it (D-051).</summary>
+    private static async Task<Results<NoContent, NotFound>> DeclineOfferAsync(
+        Guid classId, ClaimsPrincipal user, BookingHandler handler, CancellationToken cancellationToken)
+    {
+        var outcome = await handler.DeclineOfferAsync(new ClassSessionId(classId), AccountIdOf(user)!.Value, cancellationToken);
+        return outcome switch
+        {
+            null or DeclineOfferOutcome.NoOffer => TypedResults.NotFound(),
+            DeclineOfferOutcome.Declined => TypedResults.NoContent(),
+            _ => throw new InvalidOperationException($"Unknown outcome {outcome}."),
+        };
+    }
 
     /// <param name="CancelUntil">After this moment the booking can't be cancelled (D-039).</param>
     internal sealed record MyBooking(
@@ -93,7 +159,8 @@ internal static class ClassEndpoints
                 c.BookedByMe,
                 c.CancelUntil.ToDateTimeOffset(),
                 c.AfterMyMembershipEnds,
-                c.MyWaitlistPlace))
+                c.MyWaitlistPlace,
+                c.MyOfferExpiresAt?.ToDateTimeOffset()))
             .ToArray());
     }
 
