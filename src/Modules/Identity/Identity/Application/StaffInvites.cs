@@ -31,7 +31,7 @@ internal sealed class StaffInvites(
 
     public async Task<InviteOutcome> InviteAsync(
         Guid inviterId, IReadOnlyCollection<string> inviterRoles, string email, string role,
-        Language requestLanguage, HttpRequest request, CancellationToken cancellationToken)
+        string? languageCode, Language requestLanguage, HttpRequest request, CancellationToken cancellationToken)
     {
         email = email.Trim();
         var errors = new Dictionary<string, string[]>();
@@ -43,6 +43,19 @@ internal sealed class StaffInvites(
         if (!StaffRoles.All.Contains(role))
         {
             errors["role"] = [$"Role must be one of: {string.Join(", ", StaffRoles.All)}."];
+        }
+
+        // The inviter may pick the email's language (D-065); left out, it is the app's language.
+        var chosenLanguage = languageCode switch
+        {
+            null => requestLanguage,
+            "da" => Language.Danish,
+            "en" => Language.English,
+            _ => (Language?)null,
+        };
+        if (chosenLanguage is null)
+        {
+            errors["language"] = ["Language must be \"da\" or \"en\"."];
         }
 
         if (errors.Count > 0)
@@ -88,8 +101,8 @@ internal sealed class StaffInvites(
 
         var link = $"{request.Scheme}://{request.Host}{PagePath}" + QueryString.Create(query);
         // An existing account gets its own language (D-065). A new email has no account yet,
-        // so the invite is in the language the inviter uses the app in.
-        var (subject, body) = InviteEmail(existing?.PreferredLanguage ?? requestLanguage, role, existing is not null, link);
+        // so the invite is in the language the inviter picked, or else uses the app in.
+        var (subject, body) = InviteEmail(existing?.PreferredLanguage ?? chosenLanguage!.Value, role, existing is not null, link);
         await smtp.SendAsync(email, subject, body, cancellationToken);
 
         return InviteOutcome.Sent(invite);

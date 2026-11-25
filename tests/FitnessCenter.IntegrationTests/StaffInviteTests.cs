@@ -356,6 +356,88 @@ public sealed partial class StaffInviteTests
         Assert.AreEqual(0, await TestMailbox.CountToAsync(email, InviteSubject));
     }
 
+    [TestMethod]
+    public async Task Admin_may_give_every_role()
+    {
+        using var admin = await LoggedInStaffAsync(Factory, StaffRoles.Admin);
+
+        var roles = await InvitableRolesAsync(admin);
+
+        CollectionAssert.AreEqual(StaffRoles.All.ToArray(), roles);
+    }
+
+    [TestMethod]
+    public async Task Manager_may_give_front_desk_and_instructor_only()
+    {
+        using var manager = await LoggedInStaffAsync(Factory, StaffRoles.Manager);
+
+        var roles = await InvitableRolesAsync(manager);
+
+        CollectionAssert.AreEqual(new[] { StaffRoles.FrontDesk, StaffRoles.Instructor }, roles);
+    }
+
+    [TestMethod]
+    [DynamicData(nameof(NonInvitingRoles))]
+    public async Task Front_desk_and_instructor_get_no_invitable_roles(string role)
+    {
+        using var staff = await LoggedInStaffAsync(Factory, role);
+
+        using var response = await staff.GetAsync(new Uri("/api/identity/staff-invites/roles", UriKind.Relative));
+
+        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Invite_to_a_new_email_is_in_the_language_the_inviter_picked()
+    {
+        using var admin = await LoggedInStaffAsync(Factory, StaffRoles.Admin);
+        var email = SyntheticStaffEmail();
+
+        // The admin's app is in English (ApiFactory), but the invite is to be Danish.
+        using var invite = await admin.PostAsJsonAsync(
+            "/api/identity/staff-invites", new { email, role = StaffRoles.Instructor, language = "da" });
+
+        Assert.AreEqual(HttpStatusCode.Created, invite.StatusCode, await invite.Content.ReadAsStringAsync());
+        StringAssert.Contains(await TestMailbox.TextToAsync(email, StaffInvites.InviteSubjectDanish), "Hej,");
+        Assert.AreEqual(0, await TestMailbox.CountToAsync(email, InviteSubject));
+    }
+
+    [TestMethod]
+    public async Task Invite_with_an_unknown_language_is_refused()
+    {
+        using var admin = await LoggedInStaffAsync(Factory, StaffRoles.Admin);
+        var email = SyntheticStaffEmail();
+
+        using var invite = await admin.PostAsJsonAsync(
+            "/api/identity/staff-invites", new { email, role = StaffRoles.Instructor, language = "de" });
+
+        Assert.AreEqual(HttpStatusCode.BadRequest, invite.StatusCode);
+        Assert.Contains("language", await invite.Content.ReadAsStringAsync());
+        Assert.AreEqual(0, await TestMailbox.CountTo(email));
+    }
+
+    [TestMethod]
+    public async Task Current_account_lists_its_staff_roles()
+    {
+        using var manager = await LoggedInStaffAsync(Factory, StaffRoles.Manager);
+
+        var me = await manager.GetFromJsonAsync<StaffRolesOfMe>(new Uri("/api/identity/me", UriKind.Relative));
+
+        CollectionAssert.AreEqual(new[] { StaffRoles.Manager }, me!.StaffRoles.ToArray());
+    }
+
+    private static async Task<string[]> InvitableRolesAsync(HttpClient client)
+    {
+        using var response = await client.GetAsync(new Uri("/api/identity/staff-invites/roles", UriKind.Relative));
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode, await response.Content.ReadAsStringAsync());
+        var body = await response.Content.ReadFromJsonAsync<InvitableRolesBody>();
+        return body!.Roles.ToArray();
+    }
+
+    private sealed record InvitableRolesBody(IReadOnlyList<string> Roles);
+
+    private sealed record StaffRolesOfMe(IReadOnlyList<string> StaffRoles);
+
     public static IEnumerable<object[]> AllRoles => StaffRoles.All.Select(role => new object[] { role });
 
     // Synthetic data only (CLAUDE.md): a unique address on the reserved example.com domain.
