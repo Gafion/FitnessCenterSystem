@@ -82,7 +82,8 @@
       "failed": "The language could not be saved. Please try again."
     },
     "inviteStaff": "Invite staff",
-    "myClasses": "Your classes"
+    "myClasses": "Your classes",
+    "staffClasses": "Plan classes"
   },
   "errors": {
     "unexpected": "Something went wrong. Please try again.",
@@ -334,5 +335,76 @@
     "noBookings": "No one has booked yet.",
     "notAllowed": "Only instructors have classes here.",
     "backToAccount": "Back to your account"
+  },
+  "staffClasses": {
+    "title": "Classes",
+    "intro_one": "Plan the classes for the next {{count}} week: schedule, edit, move and cancel them. Times are Danish time.",
+    "intro_other": "Plan the classes for the next {{count}} weeks: schedule, edit, move and cancel them. Times are Danish time.",
+    "classesTitle": "Upcoming classes",
+    "scheduleClass": "Schedule a class",
+    "empty": "No classes are scheduled in this period.",
+    "cancelled": "Cancelled",
+    "booked_one": "{{booked}} of {{count}} spot booked",
+    "booked_other": "{{booked}} of {{count}} spots booked",
+    "waitlist_one": "{{count}} on the waitlist",
+    "waitlist_other": "{{count}} on the waitlist",
+    "started": "This class has started and can't be changed.",
+    "edit": "Edit",
+    "cancelClass": "Cancel class",
+    "notAllowed": "Only managers and admins plan the classes.",
+    "cancelConfirm": {
+      "question": "Cancel {{className}}, {{when}}?",
+      "emails_one": "The {{count}} booked member gets an email that the class is cancelled, and the booking is cancelled.",
+      "emails_other": "The {{count}} booked members get an email that the class is cancelled, and their bookings are cancelled.",
+      "noBookings": "No one has booked, so no one gets an email.",
+      "waitlist": "The waitlist is cleared.",
+      "confirm": "Yes, cancel the class",
+      "back": "Keep the class"
+    },
+    "form": {
+      "newTitle": "Schedule a class",
+      "editTitle": "Edit {{className}}",
+      "classType": "Class type",
+      "instructor": "Instructor",
+      "choose": "Choose…",
+      "start": "Starts",
+      "date": "Date",
+      "time": "Time",
+      "danishTime": "Danish time.",
+      "length": "Length in minutes",
+      "capacity": "Spots",
+      "capacityHint_one": "At least {{count}}: {{count}} member has booked.",
+      "capacityHint_other": "At least {{count}}: {{count}} members have booked.",
+      "moveNotice_one": "The {{count}} booked member will be emailed the new time and may then cancel until the class starts.",
+      "moveNotice_other": "The {{count}} booked members will be emailed the new time and may then cancel until the class starts.",
+      "classTypeRequired": "Choose a class type.",
+      "instructorRequired": "Choose an instructor.",
+      "startRequired": "Enter a date and a time.",
+      "lengthRange": "Enter a whole number of minutes from 1 to {{max}}.",
+      "capacityRange": "Enter a whole number of spots from 1 to {{max}}.",
+      "capacityBelowBookings_one": "The class has {{count}} booking, so it needs at least {{count}} spot.",
+      "capacityBelowBookings_other": "The class has {{count}} bookings, so it needs at least {{count}} spots.",
+      "schedule": "Schedule class",
+      "save": "Save changes",
+      "close": "Cancel"
+    },
+    "types": {
+      "title": "Class types",
+      "empty": "There are no class types yet. Add one to schedule classes.",
+      "newName": "New class type",
+      "add": "Add",
+      "rename": "Rename",
+      "renameButton": "Rename {{name}}",
+      "renameLabel": "New name for {{name}}",
+      "save": "Save",
+      "nameRequired": "Enter a name."
+    },
+    "errors": {
+      "class-started": "The class has started, so it can't be changed.",
+      "class-cancelled": "The class is already cancelled.",
+      "capacity-below-bookings": "More members have booked than that. Choose at least as many spots as there are bookings.",
+      "class-type-exists": "A class type with that name already exists.",
+      "unexpected": "Something went wrong. Please try again."
+    }
   }
 }

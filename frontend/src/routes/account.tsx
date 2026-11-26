@@ -282,10 +282,10 @@ function AccountPage() {
         </AccountSection>
 
         {/* Instructors see their own classes (D-049); admins and managers invite staff
-            (D-058, D-063). The API checks the role too. */}
+            (D-058, D-063) and plan the classes (D-062, D-068). The API checks the role too. */}
         {(isInstructor || canInvite) && (
           <AccountSection id="staff" title={t('account.sections.staff')}>
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               {isInstructor && (
                 <Button
                   variant="outline"
@@ -302,6 +302,15 @@ function AccountPage() {
                   render={<Link to="/staff/invite" />}
                 >
                   {t('account.inviteStaff')}
+                </Button>
+              )}
+              {canInvite && (
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  render={<Link to="/staff/classes" />}
+                >
+                  {t('account.staffClasses')}
                 </Button>
               )}
             </div>
