@@ -71,8 +71,8 @@ function TaughtClass({ entry }: { entry: Schemas['MyClass'] }) {
       <p className="flex items-center gap-2 text-sm text-muted-foreground">
         <UsersIcon aria-hidden="true" className="size-4 text-subtle" />
         {t('myClasses.booked', {
-          count: entry.bookedNames.length,
-          capacity: entry.capacity,
+          booked: entry.bookedNames.length,
+          count: entry.capacity,
         })}
       </p>
       {entry.bookedNames.length === 0 ? (
