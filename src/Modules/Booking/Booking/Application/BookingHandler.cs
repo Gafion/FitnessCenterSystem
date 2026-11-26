@@ -36,6 +36,13 @@ internal sealed record BookedClass(
 internal sealed record OpenOffer(
     ClassSessionId Id, string ClassName, string InstructorName, Instant StartsAt, Instant EndsAt, Instant ExpiresAt);
 
+/// <summary>An upcoming class an instructor teaches, with who has booked it (D-049, D-060).</summary>
+/// <param name="BookedNames">
+/// The booked members' display names only, in booking order: the minimum the instructor needs (GDPR).
+/// </param>
+internal sealed record TaughtClass(
+    ClassSessionId Id, string ClassName, Instant StartsAt, Instant EndsAt, int Capacity, IReadOnlyList<string> BookedNames);
+
 /// <summary>
 /// Booking and cancelling class spots (D-022, D-039), and the waitlist of full classes (D-051). A member who has cancelled can't book
 /// classes after their last day of access (D-055); Members answers that through its Contracts (rule 1).
@@ -119,6 +126,37 @@ internal sealed class BookingHandler(
         return sessions
             .Select(s => new BookedClass(
                 s.Id, names[s.ClassTypeId], instructors(s), s.StartsAt, s.EndsAt, s.CancelUntilFor(accountId)))
+            .ToList();
+    }
+
+    /// <summary>
+    /// The classes the instructor teaches that haven't started yet, soonest first, with the
+    /// booked members' names (D-049: an instructor sees only their own classes).
+    /// </summary>
+    public async Task<IReadOnlyList<TaughtClass>> GetTaughtClassesAsync(Guid instructorAccountId, CancellationToken cancellationToken)
+    {
+        var now = clock.GetCurrentInstant();
+        var sessions = await db.ClassSessions
+            .AsNoTracking()
+            .Where(s => s.InstructorAccountId == instructorAccountId && s.StartsAt > now && s.Status == ClassSessionStatus.Scheduled)
+            .OrderBy(s => s.StartsAt)
+            .ToListAsync(cancellationToken);
+        var names = await ClassNamesAsync(cancellationToken);
+        var booked = sessions
+            .ToDictionary(s => s.Id, s => s.Bookings.Where(b => b.IsActive).OrderBy(b => b.BookedAt).Select(b => b.AccountId).ToList());
+        var ids = booked.Values.SelectMany(accountIds => accountIds).Distinct().Select(id => new AccountId(id)).ToList();
+        var memberNames = ids.Count == 0
+            ? new Dictionary<AccountId, string>()
+            : await accounts.FindDisplayNamesAsync(ids, cancellationToken);
+
+        return sessions
+            .Select(s => new TaughtClass(
+                s.Id,
+                names[s.ClassTypeId],
+                s.StartsAt,
+                s.EndsAt,
+                s.Capacity,
+                booked[s.Id].Select(id => memberNames.GetValueOrDefault(new AccountId(id), string.Empty)).ToList()))
             .ToList();
     }
 

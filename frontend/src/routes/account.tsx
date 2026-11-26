@@ -135,6 +135,10 @@ function AccountPage() {
     simulation,
   } = Route.useLoaderData();
   const { error } = Route.useSearch();
+  const isInstructor = account.staffRoles.includes('Instructor');
+  const canInvite = account.staffRoles.some(
+    (role) => role === 'Admin' || role === 'Manager',
+  );
   const navigate = useNavigate();
   const router = useRouter();
 
@@ -277,18 +281,30 @@ function AccountPage() {
           )}
         </AccountSection>
 
-        {/* Admins and managers invite staff (D-058, D-063); the API checks the role too. */}
-        {account.staffRoles.some(
-          (role) => role === 'Admin' || role === 'Manager',
-        ) && (
+        {/* Instructors see their own classes (D-049); admins and managers invite staff
+            (D-058, D-063). The API checks the role too. */}
+        {(isInstructor || canInvite) && (
           <AccountSection id="staff" title={t('account.sections.staff')}>
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto sm:self-start"
-              render={<Link to="/staff/invite" />}
-            >
-              {t('account.inviteStaff')}
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {isInstructor && (
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  render={<Link to="/staff/my-classes" />}
+                >
+                  {t('account.myClasses')}
+                </Button>
+              )}
+              {canInvite && (
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  render={<Link to="/staff/invite" />}
+                >
+                  {t('account.inviteStaff')}
+                </Button>
+              )}
+            </div>
           </AccountSection>
         )}
 

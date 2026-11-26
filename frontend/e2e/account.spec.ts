@@ -31,10 +31,16 @@ const booking = {
 
 async function mockApi(
   page: Page,
-  options: { bookings: (typeof booking)[]; membershipStatus?: number },
+  options: {
+    bookings: (typeof booking)[];
+    membershipStatus?: number;
+    staffRoles?: string[];
+  },
 ) {
   await page.route('**/api/identity/me', (route) =>
-    route.fulfill({ json: account }),
+    route.fulfill({
+      json: { ...account, staffRoles: options.staffRoles ?? [] },
+    }),
   );
   await page.route('**/api/identity/login-options', (route) =>
     route.fulfill({ json: { google: false } }),
@@ -105,4 +111,33 @@ test('the page stays up when the membership fails to load', async ({
   await expect(page.getByRole('region', { name: 'Access card' })).toContainText(
     'A1B2C3D4',
   );
+});
+
+test('an instructor finds their classes from the account page (D-049)', async ({
+  page,
+}) => {
+  await mockApi(page, { bookings: [], staffRoles: ['Instructor'] });
+  await page.route('**/api/booking/my-classes', (route) =>
+    route.fulfill({ json: [] }),
+  );
+
+  await page.goto('/account');
+  // An instructor doesn't invite staff (D-063), so only their classes are linked.
+  await expect(page.getByRole('link', { name: 'Invite staff' })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Your classes' }).click();
+
+  await expect(page).toHaveURL(/\/staff\/my-classes$/);
+  await expect(
+    page.getByRole('heading', { name: 'Your classes', level: 1 }),
+  ).toBeVisible();
+});
+
+test('a member sees no staff section', async ({ page }) => {
+  await mockApi(page, { bookings: [] });
+
+  await page.goto('/account');
+  await expect(page.getByRole('heading', { name: 'Profile' })).toBeVisible();
+
+  await expect(page.getByRole('link', { name: 'Your classes' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Staff' })).toHaveCount(0);
 });
