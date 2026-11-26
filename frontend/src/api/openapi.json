@@ -533,6 +533,94 @@
         }
       }
     },
+    "/api/identity/authenticator/turn-off": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "TurnOffAuthenticator",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnOffAuthenticatorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/identity/staff-accounts": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "ListStaffAccounts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaffAccount"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/identity/staff-accounts/{accountId}/authenticator": {
+      "delete": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "ResetStaffAuthenticator",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/api/members/signup/terms": {
       "get": {
         "tags": [
@@ -2402,6 +2490,37 @@
           }
         }
       },
+      "StaffAccount": {
+        "required": [
+          "id",
+          "displayName",
+          "email",
+          "staffRoles",
+          "authenticatorEnabled"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "staffRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "authenticatorEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
       "StaffClass": {
         "required": [
           "classId",
@@ -2568,6 +2687,21 @@
           "at": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "TurnOffAuthenticatorRequest": {
+        "required": [
+          "code",
+          "isRecoveryCode"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "isRecoveryCode": {
+            "type": "boolean"
           }
         }
       }
