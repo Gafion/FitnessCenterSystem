@@ -63,6 +63,7 @@ Answers will be recorded here and, where they settle a medium/large decision, in
 | U5 (former "Owner decides" row 6) | Danish by default, English available; Danish formats (24-hour time, Monday-first weeks, `dd.mm.yyyy`, `kr.`). Backend texts and emails stay English for now. | D-065 |
 | AU10 | Managers may invite, but only to Front desk and Instructor; admins give any role. | D-063 |
 | AU11 | Yes: an invite to an email with an account adds the role to it after the person logs in and accepts; the membership stays. Staff MFA applies. | D-064 |
+| AU12 | An admin resets a staff member's authenticator (MFA off, key and recovery codes removed; set up again at the next login), never their own. Members turn MFA off themselves with an app or recovery code. Both email the account. | D-071 |
 | DB8 | Spike done as a verification (FIT-36). Schema per module, history table per schema, schema-qualified SQL and a non-escalating shared transaction across module DbContexts are proven by `tests/FitnessCenter.IntegrationTests/ModuleSchemaTests.cs`. Default privileges and REFERENCES are confirmed from the PostgreSQL docs but unused while there is one database role (D-015). Details: database-schemas.md, Verification (FIT-36). | D-014, D-015 |
 
 The [stakeholder interview guide](stakeholder-interview-guide.md) is on hold (D-047).
@@ -221,7 +222,6 @@ flowchart LR
 | AU6 | One identity store with roles for staff and members, or separate stores? | authentication |
 | AU7 | ASVS target: L1 for members, L2 for staff/admin? (Relates to T4.) | authentication |
 | AU8 | MFA mandatory for staff (passkey or TOTP)? Optional for members? | authentication |
-| AU12 | What happens when a staff member loses their authenticator and their recovery codes? Today nobody can reset it (ASVS 6.4.4 asks for re-proofing). Should an admin be able to reset it, and may members turn MFA off again? | D-059 |
 
 ## Tier 4 — How we work (agentic process)
 
