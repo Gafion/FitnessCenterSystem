@@ -65,7 +65,10 @@ internal static class ClassEndpoints
             .ToArray());
     }
 
-    /// <param name="CancelUntil">After this moment the booking can't be cancelled (D-039).</param>
+    /// <param name="CancelUntil">
+    /// After this moment the booking can't be cancelled (D-039). When the class moved after the
+    /// logged-in account booked it, this is the start itself (D-068).
+    /// </param>
     /// <param name="AfterMyMembershipEnds">
     /// The logged-in member has cancelled and the class starts after their last day of access,
     /// so it can't be booked (D-055). Always false when logged out.
@@ -147,7 +150,10 @@ internal static class ClassEndpoints
         };
     }
 
-    /// <param name="CancelUntil">After this moment the booking can't be cancelled (D-039).</param>
+    /// <param name="CancelUntil">
+    /// After this moment the booking can't be cancelled (D-039). When the class moved after the
+    /// logged-in account booked it, this is the start itself (D-068).
+    /// </param>
     internal sealed record MyBooking(
         Guid ClassId,
         string ClassName,
@@ -208,6 +214,7 @@ internal static class ClassEndpoints
             BookOutcome.NotOpenYet => Conflict("booking-not-open", "Booking opens 14 days before the class."),
             BookOutcome.AfterMembershipEnds => Conflict(
                 "after-membership-ends", "Your membership ends before this class, so you can't book it."),
+            BookOutcome.ClassCancelled => Conflict("class-cancelled", "This class is cancelled."),
             _ => throw new InvalidOperationException($"Unknown outcome {outcome}."),
         };
     }
@@ -241,6 +248,7 @@ internal static class ClassEndpoints
             JoinWaitlistOutcome.NotOpenYet => Conflict("booking-not-open", "Booking opens 14 days before the class."),
             JoinWaitlistOutcome.AfterMembershipEnds => Conflict(
                 "after-membership-ends", "Your membership ends before this class, so you can't book it."),
+            JoinWaitlistOutcome.ClassCancelled => Conflict("class-cancelled", "This class is cancelled."),
             _ => throw new InvalidOperationException($"Unknown outcome {outcome}."),
         };
     }

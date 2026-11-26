@@ -16,6 +16,9 @@ internal enum BookOutcome
     /// effect before it (D-048, D-055 option A).
     /// </summary>
     AfterMembershipEnds,
+
+    /// <summary>The center cancelled the class (D-068).</summary>
+    ClassCancelled,
 }
 
 internal enum JoinWaitlistOutcome
@@ -31,6 +34,9 @@ internal enum JoinWaitlistOutcome
 
     /// <inheritdoc cref="BookOutcome.AfterMembershipEnds"/>
     AfterMembershipEnds,
+
+    /// <inheritdoc cref="BookOutcome.ClassCancelled"/>
+    ClassCancelled,
 }
 
 internal enum LeaveWaitlistOutcome
@@ -66,6 +72,49 @@ internal enum CancelOutcome
     CancellationClosed,
 }
 
+internal enum ClassSessionStatus
+{
+    Scheduled,
+
+    /// <summary>The center cancelled the class: its bookings are cancelled and its waitlist cleared (D-068).</summary>
+    Cancelled,
+}
+
+/// <summary>What happened when staff changed a class (D-068).</summary>
+internal enum ChangeClassOutcome
+{
+    Changed,
+
+    /// <summary>A class that has started can't be changed.</summary>
+    Started,
+
+    /// <summary>A cancelled class can't be changed.</summary>
+    ClassCancelled,
+
+    /// <summary>The new start time has already passed.</summary>
+    StartsInPast,
+
+    /// <summary>The new capacity is below the booked spots plus the spots held by open offers.</summary>
+    CapacityBelowBookings,
+}
+
+/// <param name="MovedFrom">The old start when the class moved to a new time, else null.</param>
+/// <param name="BookedAccounts">The accounts with an active booking, who are told about a move.</param>
+internal sealed record ClassChange(ChangeClassOutcome Outcome, Instant? MovedFrom, IReadOnlyList<Guid> BookedAccounts)
+{
+    public static ClassChange Refused(ChangeClassOutcome outcome) => new(outcome, null, []);
+}
+
+internal enum CancelClassOutcome
+{
+    Cancelled,
+    Started,
+    AlreadyCancelled,
+}
+
+/// <param name="CancelledBookings">The accounts whose booking the cancellation cancelled, who are emailed.</param>
+internal sealed record ClassCancellation(CancelClassOutcome Outcome, IReadOnlyList<Guid> CancelledBookings);
+
 /// <summary>
 /// One scheduled class, e.g. Spinning on Tuesday at 18:00, with its bookings and its waitlist.
 /// All booking rules (D-039) and waitlist rules (D-051) live here, so they can be tested
@@ -97,19 +146,152 @@ internal sealed class ClassSession
 
     public int Capacity { get; private set; }
 
+    public ClassSessionStatus Status { get; private set; }
+
+    /// <summary>When the center cancelled the class (D-068), else null.</summary>
+    public Instant? CancelledAt { get; private set; }
+
+    public bool IsCancelled => Status == ClassSessionStatus.Cancelled;
+
+    /// <summary>The spots taken by active bookings.</summary>
+    public int BookedCount => _bookings.Count(booking => booking.IsActive);
+
+    /// <summary>The accounts waiting or holding an offer (D-051).</summary>
+    public int WaitlistCount => _waitlist.Count(entry => entry.IsQueued);
+
     public IReadOnlyList<ClassBooking> Bookings => _bookings;
 
     /// <summary>Every waitlist entry, including the ones that left the queue.</summary>
     public IReadOnlyList<WaitlistEntry> Waitlist => _waitlist;
 
     /// <summary>Free spots: an open offer holds its spot for the member it was offered to (D-051).</summary>
-    public int SpotsLeft => Capacity - _bookings.Count(booking => booking.IsActive) - _waitlist.Count(entry => entry.IsOffered);
+    public int SpotsLeft => Capacity - BookedCount - HeldSpots;
+
+    private int HeldSpots => _waitlist.Count(entry => entry.IsOffered);
 
     /// <summary>The last moment a member can cancel (D-039).</summary>
     public Instant CancelUntil => StartsAt - BookingPolicy.CancellationCutoff;
 
+    public Duration Length => EndsAt - StartsAt;
+
     public static ClassSession Schedule(
-        ClassType type, Guid instructorAccountId, Instant startsAt, Duration length, int capacity)
+        ClassType type, Guid instructorAccountId, Instant startsAt, Duration length, int capacity) =>
+        Schedule(type.Id, instructorAccountId, startsAt, length, capacity);
+
+    public static ClassSession Schedule(
+        ClassTypeId typeId, Guid instructorAccountId, Instant startsAt, Duration length, int capacity)
+    {
+        CheckDetails(instructorAccountId, length, capacity);
+        return new ClassSession
+        {
+            Id = ClassSessionId.New(),
+            ClassTypeId = typeId,
+            InstructorAccountId = instructorAccountId,
+            StartsAt = startsAt,
+            EndsAt = startsAt + length,
+            Capacity = capacity,
+            Status = ClassSessionStatus.Scheduled,
+        };
+    }
+
+    /// <summary>
+    /// Staff change the class's type, instructor, time, length or capacity (D-068). A new start
+    /// time moves the class: its bookings and its waitlist stay, and every booked member may
+    /// then cancel until the class starts, even after the 12-hour deadline (D-039). An open
+    /// offer never runs past the new cancel deadline (D-067). Capacity can't go below the
+    /// booked spots plus the spots held by open offers. Call <see cref="UpdateOffers"/> first,
+    /// so offers that ran out don't count, and after, so new spots are offered to the queue.
+    /// </summary>
+    public ClassChange Change(
+        ClassTypeId typeId, Guid instructorAccountId, Instant startsAt, Duration length, int capacity, Instant now)
+    {
+        CheckDetails(instructorAccountId, length, capacity);
+        if (IsCancelled)
+        {
+            return ClassChange.Refused(ChangeClassOutcome.ClassCancelled);
+        }
+
+        if (now >= StartsAt)
+        {
+            return ClassChange.Refused(ChangeClassOutcome.Started);
+        }
+
+        var moves = startsAt != StartsAt;
+        if (moves && startsAt <= now)
+        {
+            return ClassChange.Refused(ChangeClassOutcome.StartsInPast);
+        }
+
+        if (capacity < BookedCount + HeldSpots)
+        {
+            return ClassChange.Refused(ChangeClassOutcome.CapacityBelowBookings);
+        }
+
+        var movedFrom = moves ? StartsAt : (Instant?)null;
+        ClassTypeId = typeId;
+        InstructorAccountId = instructorAccountId;
+        StartsAt = startsAt;
+        EndsAt = startsAt + length;
+        Capacity = capacity;
+
+        var booked = _bookings.Where(booking => booking.IsActive).ToList();
+        if (moves)
+        {
+            foreach (var booking in booked)
+            {
+                booking.ClassMoved(now);
+            }
+
+            foreach (var entry in _waitlist)
+            {
+                entry.EndOfferBy(CancelUntil);
+            }
+        }
+
+        return new ClassChange(ChangeClassOutcome.Changed, movedFrom, booked.Select(booking => booking.AccountId).ToList());
+    }
+
+    /// <summary>
+    /// The center cancels the class (D-068): every booking is cancelled and the waitlist is
+    /// cleared, including any spot held by an offer. The 12-hour deadline (D-039) doesn't
+    /// apply; a class that has started can't be cancelled.
+    /// </summary>
+    public ClassCancellation CancelClass(Instant now)
+    {
+        if (IsCancelled)
+        {
+            return new ClassCancellation(CancelClassOutcome.AlreadyCancelled, []);
+        }
+
+        if (now >= StartsAt)
+        {
+            return new ClassCancellation(CancelClassOutcome.Started, []);
+        }
+
+        var booked = _bookings.Where(booking => booking.IsActive).ToList();
+        foreach (var booking in booked)
+        {
+            booking.CancelBecauseClassCancelled(now);
+        }
+
+        foreach (var entry in _waitlist.Where(entry => entry.IsQueued))
+        {
+            entry.RemoveBecauseClassCancelled(now);
+        }
+
+        Status = ClassSessionStatus.Cancelled;
+        CancelledAt = now;
+        return new ClassCancellation(CancelClassOutcome.Cancelled, booked.Select(booking => booking.AccountId).ToList());
+    }
+
+    /// <summary>
+    /// The last moment the account can cancel its booking: 12 hours before the class (D-039),
+    /// or the start itself when the class moved after the account booked it (D-068).
+    /// </summary>
+    public Instant CancelUntilFor(Guid accountId) =>
+        ActiveBookingOf(accountId) is { ClassMovedAt: not null } ? StartsAt : CancelUntil;
+
+    private static void CheckDetails(Guid instructorAccountId, Duration length, int capacity)
     {
         if (instructorAccountId == Guid.Empty)
         {
@@ -125,16 +307,6 @@ internal sealed class ClassSession
         {
             throw new ArgumentOutOfRangeException(nameof(length), length, "A class must have a length.");
         }
-
-        return new ClassSession
-        {
-            Id = ClassSessionId.New(),
-            ClassTypeId = type.Id,
-            InstructorAccountId = instructorAccountId,
-            StartsAt = startsAt,
-            EndsAt = startsAt + length,
-            Capacity = capacity,
-        };
     }
 
     public bool IsBookedBy(Guid accountId) => ActiveBookingOf(accountId) is not null;
@@ -170,6 +342,11 @@ internal sealed class ClassSession
                 AcceptOfferOutcome.AfterMembershipEnds => BookOutcome.AfterMembershipEnds,
                 var other => throw new InvalidOperationException($"An open offer can't end in {other}."),
             };
+        }
+
+        if (IsCancelled)
+        {
+            return BookOutcome.ClassCancelled;
         }
 
         if (now >= StartsAt)
@@ -212,6 +389,11 @@ internal sealed class ClassSession
     /// </param>
     public JoinWaitlistOutcome JoinWaitlist(Guid accountId, Instant now, LocalDate? lastDayOfAccess = null)
     {
+        if (IsCancelled)
+        {
+            return JoinWaitlistOutcome.ClassCancelled;
+        }
+
         if (now >= StartsAt)
         {
             return JoinWaitlistOutcome.Started;
@@ -269,6 +451,10 @@ internal sealed class ClassSession
     public bool StartsAfter(LocalDate? lastDayOfAccess) =>
         lastDayOfAccess is { } lastDay && StartsAt.InZone(CenterTime.Zone).Date > lastDay;
 
+    /// <summary>
+    /// The member cancels their booking, until <see cref="CancelUntilFor"/>: 12 hours before
+    /// the class (D-039), or until it starts when the class moved after they booked (D-068).
+    /// </summary>
     public CancelOutcome Cancel(Guid accountId, Instant now)
     {
         var booking = ActiveBookingOf(accountId);
@@ -277,7 +463,8 @@ internal sealed class ClassSession
             return CancelOutcome.NotBooked;
         }
 
-        if (now > CancelUntil)
+        var closed = booking.ClassMovedAt is null ? now > CancelUntil : now >= StartsAt;
+        if (closed)
         {
             return CancelOutcome.CancellationClosed;
         }
@@ -320,7 +507,7 @@ internal sealed class ClassSession
         }
 
         var offered = new List<WaitlistEntry>();
-        if (now >= CancelUntil)
+        if (IsCancelled || now >= CancelUntil)
         {
             return offered;
         }

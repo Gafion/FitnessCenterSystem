@@ -45,7 +45,7 @@ internal sealed class MemberBookings(BookingDbContext db) : IMemberBookings
             .Where(s => sessionIds.Contains(s.Id))
             .OrderBy(s => s.StartsAt)
             .ToListAsync(cancellationToken);
-        var names = ClassType.All.ToDictionary(t => t.Id, t => t.Name);
+        var names = await db.ClassTypes.AsNoTracking().ToDictionaryAsync(t => t.Id, t => t.Name, cancellationToken);
         foreach (var session in sessions)
         {
             // A queue place for a class the member can no longer attend would get an offer

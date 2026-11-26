@@ -2420,3 +2420,75 @@ Owner decision on FIT-76 (2026-11-25), as recommended. There is no real data to 
 - D-014 (one schema per module, integrity-only FKs), D-022, D-039, D-047, D-049, D-058, D-062, D-064
 - CLAUDE.md, "Module boundary rules" 1–3
 - [research/compliance-legal-security.md](research/compliance-legal-security.md) — GDPR principles table (Art. 5, data minimisation)
+
+---
+
+## D-068: Staff create, edit, move and cancel classes; what happens to the bookings
+- **Date:** 2026-11-25
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-25 (FIT-76, FIT-107). The build details under "Consequences" were chosen by the backend agent (FIT-107) and are open to the owner's review.
+- **Relates to:** D-039, D-049, D-051, D-059, D-060, D-062, D-065, D-067, FIT-105, FIT-107
+
+### Problem statement
+Classes and class types were fixed seed data (D-022, D-039). Staff need to schedule classes, change them, move them to another time and cancel them. Members who booked a class that changes must not be left with a booking for a class that won't happen, or at a time they didn't choose.
+
+### Options considered
+The owner set the booking rules directly in FIT-107; no alternatives were put forward for them. Who may do it follows D-062 (the Manager policy admits managers and admins).
+
+### Decision
+- **Who:** managers and admins (the Manager policy, D-062, with the authenticator app, D-059). Front desk, instructors and members get 403.
+- **Class types:** created and renamed by staff. Spinning and CrossFit stay seeded.
+- **Classes:** a class has a type, a time, a length, a capacity and an instructor, chosen with the picker (FIT-105). The instructor must have the Instructor role (D-049, D-060).
+- **Cancelled class:** all its bookings are cancelled, its waitlist is cleared, and every booked member gets an email in their language (D-065).
+- **Moved class** (a new start time): the bookings stay, the waitlist stays, and every booked member gets an email with the new time. They may then cancel until the class starts, even after the 12-hour deadline (D-039).
+- **Capacity** can't go below the current number of bookings.
+
+```mermaid
+flowchart TD
+  S[Manager or admin] --> E{Change}
+  E -->|edit, same time| K[Saved. More capacity offers the new spots to the waitlist, D-067]
+  E -->|new start time| M[Moved: bookings and waitlist stay]
+  M --> ME[Email to each booked member, new time]
+  ME --> MC[They may cancel until the class starts]
+  E -->|cancel| C[Bookings cancelled, waitlist cleared]
+  C --> CE[Email to each booked member]
+  E -->|capacity below bookings| R[409 capacity-below-bookings]
+```
+
+### Reasoning
+Owner decision on FIT-107. A member booked a class at a time they chose; when the center moves it, the 12-hour cut-off (D-039), which protects the center from late cancellations, would otherwise trap them in a time they didn't choose.
+
+**Law (read with the Errata of `docs/research/compliance-legal-security.md`):** the research covers consumer contracts for memberships (§6), but not what a center owes when it cancels or moves a single class. Whether Danish consumer law requires more than an email (e.g. a refund or a longer notice) is **UNVERIFIED** and a lawyer question. No refund comes up in the system today: class booking costs nothing and needs no membership (D-039), and payments are out of scope (D-006). The emails carry only the first name, the class name and the times (data minimisation, GDPR Art. 5, in the principles table of the research file).
+
+### Consequences
+Chosen in the build (FIT-107), open to the owner's review:
+
+- **Capacity counts held spots too.** It can't go below the booked spots **plus the spots held by open waitlist offers** (D-067). Otherwise a member could accept an offer into a full class.
+- **The instructor must have the Instructor role at every save**, not only when the instructor changes. If an instructor loses the role, the next edit of their classes must pick another instructor.
+- **A class that has started can't be edited, moved or cancelled.** A class can't be moved into the past.
+- **Who may cancel late after a move:** only the members whose booking was active when the class moved. A member who books after the move has the normal 12-hour deadline. `cancelUntil` in "my bookings" and the schedule shows the start for the members who may cancel late.
+- **Open waitlist offers after a move** end no later than the new cancel deadline (D-067). Waitlisted members are **not emailed** about a move or a cancellation; the owner's rule names booked members only. The account page and the schedule stop showing a cancelled class and its offers.
+- **A cancelled class stays as history** (status `Cancelled`, `cancelledAt`). Its bookings get the status `ClassCancelled`, its waitlist entries the status `ClassCancelled`. It leaves the members' schedule and the instructor's "my classes" list (FIT-106). Booking or joining its waitlist gives 409 `class-cancelled`.
+- **Emails are sent after the change is saved.** A failed send is logged, not retried, as for offers (D-067). The Danish texts are developer translations (**UNVERIFIED**, listed in `frontend/src/i18n/locales/README.md`).
+- **Limits on the form:** length 1–1440 minutes, capacity 1–1000, class type names 1–100 characters and unique ignoring case. These are sanity limits, not researched values.
+- **Not built:** retiring or deleting a class type, and deleting a class. A class type in use can only be renamed.
+- **Development schedule:** at startup it adds any missing seed slot. A moved seed class leaves its old slot empty, so a restart adds a new class there. Development only (D-022).
+
+```mermaid
+sequenceDiagram
+  participant St as Staff (Manager policy)
+  participant B as Booking
+  participant I as Identity.Contracts
+  participant M as Booked members
+  St->>B: PUT /api/booking/staff/classes/{id} (new startsAt)
+  B->>I: HasRoleAsync(instructor, Instructor)
+  B->>B: lock class row, update offers, move, update offers
+  B-->>St: 200 class
+  B->>M: "Your class has moved" (their language)
+```
+
+### Sources
+- Linear FIT-107: "What to build" (owner decision, 2026-11-25) and "Brief (orchestrator, 2026-11-25): API first"
+- Linear FIT-76 (staff screens order)
+- [research/compliance-legal-security.md](research/compliance-legal-security.md) — Errata; §6 consumer law; GDPR principles table (Art. 5)
+- D-006, D-039, D-049, D-051, D-059, D-060, D-062, D-065, D-067

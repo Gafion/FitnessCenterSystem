@@ -6,6 +6,9 @@ internal enum ClassBookingStatus
 {
     Booked,
     Cancelled,
+
+    /// <summary>The center cancelled the whole class (D-068).</summary>
+    ClassCancelled,
 }
 
 /// <summary>
@@ -30,6 +33,12 @@ internal sealed class ClassBooking
 
     public Instant? CancelledAt { get; private set; }
 
+    /// <summary>
+    /// When the class last moved to a new time while this booking was active, else null. The
+    /// member may then cancel until the class starts, even after the 12-hour deadline (D-068).
+    /// </summary>
+    public Instant? ClassMovedAt { get; private set; }
+
     public bool IsActive => Status == ClassBookingStatus.Booked;
 
     internal static ClassBooking Create(ClassSessionId sessionId, Guid accountId, Instant now) => new()
@@ -41,9 +50,15 @@ internal sealed class ClassBooking
         BookedAt = now,
     };
 
-    internal void Cancel(Instant now)
+    internal void Cancel(Instant now) => End(ClassBookingStatus.Cancelled, now);
+
+    internal void CancelBecauseClassCancelled(Instant now) => End(ClassBookingStatus.ClassCancelled, now);
+
+    internal void ClassMoved(Instant now) => ClassMovedAt = now;
+
+    private void End(ClassBookingStatus status, Instant now)
     {
-        Status = ClassBookingStatus.Cancelled;
+        Status = status;
         CancelledAt = now;
     }
 }

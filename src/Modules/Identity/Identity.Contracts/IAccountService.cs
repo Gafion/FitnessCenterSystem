@@ -52,6 +52,14 @@ public interface IAccountService
     /// <returns>A name per account that exists. Unknown IDs are left out.</returns>
     Task<IReadOnlyDictionary<AccountId, string>> FindDisplayNamesAsync(
         IReadOnlyCollection<AccountId> accountIds, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Whether the account has the role, one of <see cref="StaffRoles"/>. Booking uses it to
+    /// check that a class's instructor is an instructor (D-068). Roles don't stack here (D-062):
+    /// this asks for the role itself.
+    /// </summary>
+    /// <returns>False when there is no such account.</returns>
+    Task<bool> HasRoleAsync(AccountId accountId, string role, CancellationToken cancellationToken);
 }
 
 public readonly record struct AccountId(Guid Value);

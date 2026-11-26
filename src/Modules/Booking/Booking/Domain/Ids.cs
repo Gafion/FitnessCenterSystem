@@ -1,6 +1,9 @@
 namespace FitnessCenter.Modules.Booking.Domain;
 
-internal readonly record struct ClassTypeId(Guid Value);
+internal readonly record struct ClassTypeId(Guid Value)
+{
+    public static ClassTypeId New() => new(Guid.CreateVersion7());
+}
 
 internal readonly record struct ClassSessionId(Guid Value)
 {
