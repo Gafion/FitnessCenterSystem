@@ -21,7 +21,7 @@ namespace FitnessCenter.Modules.Identity.Application;
 /// accepts, without a new password, and keeps the membership (D-064).
 /// </summary>
 internal sealed class StaffInvites(
-    IdentityDbContext db, UserManager<Account> users, SmtpEmailSender smtp, IClock clock)
+    IdentityDbContext db, UserManager<Account> users, SmtpEmailSender smtp, IClock clock, AuditTrail audit)
 {
     /// <summary>The frontend page that reads the link and calls the accept endpoint.</summary>
     public const string PagePath = "/accept-invite";
@@ -174,6 +174,9 @@ internal sealed class StaffInvites(
                 $"Adding role {invite.Role} failed: {string.Join(", ", added.Errors.Select(e => e.Code))}");
         }
 
+        // Saved with the invite below, in the same transaction.
+        audit.Add(account.Id, account.Id, AuditActions.AccountCreated, "staff-invite");
+        audit.Add(invite.InvitedBy, account.Id, AuditActions.RoleGranted, invite.Role);
         invite.AcceptedAt = now;
         invite.AccountId = account.Id;
         await db.SaveChangesAsync(cancellationToken);
@@ -225,6 +228,9 @@ internal sealed class StaffInvites(
                 throw new InvalidOperationException(
                     $"Adding role {invite.Role} failed: {string.Join(", ", added.Errors.Select(e => e.Code))}");
             }
+
+            // Saved with the invite below, in the same transaction.
+            audit.Add(invite.InvitedBy, account.Id, AuditActions.RoleGranted, invite.Role);
         }
 
         invite.AcceptedAt = now;

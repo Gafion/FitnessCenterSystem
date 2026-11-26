@@ -72,7 +72,7 @@ internal static class AuthenticatorEndpoints
     /// <summary>Turns the authenticator on once a code from the app matches the key, and returns new recovery codes.</summary>
     private static async Task<Results<Ok<RecoveryCodes>, UnauthorizedHttpResult, ProblemHttpResult>> EnableAsync(
         EnableAuthenticatorRequest request, ClaimsPrincipal user, UserManager<Account> users,
-        SignInManager<Account> signIn)
+        SignInManager<Account> signIn, AuditTrail audit, CancellationToken cancellationToken)
     {
         if (await users.GetUserAsync(user) is not { } account)
         {
@@ -101,6 +101,7 @@ internal static class AuthenticatorEndpoints
 
         await users.SetTwoFactorEnabledAsync(account, true);
         var codes = await users.GenerateNewTwoFactorRecoveryCodesAsync(account, Authenticator.RecoveryCodeCount);
+        await audit.RecordAsync(account.Id, account.Id, AuditActions.AuthenticatorEnabled, detail: null, cancellationToken);
 
         // Setting up changes the security stamp; renew the cookie so this session stays valid.
         await signIn.RefreshSignInAsync(account);
@@ -152,7 +153,7 @@ internal static class AuthenticatorEndpoints
                 type: "invalid-code");
         }
 
-        await removal.RemoveAsync(account, AuthenticatorRemoval.Reason.TurnedOffByMember, cancellationToken);
+        await removal.RemoveAsync(account, AuthenticatorRemoval.Reason.TurnedOffByMember, account.Id, cancellationToken);
 
         // Turning it off changes the security stamp; renew the cookie so this session stays valid.
         await signIn.RefreshSignInAsync(account);

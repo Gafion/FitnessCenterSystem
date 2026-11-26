@@ -222,6 +222,7 @@ flowchart LR
 | AU6 | One identity store with roles for staff and members, or separate stores? | authentication |
 | AU7 | ASVS target: L1 for members, L2 for staff/admin? (Relates to T4.) | authentication |
 | AU8 | MFA mandatory for staff (passkey or TOTP)? Optional for members? | authentication |
+| AU13 | Audit trail (D-072): should changes in the Members module (membership signup, cancellation and undo, payments) also be audited, and how long are audit rows kept? Until decided: only login-account changes are audited, and rows are kept indefinitely. | authentication |
 
 ## Tier 4 — How we work (agentic process)
 

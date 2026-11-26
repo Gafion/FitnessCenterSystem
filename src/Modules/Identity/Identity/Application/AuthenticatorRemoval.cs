@@ -8,10 +8,11 @@ namespace FitnessCenter.Modules.Identity.Application;
 /// <summary>
 /// Turns an account's authenticator app off (D-071): an admin resetting a staff member's, or a
 /// member turning their own off. Removes the key and the recovery codes, so neither works again,
-/// and emails the account in its own language (D-065).
+/// records it in the audit trail (D-072) and emails the account in its own language (D-065).
 /// </summary>
 internal sealed class AuthenticatorRemoval(
-    UserManager<Account> users, IUserStore<Account> store, SmtpEmailSender emails, ILogger<AuthenticatorRemoval> logger)
+    UserManager<Account> users, IUserStore<Account> store, AuditTrail audit,
+    SmtpEmailSender emails, ILogger<AuthenticatorRemoval> logger)
 {
     public enum Reason
     {
@@ -22,7 +23,8 @@ internal sealed class AuthenticatorRemoval(
         TurnedOffByMember,
     }
 
-    public async Task RemoveAsync(Account account, Reason reason, CancellationToken cancellationToken)
+    /// <param name="actorId">Who made the change: the admin, or the member themselves.</param>
+    public async Task RemoveAsync(Account account, Reason reason, Guid actorId, CancellationToken cancellationToken)
     {
         // Identity has no "remove the recovery codes" on UserManager; an empty list leaves none to redeem.
         if (store is not IUserTwoFactorRecoveryCodeStore<Account> codes)
@@ -37,6 +39,11 @@ internal sealed class AuthenticatorRemoval(
         // working. It also changes the security stamp, which ends the account's other sessions
         // at their next cookie check.
         Check(await users.ResetAuthenticatorKeyAsync(account));
+
+        await audit.RecordAsync(
+            actorId, account.Id,
+            reason == Reason.ResetByAdmin ? AuditActions.AuthenticatorResetByAdmin : AuditActions.AuthenticatorTurnedOff,
+            detail: null, cancellationToken);
 
         try
         {

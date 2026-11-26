@@ -77,6 +77,7 @@ public static class IdentityModule
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<StaffInvites>();
         services.AddScoped<AuthenticatorRemoval>();
+        services.AddScoped<AuditTrail>();
         services.AddScoped<IAuthorizationHandler, AuthenticatorSetUpHandler>();
         services.AddOptions<EmailOptions>().Bind(configuration.GetSection(EmailOptions.SectionName));
         services.AddSingleton<SmtpEmailSender>();
@@ -89,7 +90,7 @@ public static class IdentityModule
     public static IEndpointRouteBuilder MapIdentityEndpoints(this IEndpointRouteBuilder endpoints)
     {
         return endpoints.MapAccountEndpoints().MapExternalLoginEndpoints().MapStaffInviteEndpoints().MapStaffEndpoints()
-            .MapAuthenticatorEndpoints().MapStaffAuthenticatorEndpoints();
+            .MapAuthenticatorEndpoints().MapStaffAuthenticatorEndpoints().MapAuditEndpoints();
     }
 
     /// <summary>

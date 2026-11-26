@@ -8,7 +8,8 @@ using Microsoft.EntityFrameworkCore;
 namespace FitnessCenter.Modules.Identity.Application;
 
 internal sealed class AccountService(
-    UserManager<Account> users, SignInManager<Account> signIn, IEmailSender<Account> emails, SmtpEmailSender smtp)
+    UserManager<Account> users, SignInManager<Account> signIn, IEmailSender<Account> emails, SmtpEmailSender smtp,
+    AuditTrail audit)
     : IAccountService
 {
     public async Task<CreateAccountResult> CreateLocalAccountAsync(
@@ -23,7 +24,13 @@ internal sealed class AccountService(
         }
 
         var account = NewAccount(newAccount.Email, newAccount.FirstName, newAccount.LastName, newAccount.PreferredLanguage);
-        return ToResult(account, await users.CreateAsync(account, newAccount.Password));
+        var created = await users.CreateAsync(account, newAccount.Password);
+        if (created.Succeeded)
+        {
+            await audit.RecordAsync(account.Id, account.Id, AuditActions.AccountCreated, "password", cancellationToken);
+        }
+
+        return ToResult(account, created);
     }
 
     public async Task<CreateAccountResult> CreateExternalAccountAsync(
@@ -61,7 +68,13 @@ internal sealed class AccountService(
         }
 
         // If this fails, the caller doesn't complete its transaction, so the account goes too.
-        return ToResult(account, await users.AddLoginAsync(account, login));
+        var linked = await users.AddLoginAsync(account, login);
+        if (linked.Succeeded)
+        {
+            await audit.RecordAsync(account.Id, account.Id, AuditActions.AccountCreated, "google", cancellationToken);
+        }
+
+        return ToResult(account, linked);
     }
 
     public async Task SendEmailConfirmationAsync(AccountId accountId, CancellationToken cancellationToken)

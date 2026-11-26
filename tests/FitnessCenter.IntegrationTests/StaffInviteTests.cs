@@ -69,6 +69,29 @@ public sealed partial class StaffInviteTests
     }
 
     [TestMethod]
+    public async Task Accepting_an_invite_is_audited_with_the_inviter_as_the_one_granting_the_role()
+    {
+        var (admin, adminId) = await LoggedInStaffWithIdAsync(Factory, StaffRoles.Admin);
+        using var adminClient = admin;
+        var email = SyntheticStaffEmail();
+        using var invite = await InviteAsync(admin, email, StaffRoles.Instructor);
+        Assert.AreEqual(HttpStatusCode.Created, invite.StatusCode, await invite.Content.ReadAsStringAsync());
+
+        using var browser = Factory.CreateClient();
+        using var accept = await AcceptAsync(browser, await InviteLinkForAsync(email));
+        Assert.AreEqual(HttpStatusCode.NoContent, accept.StatusCode, await accept.Content.ReadAsStringAsync());
+
+        var staffId = await AuditTrailTests.AccountIdAsync(Factory, email);
+        var events = (await AuditTrailTests.AuditAsync(Factory)).Where(e => e.SubjectAccountId == staffId).ToList();
+        var created = events.Single(e => e.Action == "account-created");
+        Assert.AreEqual(staffId, created.ActorAccountId);
+        Assert.AreEqual("staff-invite", created.Detail);
+        var granted = events.Single(e => e.Action == "role-granted");
+        Assert.AreEqual(adminId, granted.ActorAccountId, "the admin who sent the invite granted the role");
+        Assert.AreEqual(StaffRoles.Instructor, granted.Detail);
+    }
+
+    [TestMethod]
     public async Task Invited_staff_must_set_up_the_authenticator_before_using_staff_endpoints()
     {
         using var admin = await LoggedInStaffAsync(Factory, StaffRoles.Admin);
