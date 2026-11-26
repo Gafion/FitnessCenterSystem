@@ -2676,9 +2676,14 @@ flowchart LR
 - **Password changes and resets** aren't audited yet because the app can't change or reset a password yet. When that is built, it must record `password-changed` (actor: the account) or `password-reset`.
 - **Not audited, by choice:** failed logins and lockout counters, recovery codes used at login, and the new authenticator key made when setup starts. These are sign-in events rather than changes a person chose to make. They can be added later.
 - **Members module changes** (membership, cancellation, payments) are not in this trail. They change member records, not the login account. Whether to audit them is open (see AU13 below).
-- **Retention is open:** the compliance research leaves the retention of audit logs TBD (data inventory row 15). Until it is decided, rows are kept indefinitely. UNVERIFIED how long Danish law requires or allows.
+- ~~**Retention is open.**~~ Decided in the amendment below: one year.
 - There's no screen for the trail yet; admins can read it through the API.
 
 ### Sources
 - `docs/research/compliance-legal-security.md` SEC-08 and the data inventory row 15.
+
+### Amendment (owner, 2026-11-26): keep audit events for one year
+- **Decision:** an audit event is deleted one year after it happened: the same date and time a year earlier, in Copenhagen (`AuditTrail.KeepFrom`). A daily job (`AuditRetentionJob`) deletes them, which is the only delete the trail allows.
+- **Answers:** the retention half of AU13. Whether to audit Members-module changes is still open.
+- **Note:** the compliance research leaves the retention of audit logs TBD (data inventory row 15). Whether one year meets every Danish rule (for example the BEK 205 change logs that follow bookkeeping retention, which only matter once bookkeeping is built) is UNVERIFIED.
 

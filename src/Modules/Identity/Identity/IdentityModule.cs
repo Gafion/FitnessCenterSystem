@@ -78,6 +78,7 @@ public static class IdentityModule
         services.AddScoped<StaffInvites>();
         services.AddScoped<AuthenticatorRemoval>();
         services.AddScoped<AuditTrail>();
+        services.AddHostedService<AuditRetentionJob>();
         services.AddScoped<IAuthorizationHandler, AuthenticatorSetUpHandler>();
         services.AddOptions<EmailOptions>().Bind(configuration.GetSection(EmailOptions.SectionName));
         services.AddSingleton<SmtpEmailSender>();
