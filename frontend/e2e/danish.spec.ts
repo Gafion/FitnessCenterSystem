@@ -47,7 +47,7 @@ test('the landing page is in Danish with Danish formats', async ({ page }) => {
   ).toBeVisible();
   const upcoming = page.getByRole('region', { name: 'Næste hold' });
   await expect(
-    upcoming.getByText('tirsdag 24. november kl. 18.00'),
+    upcoming.getByText('tirsdag 24. november kl. 18:00'),
   ).toBeVisible();
   await expect(page.getByText('299,00 kr. om måneden').first()).toBeVisible();
 });

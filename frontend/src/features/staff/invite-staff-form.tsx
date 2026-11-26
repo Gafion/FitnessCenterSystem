@@ -11,6 +11,7 @@ import { Button, focusRing } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FieldError } from '@/features/account/field-error';
+import { formatWithColon } from '@/features/classes/class-time';
 import { dateLocale, type Language, languages } from '@/i18n';
 import type { FieldErrors } from '@/lib/api';
 
@@ -86,11 +87,14 @@ export function InviteStaffForm({ roles, defaultLanguage, onSubmit }: Props) {
   }
 
   const expires = sent
-    ? new Intl.DateTimeFormat(dateLocale(), {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-        timeZone: 'Europe/Copenhagen',
-      }).format(new Date(sent.expiresAt))
+    ? formatWithColon(
+        new Intl.DateTimeFormat(dateLocale(), {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+          timeZone: 'Europe/Copenhagen',
+        }),
+        new Date(sent.expiresAt),
+      )
     : '';
 
   return (

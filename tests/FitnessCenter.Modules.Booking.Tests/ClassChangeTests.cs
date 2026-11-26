@@ -185,6 +185,43 @@ public sealed class ClassChangeTests
     }
 
     [TestMethod]
+    public void Cancelling_names_the_waitlisted_members_to_email()
+    {
+        var session = Session(capacity: 1);
+        session.Book(Ann, DayBefore);
+        session.JoinWaitlist(Ben, DayBefore);
+        session.JoinWaitlist(Cleo, DayBefore);
+
+        var cancellation = session.CancelClass(DayBefore);
+
+        CollectionAssert.AreEqual(new[] { Ann }, cancellation.CancelledBookings.ToArray());
+        CollectionAssert.AreEqual(new[] { Ben, Cleo }, cancellation.ClearedWaitlist.ToArray());
+    }
+
+    [TestMethod]
+    public void Cancelling_emails_a_member_whose_offer_is_open_but_not_one_whose_offer_has_run_out()
+    {
+        var session = Session(capacity: 1);
+        session.Book(Ann, DayBefore);
+        session.JoinWaitlist(Ben, DayBefore);
+        session.JoinWaitlist(Cleo, DayBefore);
+        session.Cancel(Ann, DayBefore);
+        session.UpdateOffers(DayBefore);
+
+        var open = Session(capacity: 1);
+        open.Book(Ann, DayBefore);
+        open.JoinWaitlist(Ben, DayBefore);
+        open.Cancel(Ann, DayBefore);
+        open.UpdateOffers(DayBefore);
+
+        var lapsed = session.CancelClass(DayBefore + BookingPolicy.OfferLength);
+        var stillOpen = open.CancelClass(DayBefore + BookingPolicy.OfferLength - Duration.FromMinutes(1));
+
+        CollectionAssert.AreEqual(new[] { Cleo }, lapsed.ClearedWaitlist.ToArray(), "Ben's offer ran out, so his turn is over");
+        CollectionAssert.AreEqual(new[] { Ben }, stillOpen.ClearedWaitlist.ToArray(), "an open offer still holds Ben's place");
+    }
+
+    [TestMethod]
     public void Cancelling_ignores_the_12_hour_deadline()
     {
         var session = Session(capacity: 1);

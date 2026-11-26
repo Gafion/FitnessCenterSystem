@@ -92,8 +92,8 @@ public sealed class WaitlistOfferTests
         Assert.IsFalse((await FindAsync(first, classId)).BookedByMe);
 
         var text = await TestMailbox.TextToAsync(danishEmail, OfferEmails.SubjectDanish);
-        StringAssert.Contains(text, "Der er blevet en plads fri på Spinning, 14.01.2031 kl. 18.00");
-        StringAssert.Contains(text, "senest 13.01.2031 kl. 14.00");
+        StringAssert.Contains(text, "Der er blevet en plads fri på Spinning, 14.01.2031 kl. 18:00");
+        StringAssert.Contains(text, "senest 13.01.2031 kl. 14:00");
         Assert.AreEqual(
             (SweepNow + Duration.FromHours(4)).ToDateTimeOffset(),
             (await FindAsync(danish, classId)).MyOfferExpiresAt);

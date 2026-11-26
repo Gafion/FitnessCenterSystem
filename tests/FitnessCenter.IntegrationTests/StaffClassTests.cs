@@ -115,7 +115,7 @@ public sealed class StaffClassTests
         var text = await TestMailbox.TextToAsync(englishEmail, ClassChangeEmails.CancelledSubject);
         StringAssert.Contains(text, "We have cancelled Spinning, 12 January 2027 at 18:00, so your booking is cancelled too.");
         var tekst = await TestMailbox.TextToAsync(danishEmail, ClassChangeEmails.CancelledSubjectDanish);
-        StringAssert.Contains(tekst, "Vi har aflyst Spinning, 12.01.2027 kl. 18.00, så din booking er også aflyst.");
+        StringAssert.Contains(tekst, "Vi har aflyst Spinning, 12.01.2027 kl. 18:00, så din booking er også aflyst.");
         Assert.AreEqual(0, await TestMailbox.CountToAsync(waitingEmail, ClassChangeEmails.CancelledSubject), "only booked members are emailed");
 
         Assert.IsEmpty((await english.GetFromJsonAsync<MyBooking[]>("/api/booking/my-bookings"))!);
@@ -133,6 +133,33 @@ public sealed class StaffClassTests
         Assert.Contains("class-cancelled", await book.Content.ReadAsStringAsync());
         using var again = await manager.PostAsync(new Uri($"{ClassUri(created.ClassId)}/cancel", UriKind.Relative), null);
         Assert.AreEqual(HttpStatusCode.Conflict, again.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Cancelling_a_class_emails_each_waitlisted_member_in_their_language()
+    {
+        await using var factory = new ApiFactory(services => services.AddSingleton<IClock>(new MovableClock(Now)));
+        using var manager = await StaffInviteTests.LoggedInStaffAsync(factory, StaffRoles.Manager);
+        var created = await ScheduleAsync(manager, SpinningId, await InstructorAsync(factory), ClassStart, capacity: 1);
+        var bookedEmail = SyntheticEmail();
+        using var booked = await MemberAsync(factory, bookedEmail);
+        var englishEmail = SyntheticEmail();
+        using var english = await MemberAsync(factory, englishEmail);
+        var danishEmail = SyntheticEmail();
+        using var danish = await MemberAsync(factory, danishEmail, danish: true);
+        await SucceedsAsync(booked.PostAsync(BookingUri(created.ClassId), null));
+        await SucceedsAsync(english.PostAsync(WaitlistUri(created.ClassId), null));
+        await SucceedsAsync(danish.PostAsync(WaitlistUri(created.ClassId), null));
+
+        await SucceedsAsync(manager.PostAsync(new Uri($"{ClassUri(created.ClassId)}/cancel", UriKind.Relative), null));
+
+        var text = await TestMailbox.TextToAsync(englishEmail, ClassChangeEmails.WaitlistCancelledSubject);
+        StringAssert.Contains(text, "We have cancelled Spinning, 12 January 2027 at 18:00, so you are no longer on its waitlist.");
+        var tekst = await TestMailbox.TextToAsync(danishEmail, ClassChangeEmails.WaitlistCancelledSubjectDanish);
+        StringAssert.Contains(tekst, "Vi har aflyst Spinning, 12.01.2027 kl. 18:00, så du står ikke længere på ventelisten.");
+        await TestMailbox.TextToAsync(bookedEmail, ClassChangeEmails.CancelledSubject);
+        Assert.AreEqual(0, await TestMailbox.CountToAsync(bookedEmail, ClassChangeEmails.WaitlistCancelledSubject), "a booked member gets the booking email only");
+        Assert.AreEqual(1, await TestMailbox.CountToAsync(englishEmail, ClassChangeEmails.WaitlistCancelledSubject), "one email per waitlisted member");
     }
 
     [TestMethod]

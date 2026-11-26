@@ -52,11 +52,11 @@ internal sealed class MembershipHandler(
     private static readonly LocalDateTimePattern ClassTimePattern =
         LocalDateTimePattern.Create("d MMMM uuuu 'at' HH:mm", CultureInfo.InvariantCulture);
 
-    // Danish formats (D-065): 23.11.2026 and 18.00.
+    // Danish formats (D-065): 23.11.2026; times with a colon, 18:00 (D-070).
     private static readonly LocalDatePattern DanishDatePattern = LocalDatePattern.Create("dd.MM.uuuu", CultureInfo.InvariantCulture);
 
     private static readonly LocalDateTimePattern DanishClassTimePattern =
-        LocalDateTimePattern.Create("dd.MM.uuuu 'kl.' HH.mm", CultureInfo.InvariantCulture);
+        LocalDateTimePattern.Create("dd.MM.uuuu 'kl.' HH:mm", CultureInfo.InvariantCulture);
 
     /// <summary>Today in Copenhagen, where the undo rule applies (D-055).</summary>
     public LocalDate Today => clock.GetCurrentInstant().InZone(CenterTime.Zone).Date;
@@ -122,7 +122,7 @@ internal sealed class MembershipHandler(
         return new CancellationResult(outcome, new MembershipSummary(member, membershipType), cancelledBookings);
     }
 
-    private static (string Subject, string Body) CancelledEmail(
+    internal static (string Subject, string Body) CancelledEmail(
         EmailRecipient recipient, LocalDate lastDay, IReadOnlyList<CancelledClassBooking> cancelled)
     {
         if (recipient.Language == Language.English)
