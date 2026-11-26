@@ -4,7 +4,7 @@ namespace FitnessCenter.Modules.Identity.Infrastructure;
 
 /// <summary>
 /// One change to an account (D-072): who did it, to whom, what kind of change and when.
-/// Append-only: the app never updates or deletes a row. Sanitized: account ids, an action name
+/// Append-only: the app never updates a row, and deletes one only when it is a year old (D-072 amendment). Sanitized: account ids, an action name
 /// and at most a non-personal detail (a role name or a login method). Never a password, code,
 /// key, email, name or other value that was changed.
 /// </summary>

@@ -40,6 +40,10 @@ public sealed class ApiFactory(
         // run the sweep themselves, with a fixed clock.
         builder.UseSetting("Booking:WaitlistOffers:Enabled", "false");
 
+        // The audit retention job (D-072) would delete old events on its own timer. AuditTrailTests
+        // run the purge themselves.
+        builder.UseSetting("Identity:AuditRetention:Enabled", "false");
+
         builder.UseSetting("Email:Smtp:Host", TestMailbox.SmtpHost);
         builder.UseSetting("Email:Smtp:Port", TestMailbox.SmtpMappedPort.ToString(CultureInfo.InvariantCulture));
 
