@@ -2572,3 +2572,62 @@ Owner decision on FIT-110, so that both languages write a time the same way. `In
 - Linear FIT-110: "2. Times use a colon, 18:00, in both languages (D-070)" (owner decision, 2026-11-26)
 - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/formatToParts — the parts (`hour`, `literal`, `minute`) the colon is put between
 - D-065
+
+---
+
+## D-071: Admins reset staff authenticators; members turn MFA off themselves
+- **Date:** 2026-11-26
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-26 (FIT-111). The build details under "Consequences" were chosen by the backend agent (FIT-111) and are open to the owner's review.
+- **Answers:** AU12
+- **Relates to:** D-013, D-059, D-062, D-065
+
+### Problem statement
+D-059 made the authenticator app mandatory for staff and optional for members, but left open what happens when someone loses it and their recovery codes (AU12). Nobody could reset it, so a staff member who lost their phone was locked out of staff pages for good, and a member who turned MFA on could never turn it off again.
+
+### Options considered
+The owner set the rules directly in FIT-111; no alternatives were put forward.
+
+### Decision
+- **Admins reset a staff member's authenticator.** That turns their MFA off and removes their key and recovery codes. Staff MFA stays mandatory (D-059), so at the next login the staff member must set it up again before any staff page works.
+  - **Admins only**, not managers (unlike D-062's stacking, which this doesn't use).
+  - **Never their own.** An admin who loses their authenticator asks another admin.
+- **Members turn MFA off themselves** from their account page, confirming with a current code from the app or a recovery code. Staff can't turn theirs off.
+- **An email** goes to the affected account whenever MFA is reset or turned off, in its own language (D-065).
+
+```mermaid
+flowchart TD
+  L[Authenticator lost or unwanted] --> S{Staff account?}
+  S -- yes --> A[Another admin resets it]
+  A --> R[MFA off, key and recovery codes removed]
+  R --> E1["Email: 'Your authenticator app was reset'"]
+  R --> N[Next login: password only, then must set up again]
+  N --> P[Staff pages work again once set up]
+  S -- no, member --> C[Member confirms with an app code or a recovery code]
+  C --> O[MFA off, key and recovery codes removed]
+  O --> E2["Email: 'Your authenticator app is turned off'"]
+```
+
+### Reasoning
+Owner decision on FIT-111.
+- **Re-proofing (ASVS 6.4.4, L2):** if a factor is lost, "evidence of identity proofing is performed at the same level as during enrollment" ([A5]). Staff are enrolled by an admin or manager's invite (D-063), so a person with admin rights vouching for them is the closest match in the app; the research file's reading is "in-person proofing by the owner" ([research/authentication.md](research/authentication.md), Recovery, marked inference). The reset itself doesn't check identity; the admin does that outside the app. **UNVERIFIED** that this satisfies 6.4.4; it is our reading.
+- **No self-reset:** not a rule ASVS states, so **UNVERIFIED** as an ASVS requirement. It follows from 6.4.4: a self-reset would proof nobody. It also means someone who has taken over an admin's session can't strip that admin's MFA. ASVS 6.4.6 (L3) has the same shape for passwords: an admin may start a user's reset but not choose the result ([A5]).
+- **Emails:** ASVS 6.3.7 (L3) asks that "users are notified after updates to authentication details" ([A5]). We are not at L3, but it is the owner's rule anyway.
+- **Members confirm with a code, not a password:** a Google-only member has no password (D-011), but everyone with MFA on has the app or recovery codes. ASP.NET Core Identity checks both: `VerifyTwoFactorTokenAsync` for app codes and `RedeemTwoFactorRecoveryCodeAsync` for recovery codes ([UserManager](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.identity.usermanager-1)).
+
+### Consequences
+Chosen in the build (FIT-111), open to the owner's review:
+- **Endpoints:** `GET /api/identity/staff-accounts` (Admin policy) lists every staff account with its name, email, roles and whether the authenticator is on, for the admin to pick from. The FIT-105 list (`/api/identity/staff`) stays as it was, because managers may call it and shouldn't see MFA state. `DELETE /api/identity/staff-accounts/{accountId}/authenticator` (Admin policy) resets. `POST /api/identity/authenticator/turn-off` is the member's control.
+- **Answers:** a self-reset is 403 `cannot-reset-own-authenticator`; a member or unknown id is 404; a staff member without the authenticator is 409 `authenticator-not-enabled`. A staff member turning theirs off is 403 `staff-must-keep-authenticator`; a wrong code is 400 `invalid-code` and counts towards lockout, as at login.
+- **How it is removed:** the recovery codes are replaced with none (`IUserTwoFactorRecoveryCodeStore.ReplaceCodesAsync`), MFA is turned off, and the key is replaced with a new random one that is shown only at the next setup (`ResetAuthenticatorKeyAsync`), so the old app's codes stop working. That changes the security stamp, so the account's other sessions end at their next cookie check; staff pages refuse at once, because the policy reads MFA from the database on every request (D-059).
+- **No audit table exists.** Who reset whose authenticator is written to the application log with both account ids, no names or emails. A real audit trail is future work.
+- **Emails** are sent after the change is saved; a failed send is logged, not retried, as for the other notification emails (D-067, D-068). The Danish texts are developer translations (**UNVERIFIED**, listed in `frontend/src/i18n/locales/README.md`).
+- **Frontend** controls (the admin action and "Turn off" on the account page) come in a second PR.
+
+### Sources
+- Linear FIT-111: "Rules" (owner decision, 2026-11-26)
+- [A5] OWASP ASVS 5.0 V6 Authentication, 6.3.7, 6.4.4, 6.4.6 — https://github.com/OWASP/ASVS/blob/master/5.0/en/0x15-V6-Authentication.md
+- [research/authentication.md](research/authentication.md) — Recovery
+- https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.identity.usermanager-1 — `VerifyTwoFactorTokenAsync`, `RedeemTwoFactorRecoveryCodeAsync`, `ResetAuthenticatorKeyAsync`, `SetTwoFactorEnabledAsync`
+- https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.identity.iusertwofactorrecoverycodestore-1 — `ReplaceCodesAsync`
+- D-013, D-059, D-062, D-063, D-065

@@ -26,14 +26,15 @@ account's language, and the terms, early-start text and membership type name in 
 request's `Accept-Language`. These Danish backend texts are also UNVERIFIED translations by
 the developer, for the owner to check:
 
-| Where                                                             | What                                                                                   |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `src/Modules/Members/Members/Domain/ConsentTexts.cs`              | Danish terms and early-start placeholders (FIT-53 brings the real wording).            |
-| `src/Modules/Members/Members/Application/MembershipHandler.cs`    | Cancellation and undo emails ("opsigelse", "annullere opsigelsen", "afmeldt").         |
-| `src/Modules/Members/Members/Application/PaymentReminders.cs`     | Payment reminder email.                                                                |
-| `src/Modules/Identity/Identity/Infrastructure/SmtpEmailSender.cs` | Signup confirmation email.                                                             |
-| `src/Modules/Identity/Identity/Application/StaffInvites.cs`       | Staff invite email. The role names in it stay English, as in the app.                  |
-| `src/Modules/Booking/Booking/Application/OfferEmails.cs`          | Waitlist offer email ("Der er en plads til dig", D-067).                               |
-| `src/Modules/Booking/Booking/Application/ClassChangeEmails.cs`    | Cancelled and moved class emails ("Dit hold er aflyst", "Dit hold er flyttet", D-068). |
-| `src/Modules/Booking/Booking/Application/ClassChangeEmails.cs`    | Cancelled class email to the waitlist ("Et hold, du ventede på, er aflyst", D-069).    |
-| `src/Modules/Members/Members/Domain/MembershipType.cs`            | "Almindeligt medlemskab" for the placeholder membership type.                          |
+| Where                                                               | What                                                                                                          |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `src/Modules/Members/Members/Domain/ConsentTexts.cs`                | Danish terms and early-start placeholders (FIT-53 brings the real wording).                                   |
+| `src/Modules/Members/Members/Application/MembershipHandler.cs`      | Cancellation and undo emails ("opsigelse", "annullere opsigelsen", "afmeldt").                                |
+| `src/Modules/Members/Members/Application/PaymentReminders.cs`       | Payment reminder email.                                                                                       |
+| `src/Modules/Identity/Identity/Infrastructure/SmtpEmailSender.cs`   | Signup confirmation email.                                                                                    |
+| `src/Modules/Identity/Identity/Application/StaffInvites.cs`         | Staff invite email. The role names in it stay English, as in the app.                                         |
+| `src/Modules/Identity/Identity/Application/AuthenticatorRemoval.cs` | Authenticator reset and turned-off emails ("Din autentificeringsapp er nulstillet", "… er slået fra", D-071). |
+| `src/Modules/Booking/Booking/Application/OfferEmails.cs`            | Waitlist offer email ("Der er en plads til dig", D-067).                                                      |
+| `src/Modules/Booking/Booking/Application/ClassChangeEmails.cs`      | Cancelled and moved class emails ("Dit hold er aflyst", "Dit hold er flyttet", D-068).                        |
+| `src/Modules/Booking/Booking/Application/ClassChangeEmails.cs`      | Cancelled class email to the waitlist ("Et hold, du ventede på, er aflyst", D-069).                           |
+| `src/Modules/Members/Members/Domain/MembershipType.cs`              | "Almindeligt medlemskab" for the placeholder membership type.                                                 |
