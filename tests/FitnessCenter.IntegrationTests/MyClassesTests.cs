@@ -89,6 +89,30 @@ public sealed class MyClassesTests
     }
 
     [TestMethod]
+    public async Task A_class_the_center_cancelled_is_left_out()
+    {
+        var (client, me) = await StaffInviteTests.LoggedInStaffWithIdAsync(Factory, StaffRoles.Instructor);
+        using var _ = client;
+        using var manager = await StaffInviteTests.LoggedInStaffAsync(Factory, StaffRoles.Manager);
+        var kept = await ScheduleAsync(me, Duration.FromDays(2), capacity: 6);
+        var cancelled = await ScheduleAsync(me, Duration.FromDays(3), capacity: 6);
+        Assert.IsTrue(
+            (await client.GetFromJsonAsync<MyClass[]>(Url))!.Any(c => c.ClassId == cancelled),
+            "listed before it is cancelled");
+
+        using (var cancel = await manager.PostAsync(
+            new Uri($"/api/booking/staff/classes/{cancelled}/cancel", UriKind.Relative), null))
+        {
+            Assert.AreEqual(HttpStatusCode.NoContent, cancel.StatusCode, await cancel.Content.ReadAsStringAsync());
+        }
+
+        var classes = (await client.GetFromJsonAsync<MyClass[]>(Url))!;
+
+        Assert.IsTrue(classes.Any(c => c.ClassId == kept));
+        Assert.IsFalse(classes.Any(c => c.ClassId == cancelled), "a cancelled class is not taught (D-068)");
+    }
+
+    [TestMethod]
     public async Task Response_holds_only_the_minimum_fields()
     {
         var (client, me) = await StaffInviteTests.LoggedInStaffWithIdAsync(Factory, StaffRoles.Instructor);
