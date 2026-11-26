@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text.Json.Serialization;
 using FitnessCenter.Modules.Booking.Application;
 using FitnessCenter.Modules.Booking.Domain;
@@ -93,14 +94,14 @@ internal static class StaffClassEndpoints
     }
 
     private static async Task<Results<Created<StaffClassType>, ValidationProblem, ProblemHttpResult>> CreateClassTypeAsync(
-        ClassTypeRequest request, StaffClassHandler handler, CancellationToken cancellationToken)
+        ClassTypeRequest request, ClaimsPrincipal user, StaffClassHandler handler, CancellationToken cancellationToken)
     {
         if (CheckName(request.Name) is not { } name)
         {
             return NameProblem();
         }
 
-        var (outcome, type) = await handler.CreateClassTypeAsync(name, cancellationToken);
+        var (outcome, type) = await handler.CreateClassTypeAsync(name, StaffId(user), cancellationToken);
         return outcome switch
         {
             ClassTypeOutcome.Done => TypedResults.Created($"/api/booking/staff/class-types/{type!.Id.Value}", ToResponse(type)),
@@ -110,14 +111,15 @@ internal static class StaffClassEndpoints
     }
 
     private static async Task<Results<Ok<StaffClassType>, NotFound, ValidationProblem, ProblemHttpResult>> RenameClassTypeAsync(
-        Guid classTypeId, ClassTypeRequest request, StaffClassHandler handler, CancellationToken cancellationToken)
+        Guid classTypeId, ClassTypeRequest request, ClaimsPrincipal user, StaffClassHandler handler,
+        CancellationToken cancellationToken)
     {
         if (CheckName(request.Name) is not { } name)
         {
             return NameProblem();
         }
 
-        var (outcome, type) = await handler.RenameClassTypeAsync(new ClassTypeId(classTypeId), name, cancellationToken);
+        var (outcome, type) = await handler.RenameClassTypeAsync(new ClassTypeId(classTypeId), name, StaffId(user), cancellationToken);
         return outcome switch
         {
             ClassTypeOutcome.Done => TypedResults.Ok(ToResponse(type!)),
@@ -158,14 +160,14 @@ internal static class StaffClassEndpoints
     }
 
     private static async Task<Results<Created<StaffClass>, ValidationProblem, ProblemHttpResult>> ScheduleClassAsync(
-        ClassRequest request, StaffClassHandler handler, CancellationToken cancellationToken)
+        ClassRequest request, ClaimsPrincipal user, StaffClassHandler handler, CancellationToken cancellationToken)
     {
         if (CheckClass(request) is { } invalid)
         {
             return invalid;
         }
 
-        var (outcome, view) = await handler.ScheduleClassAsync(Details(request), cancellationToken);
+        var (outcome, view) = await handler.ScheduleClassAsync(Details(request), StaffId(user), cancellationToken);
         return outcome switch
         {
             StaffClassOutcome.Done => TypedResults.Created($"/api/booking/staff/classes/{view!.Id.Value}", ToResponse(view)),
@@ -181,14 +183,16 @@ internal static class StaffClassEndpoints
     /// booked member is emailed the new time and may cancel until the class starts (D-068).
     /// </summary>
     private static async Task<Results<Ok<StaffClass>, NotFound, ValidationProblem, ProblemHttpResult>> ChangeClassAsync(
-        Guid classId, ClassRequest request, StaffClassHandler handler, CancellationToken cancellationToken)
+        Guid classId, ClassRequest request, ClaimsPrincipal user, StaffClassHandler handler,
+        CancellationToken cancellationToken)
     {
         if (CheckClass(request) is { } invalid)
         {
             return invalid;
         }
 
-        var (outcome, view) = await handler.ChangeClassAsync(new ClassSessionId(classId), Details(request), cancellationToken);
+        var (outcome, view) = await handler.ChangeClassAsync(
+            new ClassSessionId(classId), Details(request), StaffId(user), cancellationToken);
         return outcome switch
         {
             StaffClassOutcome.Done => TypedResults.Ok(ToResponse(view!)),
@@ -209,9 +213,9 @@ internal static class StaffClassEndpoints
     /// member is emailed (D-068).
     /// </summary>
     private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> CancelClassAsync(
-        Guid classId, StaffClassHandler handler, CancellationToken cancellationToken)
+        Guid classId, ClaimsPrincipal user, StaffClassHandler handler, CancellationToken cancellationToken)
     {
-        var outcome = await handler.CancelClassAsync(new ClassSessionId(classId), cancellationToken);
+        var outcome = await handler.CancelClassAsync(new ClassSessionId(classId), StaffId(user), cancellationToken);
         return outcome switch
         {
             null => TypedResults.NotFound(),
@@ -293,4 +297,9 @@ internal static class StaffClassEndpoints
 
     private static ProblemHttpResult Conflict(string type, string title) =>
         TypedResults.Problem(title: title, statusCode: StatusCodes.Status409Conflict, type: type);
+
+    /// <summary>The logged-in staff member, for the audit trail (D-072). The Manager policy guarantees a login.</summary>
+    private static Guid StaffId(ClaimsPrincipal user) =>
+        Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new InvalidOperationException("A staff endpoint ran without a login."));
 }

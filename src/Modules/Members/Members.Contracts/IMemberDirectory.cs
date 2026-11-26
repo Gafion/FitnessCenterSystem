@@ -28,7 +28,9 @@ public interface IMemberDirectory
 /// The member cancelled and the cancellation has taken effect before the check-in's Copenhagen
 /// day (D-048, D-055). Check-in is refused.
 /// </param>
-public sealed record MemberAtEntrance(Guid MemberId, string FirstName, EntrancePayment Payment, bool MembershipEnded);
+/// <param name="AccountId">The member's login account, for the audit trail (D-072).</param>
+public sealed record MemberAtEntrance(
+    Guid MemberId, string FirstName, EntrancePayment Payment, bool MembershipEnded, Guid AccountId);
 
 /// <summary>The member's payments as the entrance sees them (D-020, D-042).</summary>
 public enum EntrancePayment

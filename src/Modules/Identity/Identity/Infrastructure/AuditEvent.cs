@@ -18,8 +18,11 @@ internal sealed class AuditEvent
 
     public Instant OccurredAt { get; init; }
 
-    /// <summary>The account that made the change. The same as the subject when someone changes their own.</summary>
-    public Guid ActorAccountId { get; init; }
+    /// <summary>
+    /// The account that made the change. The same as the subject when someone changes their own.
+    /// Null when the system made it on its own, for example a scheduled job.
+    /// </summary>
+    public Guid? ActorAccountId { get; init; }
 
     /// <summary>The account that was changed.</summary>
     public Guid SubjectAccountId { get; init; }

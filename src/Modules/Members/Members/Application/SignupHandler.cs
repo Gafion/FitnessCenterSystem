@@ -50,7 +50,8 @@ internal sealed record SignupResult(MemberId? MemberId, IReadOnlyDictionary<stri
 /// then signs the member in.
 /// </summary>
 internal sealed class SignupHandler(
-    IAccountService accounts, IAccessCards cards, MembersDbContext db, IClock clock, ILogger<SignupHandler> logger)
+    IAccountService accounts, IAccessCards cards, MembersDbContext db, IClock clock, IAuditLog audit,
+    ILogger<SignupHandler> logger)
 {
     public Task<SignupResult> HandleAsync(SignupCommand command, CancellationToken cancellationToken) =>
         SignUpAsync(
@@ -134,6 +135,7 @@ internal sealed class SignupHandler(
             transaction.Complete();
         }
 
+        await audit.RecordAsync(member.AccountId, member.AccountId, AuditActions.MembershipStarted, null, cancellationToken);
         var signedIn = await afterCommit(new AccountId(member.AccountId), cancellationToken);
         return new SignupResult(member.Id, new Dictionary<string, string[]>(), signedIn);
     }

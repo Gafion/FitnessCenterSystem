@@ -30,7 +30,7 @@ internal sealed class MemberDirectory(MembersDbContext db, IAccountService accou
             var other => throw new InvalidOperationException($"Unknown payment standing {other}."),
         };
         var membershipEnded = !member.HasAccessOn(at.InZone(CenterTime.Zone).Date);
-        return new MemberAtEntrance(memberId, firstName, payment, membershipEnded);
+        return new MemberAtEntrance(memberId, firstName, payment, membershipEnded, member.AccountId);
     }
 
     public async Task<LocalDate?> FindLastDayOfAccessAsync(Guid accountId, CancellationToken cancellationToken) =>

@@ -49,7 +49,8 @@ internal sealed record TaughtClass(
 /// Instructors' names come from Identity's Contracts, one batch per list (D-060).
 /// </summary>
 internal sealed class BookingHandler(
-    BookingDbContext db, IMemberDirectory members, IAccountService accounts, IClock clock, OfferEmails offerEmails)
+    BookingDbContext db, IMemberDirectory members, IAccountService accounts, IClock clock, OfferEmails offerEmails,
+    IAuditLog audit)
 {
     /// <summary>The classes that start within the booking window, soonest first.</summary>
     public async Task<IReadOnlyList<ScheduledClass>> GetScheduleAsync(Guid? accountId, CancellationToken cancellationToken)
@@ -168,12 +169,18 @@ internal sealed class BookingHandler(
             sessionId,
             session => session.Book(accountId, clock.GetCurrentInstant(), lastDayOfAccess),
             BookOutcome.Booked,
+            (accountId, AuditActions.ClassBooked),
             cancellationToken);
     }
 
     /// <returns>The outcome, or null when there is no such class.</returns>
     public Task<CancelOutcome?> CancelAsync(ClassSessionId sessionId, Guid accountId, CancellationToken cancellationToken) =>
-        ChangeAsync(sessionId, session => session.Cancel(accountId, clock.GetCurrentInstant()), CancelOutcome.Cancelled, cancellationToken);
+        ChangeAsync(
+            sessionId,
+            session => session.Cancel(accountId, clock.GetCurrentInstant()),
+            CancelOutcome.Cancelled,
+            (accountId, AuditActions.BookingCancelled),
+            cancellationToken);
 
     /// <returns>The outcome, or null when there is no such class.</returns>
     public async Task<JoinWaitlistOutcome?> JoinWaitlistAsync(
@@ -184,6 +191,7 @@ internal sealed class BookingHandler(
             sessionId,
             session => session.JoinWaitlist(accountId, clock.GetCurrentInstant(), lastDayOfAccess),
             JoinWaitlistOutcome.Joined,
+            (accountId, AuditActions.WaitlistJoined),
             cancellationToken);
     }
 
@@ -194,6 +202,7 @@ internal sealed class BookingHandler(
             sessionId,
             session => session.LeaveWaitlist(accountId, clock.GetCurrentInstant()),
             LeaveWaitlistOutcome.Left,
+            (accountId, AuditActions.WaitlistLeft),
             cancellationToken);
 
     /// <returns>The outcome, or null when there is no such class.</returns>
@@ -205,6 +214,7 @@ internal sealed class BookingHandler(
             sessionId,
             session => session.AcceptOffer(accountId, clock.GetCurrentInstant(), lastDayOfAccess),
             AcceptOfferOutcome.Booked,
+            (accountId, AuditActions.OfferAccepted),
             cancellationToken);
     }
 
@@ -215,6 +225,7 @@ internal sealed class BookingHandler(
             sessionId,
             session => session.DeclineOffer(accountId, clock.GetCurrentInstant()),
             DeclineOfferOutcome.Declined,
+            (accountId, AuditActions.OfferDeclined),
             cancellationToken);
 
     /// <summary>
@@ -259,6 +270,7 @@ internal sealed class BookingHandler(
             await transaction.CommitAsync(cancellationToken);
         }
 
+        await AuditOffersAsync(sessionId, offers, cancellationToken);
         await offerEmails.SendAsync(offers);
         return offers.Count;
     }
@@ -270,7 +282,8 @@ internal sealed class BookingHandler(
     /// next person (D-051). Members who got an offer are emailed once it is saved (D-067).
     /// </summary>
     private async Task<TOutcome?> ChangeAsync<TOutcome>(
-        ClassSessionId sessionId, Func<ClassSession, TOutcome> change, TOutcome success, CancellationToken cancellationToken)
+        ClassSessionId sessionId, Func<ClassSession, TOutcome> change, TOutcome success,
+        (Guid AccountId, string Action) audited, CancellationToken cancellationToken)
         where TOutcome : struct, Enum
     {
         var offers = new List<NewOffer>();
@@ -295,8 +308,26 @@ internal sealed class BookingHandler(
             await transaction.CommitAsync(cancellationToken);
         }
 
+        // Audited after the commit, as the emails are: the trail lives in Identity's tables (D-072).
+        if (EqualityComparer<TOutcome>.Default.Equals(outcome, success))
+        {
+            await audit.RecordAsync(
+                audited.AccountId, audited.AccountId, audited.Action, sessionId.Value.ToString(), cancellationToken);
+        }
+
+        await AuditOffersAsync(sessionId, offers, cancellationToken);
         await offerEmails.SendAsync(offers);
         return outcome;
+    }
+
+    /// <summary>A spot offered to the next person is the system's doing (D-067), so it has no actor.</summary>
+    private async Task AuditOffersAsync(ClassSessionId sessionId, IEnumerable<NewOffer> offers, CancellationToken cancellationToken)
+    {
+        foreach (var offer in offers)
+        {
+            await audit.RecordAsync(
+                null, offer.AccountId, AuditActions.WaitlistOfferMade, sessionId.Value.ToString(), cancellationToken);
+        }
     }
 
     /// <summary>The members to email about the new offers (D-067).</summary>

@@ -64,6 +64,7 @@ Answers will be recorded here and, where they settle a medium/large decision, in
 | AU10 | Managers may invite, but only to Front desk and Instructor; admins give any role. | D-063 |
 | AU11 | Yes: an invite to an email with an account adds the role to it after the person logs in and accepts; the membership stays. Staff MFA applies. | D-064 |
 | AU12 | An admin resets a staff member's authenticator (MFA off, key and recovery codes removed; set up again at the next login), never their own. Members turn MFA off themselves with an app or recovery code. Both email the account. | D-071 |
+| AU13 | Yes: every action in every module is audited, and audit events are kept for one year. | D-072 |
 | DB8 | Spike done as a verification (FIT-36). Schema per module, history table per schema, schema-qualified SQL and a non-escalating shared transaction across module DbContexts are proven by `tests/FitnessCenter.IntegrationTests/ModuleSchemaTests.cs`. Default privileges and REFERENCES are confirmed from the PostgreSQL docs but unused while there is one database role (D-015). Details: database-schemas.md, Verification (FIT-36). | D-014, D-015 |
 
 The [stakeholder interview guide](stakeholder-interview-guide.md) is on hold (D-047).
@@ -222,7 +223,6 @@ flowchart LR
 | AU6 | One identity store with roles for staff and members, or separate stores? | authentication |
 | AU7 | ASVS target: L1 for members, L2 for staff/admin? (Relates to T4.) | authentication |
 | AU8 | MFA mandatory for staff (passkey or TOTP)? Optional for members? | authentication |
-| AU13 | Audit trail (D-072): should changes in the Members module (membership signup, cancellation and undo, payments) also be audited? Until decided, only login-account changes are. (Retention answered: one year, D-072 amendment.) | authentication |
 
 ## Tier 4 — How we work (agentic process)
 

@@ -57,14 +57,15 @@ internal sealed class StaffClassHandler(
     IAccountService accounts,
     IClock clock,
     OfferEmails offerEmails,
-    ClassChangeEmails changeEmails)
+    ClassChangeEmails changeEmails,
+    IAuditLog audit)
 {
     public async Task<IReadOnlyList<ClassType>> ListClassTypesAsync(CancellationToken cancellationToken) =>
         await db.ClassTypes.AsNoTracking().OrderBy(t => t.Name).ToListAsync(cancellationToken);
 
     /// <param name="name">Checked by <see cref="ClassType.IsValidName"/>.</param>
     public async Task<(ClassTypeOutcome Outcome, ClassType? Type)> CreateClassTypeAsync(
-        string name, CancellationToken cancellationToken)
+        string name, Guid staffId, CancellationToken cancellationToken)
     {
         if (await NameTakenAsync(name, null, cancellationToken))
         {
@@ -74,12 +75,13 @@ internal sealed class StaffClassHandler(
         var type = ClassType.Create(name);
         db.ClassTypes.Add(type);
         await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(staffId, staffId, AuditActions.ClassTypeCreated, type.Id.Value.ToString(), cancellationToken);
         return (ClassTypeOutcome.Done, type);
     }
 
     /// <param name="name">Checked by <see cref="ClassType.IsValidName"/>.</param>
     public async Task<(ClassTypeOutcome Outcome, ClassType? Type)> RenameClassTypeAsync(
-        ClassTypeId id, string name, CancellationToken cancellationToken)
+        ClassTypeId id, string name, Guid staffId, CancellationToken cancellationToken)
     {
         var type = await db.ClassTypes.SingleOrDefaultAsync(t => t.Id == id, cancellationToken);
         if (type is null)
@@ -94,6 +96,7 @@ internal sealed class StaffClassHandler(
 
         type.Rename(name);
         await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(staffId, staffId, AuditActions.ClassTypeRenamed, id.Value.ToString(), cancellationToken);
         return (ClassTypeOutcome.Done, type);
     }
 
@@ -116,7 +119,7 @@ internal sealed class StaffClassHandler(
     }
 
     public async Task<(StaffClassOutcome Outcome, StaffClassView? Class)> ScheduleClassAsync(
-        ClassDetails details, CancellationToken cancellationToken)
+        ClassDetails details, Guid staffId, CancellationToken cancellationToken)
     {
         if (await CheckDetailsAsync(details, cancellationToken) is { } refused)
         {
@@ -132,6 +135,7 @@ internal sealed class StaffClassHandler(
             details.TypeId, details.InstructorAccountId, details.StartsAt, details.Length, details.Capacity);
         db.ClassSessions.Add(session);
         await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(staffId, staffId, AuditActions.ClassScheduled, session.Id.Value.ToString(), cancellationToken);
         return (StaffClassOutcome.Done, await GetClassAsync(session.Id, cancellationToken));
     }
 
@@ -140,7 +144,7 @@ internal sealed class StaffClassHandler(
     /// booked members are emailed the new time. More capacity offers the new spots to the waitlist.
     /// </summary>
     public async Task<(StaffClassOutcome Outcome, StaffClassView? Class)> ChangeClassAsync(
-        ClassSessionId id, ClassDetails details, CancellationToken cancellationToken)
+        ClassSessionId id, ClassDetails details, Guid staffId, CancellationToken cancellationToken)
     {
         if (await CheckDetailsAsync(details, cancellationToken) is { } refused)
         {
@@ -178,6 +182,21 @@ internal sealed class StaffClassHandler(
             await transaction.CommitAsync(cancellationToken);
         }
 
+        if (change.Outcome == ChangeClassOutcome.Changed)
+        {
+            var classId = id.Value.ToString();
+            await audit.RecordAsync(staffId, staffId, AuditActions.ClassChanged, classId, cancellationToken);
+            foreach (var notice in moved)
+            {
+                await audit.RecordAsync(staffId, notice.AccountId, AuditActions.BookingMovedByStaff, classId, cancellationToken);
+            }
+        }
+
+        foreach (var offer in offers)
+        {
+            await audit.RecordAsync(null, offer.AccountId, AuditActions.WaitlistOfferMade, id.Value.ToString(), cancellationToken);
+        }
+
         await offerEmails.SendAsync(offers);
         await changeEmails.SendAsync(moved);
         return change.Outcome switch
@@ -196,7 +215,8 @@ internal sealed class StaffClassHandler(
     /// booked and waitlisted member is emailed (D-069).
     /// </summary>
     /// <returns>The outcome, or null when there is no such class.</returns>
-    public async Task<CancelClassOutcome?> CancelClassAsync(ClassSessionId id, CancellationToken cancellationToken)
+    public async Task<CancelClassOutcome?> CancelClassAsync(
+        ClassSessionId id, Guid staffId, CancellationToken cancellationToken)
     {
         var notices = new List<CancelledClassNotice>();
         ClassCancellation cancellation;
@@ -220,6 +240,19 @@ internal sealed class StaffClassHandler(
             }
 
             await transaction.CommitAsync(cancellationToken);
+        }
+
+        if (cancellation.Outcome == CancelClassOutcome.Cancelled)
+        {
+            var classId = id.Value.ToString();
+            await audit.RecordAsync(staffId, staffId, AuditActions.ClassCancelled, classId, cancellationToken);
+            foreach (var notice in notices)
+            {
+                await audit.RecordAsync(
+                    staffId, notice.AccountId,
+                    notice.WasWaitlisted ? AuditActions.WaitlistRemovedByStaff : AuditActions.BookingCancelledByStaff,
+                    classId, cancellationToken);
+            }
         }
 
         await changeEmails.SendAsync(notices);

@@ -115,7 +115,7 @@ namespace Identity.Infrastructure.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<Guid>("ActorAccountId")
+                    b.Property<Guid?>("ActorAccountId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Detail")
@@ -349,8 +349,7 @@ namespace Identity.Infrastructure.Migrations
                     b.HasOne("FitnessCenter.Modules.Identity.Infrastructure.Account", null)
                         .WithMany()
                         .HasForeignKey("ActorAccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("FitnessCenter.Modules.Identity.Infrastructure.Account", null)
                         .WithMany()

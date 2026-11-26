@@ -1,3 +1,4 @@
+using FitnessCenter.Modules.Identity.Contracts;
 using FitnessCenter.Modules.Members.Contracts;
 using FitnessCenter.Modules.Members.Domain;
 using FitnessCenter.Modules.Members.Infrastructure;
@@ -10,7 +11,7 @@ namespace FitnessCenter.Modules.Members.Application;
 /// Records payment confirmations and moves the member's paid-until date (D-020). The single
 /// entry point for the simulator now and the Payments service later (D-021).
 /// </summary>
-internal sealed class PaymentIntake(MembersDbContext db) : IPaymentConfirmations
+internal sealed class PaymentIntake(MembersDbContext db, IAuditLog audit) : IPaymentConfirmations
 {
     public async Task<PaymentConfirmationResult> ReceiveAsync(PaymentConfirmed confirmation, CancellationToken cancellationToken)
     {
@@ -51,6 +52,7 @@ internal sealed class PaymentIntake(MembersDbContext db) : IPaymentConfirmations
             period));
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+        await audit.RecordAsync(null, member.AccountId, AuditActions.PaymentRecorded, null, cancellationToken);
         return PaymentConfirmationResult.Recorded;
     }
 }
