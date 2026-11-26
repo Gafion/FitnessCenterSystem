@@ -18,6 +18,7 @@ should check them before real members use them (FIT-53 covers the real terms tex
 | `loginCode.*`, `authenticator.*`                                                                                                                                     | Login code and authenticator setup (D-059), translated by the developer.                                                                                           |
 | `staffRoles.*`, `staffInvite.*`, `account.sections.staff`, `account.inviteStaff`                                                                                     | Staff invite screen (D-058, D-063) and role names, translated by the developer.                                                                                    |
 | `myClasses.*`, `account.myClasses`                                                                                                                                   | Instructor's classes screen (D-049, FIT-106), translated by the developer.                                                                                         |
+| `staffClasses.*`, `account.staffClasses`                                                                                                                             | Class planning screens for managers and admins (D-062, D-068, FIT-107), translated by the developer.                                                               |
 
 ## Texts from the backend
 

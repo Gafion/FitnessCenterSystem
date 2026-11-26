@@ -82,7 +82,8 @@
       "failed": "Sproget kunne ikke gemmes. Prøv igen."
     },
     "inviteStaff": "Inviter medarbejder",
-    "myClasses": "Dine hold"
+    "myClasses": "Dine hold",
+    "staffClasses": "Planlæg hold"
   },
   "errors": {
     "unexpected": "Noget gik galt. Prøv igen.",
@@ -334,5 +335,74 @@
     "noBookings": "Ingen har booket endnu.",
     "notAllowed": "Kun instruktører har hold her.",
     "backToAccount": "Tilbage til din konto"
+  },
+  "staffClasses": {
+    "title": "Hold",
+    "intro_one": "Planlæg holdene for den næste {{count}} uge: opret, ret, flyt og aflys dem. Tiderne er dansk tid.",
+    "intro_other": "Planlæg holdene for de næste {{count}} uger: opret, ret, flyt og aflys dem. Tiderne er dansk tid.",
+    "classesTitle": "Kommende hold",
+    "scheduleClass": "Opret et hold",
+    "empty": "Der er ingen hold i denne periode.",
+    "cancelled": "Aflyst",
+    "waitlist_one": "{{count}} på ventelisten",
+    "waitlist_other": "{{count}} på ventelisten",
+    "started": "Holdet er begyndt og kan ikke ændres.",
+    "edit": "Ret",
+    "cancelClass": "Aflys hold",
+    "notAllowed": "Kun ledere og administratorer planlægger holdene.",
+    "cancelConfirm": {
+      "question": "Aflys {{className}}, {{when}}?",
+      "emails_one": "Det {{count}} bookede medlem får en e-mail om, at holdet er aflyst, og bookingen aflyses.",
+      "emails_other": "De {{count}} bookede medlemmer får en e-mail om, at holdet er aflyst, og deres bookinger aflyses.",
+      "noBookings": "Ingen har booket, så ingen får en e-mail.",
+      "waitlist": "Ventelisten ryddes.",
+      "confirm": "Ja, aflys holdet",
+      "back": "Behold holdet"
+    },
+    "form": {
+      "newTitle": "Opret et hold",
+      "editTitle": "Ret {{className}}",
+      "classType": "Holdtype",
+      "instructor": "Instruktør",
+      "choose": "Vælg …",
+      "start": "Starter",
+      "date": "Dato",
+      "time": "Tidspunkt",
+      "danishTime": "Dansk tid.",
+      "length": "Varighed i minutter",
+      "capacity": "Pladser",
+      "capacityHint_one": "Mindst {{count}}: {{count}} medlem har booket.",
+      "capacityHint_other": "Mindst {{count}}: {{count}} medlemmer har booket.",
+      "moveNotice_one": "Det {{count}} bookede medlem får det nye tidspunkt på e-mail og kan derefter afmelde sig, indtil holdet starter.",
+      "moveNotice_other": "De {{count}} bookede medlemmer får det nye tidspunkt på e-mail og kan derefter afmelde sig, indtil holdet starter.",
+      "classTypeRequired": "Vælg en holdtype.",
+      "instructorRequired": "Vælg en instruktør.",
+      "startRequired": "Angiv en dato og et tidspunkt.",
+      "lengthRange": "Angiv et helt antal minutter fra 1 til {{max}}.",
+      "capacityRange": "Angiv et helt antal pladser fra 1 til {{max}}.",
+      "capacityBelowBookings_one": "Holdet har {{count}} booking, så det skal have mindst {{count}} plads.",
+      "capacityBelowBookings_other": "Holdet har {{count}} bookinger, så det skal have mindst {{count}} pladser.",
+      "schedule": "Opret hold",
+      "save": "Gem ændringer",
+      "close": "Annuller"
+    },
+    "types": {
+      "title": "Holdtyper",
+      "empty": "Der er ingen holdtyper endnu. Tilføj en for at oprette hold.",
+      "newName": "Ny holdtype",
+      "add": "Tilføj",
+      "rename": "Omdøb",
+      "renameButton": "Omdøb {{name}}",
+      "renameLabel": "Nyt navn til {{name}}",
+      "save": "Gem",
+      "nameRequired": "Angiv et navn."
+    },
+    "errors": {
+      "class-started": "Holdet er begyndt, så det kan ikke ændres.",
+      "class-cancelled": "Holdet er allerede aflyst.",
+      "capacity-below-bookings": "Flere medlemmer har booket end det. Vælg mindst lige så mange pladser, som der er bookinger.",
+      "class-type-exists": "Der findes allerede en holdtype med det navn.",
+      "unexpected": "Noget gik galt. Prøv igen."
+    }
   }
 }
