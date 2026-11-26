@@ -2054,7 +2054,7 @@ The app was English only (D-018 left Danish open as U5). The center is in Denmar
 
 ### Decision
 **Option 1.** Danish is the default language and English is available.
-- **Formats in Danish:** 24-hour time, Monday-first weeks, `dd.mm.yyyy` dates and `kr.` amounts. The app formats through `Intl` with the `da-DK` locale in Europe/Copenhagen, which writes times as `18.00` and dates as `23.11.2026`.
+- **Formats in Danish:** 24-hour time, Monday-first weeks, `dd.mm.yyyy` dates and `kr.` amounts. The app formats through `Intl` with the `da-DK` locale in Europe/Copenhagen, which writes times as `18.00` and dates as `23.11.2026`. *(Amended by D-070: times use a colon, `18:00`, in both languages.)*
 - **Formats in English:** British English (`en-GB`): 24-hour time and the day before the month (`23 Nov 2026`). Amounts stay `299,00 kr.` in both languages.
 - **Switch:** a DA/EN switch in the header and in the phone menu (UI SDK SegmentedControl and Menu radio items, D-056). The choice is kept in the browser's localStorage; a first visit is Danish.
 - **Legal-ish texts:** the Danish terms, early-start consent and cancellation texts are **UNVERIFIED** translations for the owner to check (`frontend/src/i18n/locales/README.md`; real terms wording is FIT-53).
@@ -2467,7 +2467,7 @@ Chosen in the build (FIT-107), open to the owner's review:
 - **The instructor must have the Instructor role at every save**, not only when the instructor changes. If an instructor loses the role, the next edit of their classes must pick another instructor.
 - **A class that has started can't be edited, moved or cancelled.** A class can't be moved into the past.
 - **Who may cancel late after a move:** only the members whose booking was active when the class moved. A member who books after the move has the normal 12-hour deadline. `cancelUntil` in "my bookings" and the schedule shows the start for the members who may cancel late.
-- **Open waitlist offers after a move** end no later than the new cancel deadline (D-067). Waitlisted members are **not emailed** about a move or a cancellation; the owner's rule names booked members only. The account page and the schedule stop showing a cancelled class and its offers.
+- **Open waitlist offers after a move** end no later than the new cancel deadline (D-067). Waitlisted members are **not emailed** about a move or a cancellation; the owner's rule names booked members only. *(Cancellation part amended by D-069: waitlisted members are emailed when a class is cancelled.)* The account page and the schedule stop showing a cancelled class and its offers.
 - **A cancelled class stays as history** (status `Cancelled`, `cancelledAt`). Its bookings get the status `ClassCancelled`, its waitlist entries the status `ClassCancelled`. It leaves the members' schedule and the instructor's "my classes" list (FIT-106). Booking or joining its waitlist gives 409 `class-cancelled`.
 - **Emails are sent after the change is saved.** A failed send is logged, not retried, as for offers (D-067). The Danish texts are developer translations (**UNVERIFIED**, listed in `frontend/src/i18n/locales/README.md`).
 - **Limits on the form:** length 1–1440 minutes, capacity 1–1000, class type names 1–100 characters and unique ignoring case. These are sanity limits, not researched values.
@@ -2492,3 +2492,83 @@ sequenceDiagram
 - Linear FIT-76 (staff screens order)
 - [research/compliance-legal-security.md](research/compliance-legal-security.md) — Errata; §6 consumer law; GDPR principles table (Art. 5)
 - D-006, D-039, D-049, D-051, D-059, D-060, D-062, D-065, D-067
+
+---
+
+## D-069: Waitlisted members are emailed when a class is cancelled
+- **Date:** 2026-11-26
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-26 (FIT-110). The build details under "Consequences" were chosen by the backend agent (FIT-110) and are open to the owner's review.
+- **Amends:** D-068, Consequences: "Waitlisted members are **not emailed** about a move or a cancellation". A cancellation now emails them; a move still doesn't.
+- **Relates to:** D-065, D-067, D-068
+
+### Problem statement
+When staff cancel a class (D-068), its waitlist is cleared, but only booked members were emailed. Members on the waitlist learned of it only if they opened the schedule or the account page.
+
+### Options considered
+The owner set the rule directly in FIT-110; no alternatives were put forward.
+
+### Decision
+- **Cancelled class:** everyone on its waitlist also gets an email, in their own language (D-065), saying the class is cancelled and they are no longer on its waitlist.
+- **Moved class:** still no email to the waitlist. The waitlist stays (D-068).
+
+```mermaid
+flowchart TD
+  C[Staff cancel a class] --> B[Booked members]
+  C --> W[Waitlisted members]
+  B --> BE["'Your class is cancelled' /<br/>'Dit hold er aflyst'"]
+  W --> WE["'A class you were waiting for is cancelled' /<br/>'Et hold, du ventede på, er aflyst'"]
+  M[Staff move a class] --> MB[Booked members: email with the new time]
+  M -.-> MW[Waitlisted members: no email]
+```
+
+### Reasoning
+Owner decision on FIT-110. A member who waits for a spot would otherwise keep waiting for a class that won't happen. The email carries only the first name, the class name and the time, as the D-068 emails do (data minimisation, GDPR Art. 5, in the principles table of the research file).
+
+### Consequences
+Chosen in the build (FIT-110), open to the owner's review:
+- **Who counts as waitlisted:** members still waiting, and members with an open offer (D-067). A member whose offer has run out at the moment of the cancellation is no longer on the waitlist (their turn ended, D-067), so they get no email.
+- **A separate email**, not the booked members' one: its own subject and text, because the member had no booking to cancel. A member is either booked or waitlisted, so nobody gets both.
+- **Sent after the change is saved.** A failed send is logged, not retried, as for the other class emails (D-067, D-068). The Danish text is a developer translation (**UNVERIFIED**, listed in `frontend/src/i18n/locales/README.md`).
+
+### Sources
+- Linear FIT-110: "1. Waitlisted members are emailed when a class is cancelled (D-069)" (owner decision, 2026-11-26)
+- [research/compliance-legal-security.md](research/compliance-legal-security.md) — GDPR principles table (Art. 5)
+- D-065, D-067, D-068
+
+---
+
+## D-070: Times use a colon, 18:00, in both languages
+- **Date:** 2026-11-26
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-26 (FIT-110)
+- **Amends:** D-065, "Formats in Danish" and its FIT-101 amendment, which wrote Danish times as `18.00`.
+- **Relates to:** D-065
+
+### Problem statement
+D-065 formats through `Intl` with the `da-DK` locale, which writes times with a full stop, `18.00`. English (`en-GB`) writes `18:00`. The owner wants one way of writing a time.
+
+### Options considered
+The owner set the format directly in FIT-110; no alternatives were put forward.
+
+### Decision
+**Times are written with a colon, `18:00`, in Danish and in English**, everywhere a time is shown: on every page and in every email. Everything else in D-065 stays: Danish dates are `dd.mm.yyyy` (`23.11.2026`), Danish date-times read `12.01.2027 kl. 18:00`, and amounts are `299,00 kr.`
+
+```mermaid
+flowchart LR
+  DA[Danish] --> F1["18:00, 23.11.2026,<br/>12.01.2027 kl. 18:00"]
+  EN[English] --> F2["18:00, 23 Nov 2026,<br/>12 January 2027 at 18:00"]
+```
+
+### Reasoning
+Owner decision on FIT-110, so that both languages write a time the same way. `Intl` with `da-DK` gives `18.00` (checked in `frontend/src/i18n/format.test.ts` before this change), so the app changes the separator itself rather than relying on the locale.
+
+### Consequences
+- **Frontend:** `formatWithColon` in `frontend/src/features/classes/class-time.ts` formats with `Intl` and puts a colon between the hour and the minute. Every time formatter uses it (`formatTime`, `formatDateTime`, and the staff invite expiry).
+- **Emails:** the Danish patterns in `ClassChangeEmails`, `OfferEmails` and `MembershipHandler` use `HH:mm`.
+- **Tests:** the existing Danish expectations of `18.00` (and `06.00`, `14.00`) were changed to the colon form; the PR for FIT-110 lists them.
+
+### Sources
+- Linear FIT-110: "2. Times use a colon, 18:00, in both languages (D-070)" (owner decision, 2026-11-26)
+- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/formatToParts — the parts (`hour`, `literal`, `minute`) the colon is put between
+- D-065

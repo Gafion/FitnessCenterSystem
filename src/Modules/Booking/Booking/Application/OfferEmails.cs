@@ -24,11 +24,9 @@ internal sealed class OfferEmails(IAccountService accounts, ILogger<OfferEmails>
         LocalDateTimePattern.Create("d MMMM uuuu 'at' HH:mm", CultureInfo.InvariantCulture);
 
     private static readonly LocalDateTimePattern DanishClassTimePattern =
-        LocalDateTimePattern.Create("dd.MM.uuuu 'kl.' HH.mm", CultureInfo.InvariantCulture);
+        LocalDateTimePattern.Create("dd.MM.uuuu 'kl.' HH:mm", CultureInfo.InvariantCulture);
 
     private static readonly LocalTimePattern TimePattern = LocalTimePattern.Create("HH:mm", CultureInfo.InvariantCulture);
-
-    private static readonly LocalTimePattern DanishTimePattern = LocalTimePattern.Create("HH.mm", CultureInfo.InvariantCulture);
 
     /// <summary>Sends one email per offer. Call it after the offers are saved.</summary>
     public async Task SendAsync(IReadOnlyList<NewOffer> offers)
@@ -67,7 +65,7 @@ internal sealed class OfferEmails(IAccountService accounts, ILogger<OfferEmails>
                 """);
         }
 
-        var indtil = sameDay ? $"kl. {DanishTimePattern.Format(expiresAt.TimeOfDay)}" : DanishClassTimePattern.Format(expiresAt);
+        var indtil = sameDay ? $"kl. {TimePattern.Format(expiresAt.TimeOfDay)}" : DanishClassTimePattern.Format(expiresAt);
         return (SubjectDanish, $"""
             Hej {recipient.FirstName},
 
