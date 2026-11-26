@@ -193,7 +193,7 @@ internal sealed class StaffClassHandler(
 
     /// <summary>
     /// Cancels the class (D-068): its bookings are cancelled, its waitlist is cleared, and every
-    /// booked member is emailed.
+    /// booked and waitlisted member is emailed (D-069).
     /// </summary>
     /// <returns>The outcome, or null when there is no such class.</returns>
     public async Task<CancelClassOutcome?> CancelClassAsync(ClassSessionId id, CancellationToken cancellationToken)
@@ -213,7 +213,9 @@ internal sealed class StaffClassHandler(
             {
                 var name = await ClassNameAsync(session.ClassTypeId, cancellationToken);
                 notices.AddRange(cancellation.CancelledBookings.Select(account =>
-                    new CancelledClassNotice(account, name, session.StartsAt)));
+                    new CancelledClassNotice(account, name, session.StartsAt, WasWaitlisted: false)));
+                notices.AddRange(cancellation.ClearedWaitlist.Select(account =>
+                    new CancelledClassNotice(account, name, session.StartsAt, WasWaitlisted: true)));
                 await db.SaveChangesAsync(cancellationToken);
             }
 

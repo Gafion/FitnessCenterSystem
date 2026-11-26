@@ -7,14 +7,18 @@ using NodaTime.Text;
 
 namespace FitnessCenter.Modules.Booking.Application;
 
-/// <summary>A class the center cancelled, as the email to a booked member describes it (D-068).</summary>
-internal sealed record CancelledClassNotice(Guid AccountId, string ClassName, Instant StartsAt);
+/// <summary>
+/// A class the center cancelled, as the email to a booked member (D-068) or to a member on its
+/// waitlist (D-069) describes it.
+/// </summary>
+internal sealed record CancelledClassNotice(Guid AccountId, string ClassName, Instant StartsAt, bool WasWaitlisted);
 
 /// <summary>A class the center moved, as the email to a booked member describes it (D-068).</summary>
 internal sealed record MovedClassNotice(Guid AccountId, string ClassName, Instant MovedFrom, Instant StartsAt);
 
 /// <summary>
-/// Tells booked members by email that the center cancelled or moved their class (D-068), in the
+/// Tells booked members by email that the center cancelled or moved their class (D-068), and
+/// waitlisted members that it cancelled the class (D-069), in the
 /// account's language (D-065). Sent after the change is saved. The classes page and the
 /// account page show the change too, so a failed send is logged, not retried, as for offers (D-067).
 /// </summary>
@@ -24,6 +28,10 @@ internal sealed class ClassChangeEmails(IAccountService accounts, ILogger<ClassC
 
     public const string CancelledSubjectDanish = "Dit hold er aflyst";
 
+    public const string WaitlistCancelledSubject = "A class you were waiting for is cancelled";
+
+    public const string WaitlistCancelledSubjectDanish = "Et hold, du ventede på, er aflyst";
+
     public const string MovedSubject = "Your class has moved";
 
     public const string MovedSubjectDanish = "Dit hold er flyttet";
@@ -32,7 +40,7 @@ internal sealed class ClassChangeEmails(IAccountService accounts, ILogger<ClassC
         LocalDateTimePattern.Create("d MMMM uuuu 'at' HH:mm", CultureInfo.InvariantCulture);
 
     private static readonly LocalDateTimePattern DanishClassTimePattern =
-        LocalDateTimePattern.Create("dd.MM.uuuu 'kl.' HH.mm", CultureInfo.InvariantCulture);
+        LocalDateTimePattern.Create("dd.MM.uuuu 'kl.' HH:mm", CultureInfo.InvariantCulture);
 
     public Task SendAsync(IReadOnlyList<CancelledClassNotice> notices) =>
         SendAllAsync(notices, notice => notice.AccountId, Email);
@@ -43,6 +51,11 @@ internal sealed class ClassChangeEmails(IAccountService accounts, ILogger<ClassC
     internal static (string Subject, string Body) Email(EmailRecipient recipient, CancelledClassNotice notice)
     {
         var startsAt = notice.StartsAt.InZone(CenterTime.Zone).LocalDateTime;
+        if (notice.WasWaitlisted)
+        {
+            return WaitlistEmail(recipient, notice.ClassName, startsAt);
+        }
+
         if (recipient.Language == Language.English)
         {
             return (CancelledSubject, $"""
@@ -57,6 +70,27 @@ internal sealed class ClassChangeEmails(IAccountService accounts, ILogger<ClassC
             Hej {recipient.FirstName},
 
             Vi har aflyst {notice.ClassName}, {DanishClassTimePattern.Format(startsAt)}, så din booking er også aflyst.
+            Du behøver ikke gøre noget. Du kan booke et andet hold på holdsiden.
+            """);
+    }
+
+    private static (string Subject, string Body) WaitlistEmail(
+        EmailRecipient recipient, string className, LocalDateTime startsAt)
+    {
+        if (recipient.Language == Language.English)
+        {
+            return (WaitlistCancelledSubject, $"""
+                Hi {recipient.FirstName},
+
+                We have cancelled {className}, {ClassTimePattern.Format(startsAt)}, so you are no longer on its waitlist.
+                You don't need to do anything. You can book another class on the classes page.
+                """);
+        }
+
+        return (WaitlistCancelledSubjectDanish, $"""
+            Hej {recipient.FirstName},
+
+            Vi har aflyst {className}, {DanishClassTimePattern.Format(startsAt)}, så du står ikke længere på ventelisten.
             Du behøver ikke gøre noget. Du kan booke et andet hold på holdsiden.
             """);
     }

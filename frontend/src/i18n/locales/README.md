@@ -36,4 +36,5 @@ the developer, for the owner to check:
 | `src/Modules/Identity/Identity/Application/StaffInvites.cs`       | Staff invite email. The role names in it stay English, as in the app.                  |
 | `src/Modules/Booking/Booking/Application/OfferEmails.cs`          | Waitlist offer email ("Der er en plads til dig", D-067).                               |
 | `src/Modules/Booking/Booking/Application/ClassChangeEmails.cs`    | Cancelled and moved class emails ("Dit hold er aflyst", "Dit hold er flyttet", D-068). |
+| `src/Modules/Booking/Booking/Application/ClassChangeEmails.cs`    | Cancelled class email to the waitlist ("Et hold, du ventede på, er aflyst", D-069).    |
 | `src/Modules/Members/Members/Domain/MembershipType.cs`            | "Almindeligt medlemskab" for the placeholder membership type.                          |

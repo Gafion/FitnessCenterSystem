@@ -35,8 +35,29 @@ function dayKey(instant: string): string {
   return dayKeyFormat.format(new Date(instant));
 }
 
+/**
+ * Formats like `formatter.format`, but always with a colon between hours and minutes:
+ * `da-DK` writes "18.00", and the owner chose "18:00" in both languages (D-070).
+ */
+export function formatWithColon(
+  formatter: Intl.DateTimeFormat,
+  date: Date,
+): string {
+  return formatter
+    .formatToParts(date)
+    .map((part, index, parts) =>
+      part.type === 'literal' &&
+      parts[index - 1]?.type === 'hour' &&
+      parts[index + 1]?.type === 'minute'
+        ? ':'
+        : part.value,
+    )
+    .join('');
+}
+
 function format(instant: string, options: Intl.DateTimeFormatOptions): string {
-  return new Intl.DateTimeFormat(dateLocale(), options).format(
+  return formatWithColon(
+    new Intl.DateTimeFormat(dateLocale(), options),
     new Date(instant),
   );
 }
@@ -46,12 +67,12 @@ export function formatDay(instant: string): string {
   return format(instant, dayOptions);
 }
 
-/** "18.00" / "18:00" */
+/** "18:00" in both languages (D-070) */
 export function formatTime(instant: string): string {
   return format(instant, timeOptions);
 }
 
-/** "tirs. 24. nov., 06.00" / "Mon 24 Nov, 06:00" */
+/** "tirs. 24. nov., 06:00" / "Mon 24 Nov, 06:00" */
 export function formatDateTime(instant: string): string {
   return format(instant, dateTimeOptions);
 }

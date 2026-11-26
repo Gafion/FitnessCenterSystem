@@ -113,7 +113,9 @@ internal enum CancelClassOutcome
 }
 
 /// <param name="CancelledBookings">The accounts whose booking the cancellation cancelled, who are emailed.</param>
-internal sealed record ClassCancellation(CancelClassOutcome Outcome, IReadOnlyList<Guid> CancelledBookings);
+/// <param name="ClearedWaitlist">The accounts the cancellation took off the waitlist, who are emailed too (D-069).</param>
+internal sealed record ClassCancellation(
+    CancelClassOutcome Outcome, IReadOnlyList<Guid> CancelledBookings, IReadOnlyList<Guid> ClearedWaitlist);
 
 /// <summary>
 /// One scheduled class, e.g. Spinning on Tuesday at 18:00, with its bookings and its waitlist.
@@ -253,19 +255,19 @@ internal sealed class ClassSession
 
     /// <summary>
     /// The center cancels the class (D-068): every booking is cancelled and the waitlist is
-    /// cleared, including any spot held by an offer. The 12-hour deadline (D-039) doesn't
+    /// cleared, including any spot held by an offer. Booked and waitlisted members are emailed (D-069). The 12-hour deadline (D-039) doesn't
     /// apply; a class that has started can't be cancelled.
     /// </summary>
     public ClassCancellation CancelClass(Instant now)
     {
         if (IsCancelled)
         {
-            return new ClassCancellation(CancelClassOutcome.AlreadyCancelled, []);
+            return new ClassCancellation(CancelClassOutcome.AlreadyCancelled, [], []);
         }
 
         if (now >= StartsAt)
         {
-            return new ClassCancellation(CancelClassOutcome.Started, []);
+            return new ClassCancellation(CancelClassOutcome.Started, [], []);
         }
 
         var booked = _bookings.Where(booking => booking.IsActive).ToList();
@@ -274,6 +276,9 @@ internal sealed class ClassSession
             booking.CancelBecauseClassCancelled(now);
         }
 
+        // An offer that has run out has ended the member's turn (D-067), even if it isn't
+        // marked expired yet, so they are no longer waiting and get no email (D-069).
+        var waiting = _waitlist.Where(entry => entry.IsWaiting || entry.IsOfferOpenAt(now)).ToList();
         foreach (var entry in _waitlist.Where(entry => entry.IsQueued))
         {
             entry.RemoveBecauseClassCancelled(now);
@@ -281,7 +286,10 @@ internal sealed class ClassSession
 
         Status = ClassSessionStatus.Cancelled;
         CancelledAt = now;
-        return new ClassCancellation(CancelClassOutcome.Cancelled, booked.Select(booking => booking.AccountId).ToList());
+        return new ClassCancellation(
+            CancelClassOutcome.Cancelled,
+            booked.Select(booking => booking.AccountId).ToList(),
+            waiting.Select(entry => entry.AccountId).ToList());
     }
 
     /// <summary>
