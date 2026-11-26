@@ -274,6 +274,73 @@ public sealed class AuthenticatorResetTests
         Assert.AreEqual(HttpStatusCode.Unauthorized, loggedOut.StatusCode);
     }
 
+    [TestMethod]
+    public async Task An_admin_reset_is_recorded_in_the_audit_trail()
+    {
+        using var admin = await StaffAsync(StaffRoles.Admin);
+        using var staff = await StaffAsync(StaffRoles.FrontDesk);
+
+        using var reset = await ResetAsync(admin.Client, staff.Id);
+
+        Assert.AreEqual(HttpStatusCode.NoContent, reset.StatusCode, await reset.Content.ReadAsStringAsync());
+        var entry = (await AuditAsync(admin.Client)).Single(
+            e => e.SubjectAccountId == staff.Id && e.Action == "authenticator-reset-by-admin");
+        Assert.AreEqual("authenticator-reset-by-admin", entry.Action);
+        Assert.AreEqual(admin.Id, entry.ActorAccountId);
+    }
+
+    [TestMethod]
+    public async Task A_member_turning_mfa_off_is_recorded_with_themselves_as_the_actor()
+    {
+        var email = TestAccounts.SyntheticEmail();
+        using var client = Factory.CreateClient();
+        await TestAccounts.SignUpConfirmedAndLoggedInAsync(client, email);
+        var (key, _) = await TestAuthenticator.SetUpAsync(client);
+        using var admin = await StaffAsync(StaffRoles.Admin);
+
+        using var turnOff = await TurnOffAsync(client, TestAuthenticator.Code(key));
+
+        Assert.AreEqual(HttpStatusCode.NoContent, turnOff.StatusCode, await turnOff.Content.ReadAsStringAsync());
+        var memberId = await AccountIdAsync(email);
+        var entry = (await AuditAsync(admin.Client)).Single(
+            e => e.SubjectAccountId == memberId && e.Action == "authenticator-turned-off");
+        Assert.AreEqual("authenticator-turned-off", entry.Action);
+        Assert.AreEqual(memberId, entry.ActorAccountId);
+    }
+
+    [TestMethod]
+    public async Task A_refused_reset_is_not_recorded()
+    {
+        using var admin = await StaffAsync(StaffRoles.Admin);
+
+        using var own = await ResetAsync(admin.Client, admin.Id);
+
+        Assert.AreEqual(HttpStatusCode.Forbidden, own.StatusCode);
+        Assert.IsFalse((await AuditAsync(admin.Client)).Any(
+            e => e.SubjectAccountId == admin.Id && e.Action == "authenticator-reset-by-admin"));
+    }
+
+    [TestMethod]
+    [DynamicData(nameof(NonAdminRoles))]
+    public async Task Only_admins_may_read_the_audit_trail(string role)
+    {
+        using var notAdmin = await StaffAsync(role);
+        using var member = Factory.CreateClient();
+        await TestAccounts.SignUpConfirmedAndLoggedInAsync(member, TestAccounts.SyntheticEmail());
+        using var anonymous = Factory.CreateClient();
+
+        using var staffRead = await notAdmin.Client.GetAsync(new Uri("/api/identity/audit-events", UriKind.Relative));
+        using var memberRead = await member.GetAsync(new Uri("/api/identity/audit-events", UriKind.Relative));
+        using var anonymousRead = await anonymous.GetAsync(new Uri("/api/identity/audit-events", UriKind.Relative));
+
+        Assert.AreEqual(HttpStatusCode.Forbidden, staffRead.StatusCode);
+        Assert.AreEqual(HttpStatusCode.Forbidden, memberRead.StatusCode);
+        Assert.AreEqual(HttpStatusCode.Unauthorized, anonymousRead.StatusCode);
+    }
+
+    private static async Task<IReadOnlyList<AuditEntry>> AuditAsync(HttpClient admin) =>
+        await admin.GetFromJsonAsync<IReadOnlyList<AuditEntry>>("/api/identity/audit-events") ?? [];
+
     private static Task<HttpResponseMessage> ResetAsync(HttpClient client, Guid accountId) =>
         client.DeleteAsync(new Uri($"/api/identity/staff-accounts/{accountId}/authenticator", UriKind.Relative));
 
@@ -347,6 +414,8 @@ public sealed class AuthenticatorResetTests
     }
 
     private sealed record Me(bool TwoFactorEnabled, bool MustSetUpAuthenticator);
+
+    private sealed record AuditEntry(Guid Id, string Action, Guid ActorAccountId, Guid SubjectAccountId);
 
     private sealed record StaffAccount(
         Guid Id, string DisplayName, string Email, IReadOnlyList<string> StaffRoles, bool AuthenticatorEnabled);

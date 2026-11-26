@@ -104,6 +104,41 @@ namespace Identity.Infrastructure.Migrations
                     b.ToTable("AspNetUsers", "identity");
                 });
 
+            modelBuilder.Entity("FitnessCenter.Modules.Identity.Infrastructure.AuditEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("ActorAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Detail")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Instant>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SubjectAccountId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorAccountId");
+
+                    b.HasIndex("OccurredAt");
+
+                    b.HasIndex("SubjectAccountId");
+
+                    b.ToTable("AuditEvents", "identity");
+                });
+
             modelBuilder.Entity("FitnessCenter.Modules.Identity.Infrastructure.StaffInvite", b =>
                 {
                     b.Property<Guid>("Id")
@@ -307,6 +342,21 @@ namespace Identity.Infrastructure.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", "identity");
+                });
+
+            modelBuilder.Entity("FitnessCenter.Modules.Identity.Infrastructure.AuditEvent", b =>
+                {
+                    b.HasOne("FitnessCenter.Modules.Identity.Infrastructure.Account", null)
+                        .WithMany()
+                        .HasForeignKey("ActorAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FitnessCenter.Modules.Identity.Infrastructure.Account", null)
+                        .WithMany()
+                        .HasForeignKey("SubjectAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("FitnessCenter.Modules.Identity.Infrastructure.StaffInvite", b =>

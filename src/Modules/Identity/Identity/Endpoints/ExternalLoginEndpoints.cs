@@ -138,7 +138,8 @@ internal static class ExternalLoginEndpoints
     }
 
     private static async Task<RedirectHttpResult> FinishGoogleLinkAsync(
-        ClaimsPrincipal user, SignInManager<Account> signIn, UserManager<Account> users)
+        ClaimsPrincipal user, SignInManager<Account> signIn, UserManager<Account> users, AuditTrail audit,
+        CancellationToken cancellationToken)
     {
         var account = await users.GetUserAsync(user);
         var login = account is null ? null : await signIn.GetExternalLoginInfoAsync(account.Id.ToString());
@@ -149,6 +150,13 @@ internal static class ExternalLoginEndpoints
         }
 
         var result = await users.AddLoginAsync(account, login);
+        if (result.Succeeded)
+        {
+            await audit.RecordAsync(
+                account.Id, account.Id, AuditActions.ExternalLoginLinked, ExternalLogins.Google.ToLowerInvariant(),
+                cancellationToken);
+        }
+
         return result.Succeeded
             ? Redirect("/account")
             // The only expected failure: this Google account belongs to another account.

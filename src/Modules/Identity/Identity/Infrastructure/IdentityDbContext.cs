@@ -17,6 +17,8 @@ internal sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> opti
 
     public DbSet<StaffInvite> StaffInvites => Set<StaffInvite>();
 
+    public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -44,6 +46,18 @@ internal sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> opti
             invite.Property(i => i.CodeHash).HasMaxLength(StaffInvite.CodeHashLength);
             invite.HasOne<Account>().WithMany().HasForeignKey(i => i.InvitedBy).OnDelete(DeleteBehavior.Restrict);
             invite.HasOne<Account>().WithMany().HasForeignKey(i => i.AccountId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Append-only audit trail (D-072). Restrict keeps an audited account from being deleted with its history.
+        builder.Entity<AuditEvent>(audit =>
+        {
+            audit.ToTable("AuditEvents");
+            audit.HasKey(e => e.Id);
+            audit.Property(e => e.Action).HasMaxLength(AuditEvent.ActionMaxLength);
+            audit.Property(e => e.Detail).HasMaxLength(AuditEvent.DetailMaxLength);
+            audit.HasIndex(e => e.OccurredAt);
+            audit.HasOne<Account>().WithMany().HasForeignKey(e => e.ActorAccountId).OnDelete(DeleteBehavior.Restrict);
+            audit.HasOne<Account>().WithMany().HasForeignKey(e => e.SubjectAccountId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

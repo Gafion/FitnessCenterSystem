@@ -68,7 +68,7 @@ internal static class StaffAuthenticatorEndpoints
 
     /// <summary>
     /// Turns the staff member's authenticator off and removes its key and recovery codes, then emails
-    /// them. Logged with both account ids; there is no audit table yet (D-071).
+    /// them. Recorded in the audit trail with both account ids (D-072).
     /// </summary>
     private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> ResetAsync(
         Guid accountId, ClaimsPrincipal user, UserManager<Account> users, AuthenticatorRemoval removal,
@@ -100,7 +100,8 @@ internal static class StaffAuthenticatorEndpoints
                 type: "authenticator-not-enabled");
         }
 
-        await removal.RemoveAsync(account, AuthenticatorRemoval.Reason.ResetByAdmin, cancellationToken);
+        await removal.RemoveAsync(
+            account, AuthenticatorRemoval.Reason.ResetByAdmin, Guid.Parse(adminId!), cancellationToken);
         logger.LogInformation(
             "Admin {AdminId} reset the authenticator app of staff account {AccountId}", adminId, account.Id);
         return TypedResults.NoContent();
