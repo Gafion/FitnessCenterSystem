@@ -344,6 +344,8 @@
     "scheduleClass": "Schedule a class",
     "empty": "No classes are scheduled in this period.",
     "cancelled": "Cancelled",
+    "booked_one": "{{booked}} of {{count}} spot booked",
+    "booked_other": "{{booked}} of {{count}} spots booked",
     "waitlist_one": "{{count}} on the waitlist",
     "waitlist_other": "{{count}} on the waitlist",
     "started": "This class has started and can't be changed.",

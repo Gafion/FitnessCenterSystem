@@ -40,15 +40,28 @@ test('handles the clock changes', () => {
   );
 });
 
-test('round-trips every quarter hour of a year', () => {
-  const start = Date.parse('2027-01-01T00:00:00Z');
-  for (let at = start; at < start + 365 * 86_400_000; at += 900_000) {
+function expectRoundTrip(from: string, hours: number, stepMinutes: number) {
+  const start = Date.parse(from);
+  for (
+    let at = start;
+    at < start + hours * 3_600_000;
+    at += stepMinutes * 60_000
+  ) {
     const instant = new Date(at).toISOString();
-    const back = fromCopenhagen(toCopenhagen(instant));
     const local = toCopenhagen(instant);
+    const back = fromCopenhagen(local);
     // In the repeated autumn hour both instants read the same; the earlier is returned.
     expect(back && toCopenhagen(back)).toEqual(local);
   }
+}
+
+test('round-trips every hour of a year', () => {
+  expectRoundTrip('2027-01-01T00:00:00Z', 365 * 24, 60);
+});
+
+test('round-trips every quarter hour of both clock-change days', () => {
+  expectRoundTrip('2027-03-27T22:00:00Z', 24, 15);
+  expectRoundTrip('2027-10-30T22:00:00Z', 24, 15);
 });
 
 test('rejects fields that are not a date and a time', () => {

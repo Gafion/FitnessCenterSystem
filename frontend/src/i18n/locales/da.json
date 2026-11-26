@@ -344,6 +344,8 @@
     "scheduleClass": "Opret et hold",
     "empty": "Der er ingen hold i denne periode.",
     "cancelled": "Aflyst",
+    "booked_one": "{{booked}} af {{count}} plads booket",
+    "booked_other": "{{booked}} af {{count}} pladser booket",
     "waitlist_one": "{{count}} på ventelisten",
     "waitlist_other": "{{count}} på ventelisten",
     "started": "Holdet er begyndt og kan ikke ændres.",

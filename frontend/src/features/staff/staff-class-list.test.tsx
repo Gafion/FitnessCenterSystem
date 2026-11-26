@@ -178,3 +178,10 @@ test('says when no classes are scheduled', () => {
     screen.getByText('No classes are scheduled in this period.'),
   ).toBeInTheDocument();
 });
+
+test('names spots by the capacity, not the bookings', () => {
+  renderList([staffClass({ bookedCount: 1, capacity: 5 })]);
+  expect(screen.getByRole('listitem', { name: 'Spinning' })).toHaveTextContent(
+    '1 of 5 spots booked',
+  );
+});

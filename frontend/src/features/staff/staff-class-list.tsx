@@ -122,9 +122,9 @@ function ClassRow({
         {!cancelled && (
           <span className="flex items-center gap-2">
             <UsersIcon aria-hidden="true" className="size-4 text-subtle" />
-            {t('myClasses.booked', {
-              count: entry.bookedCount,
-              capacity: entry.capacity,
+            {t('staffClasses.booked', {
+              booked: entry.bookedCount,
+              count: entry.capacity,
             })}
           </span>
         )}
