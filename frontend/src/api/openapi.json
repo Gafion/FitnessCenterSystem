@@ -459,6 +459,35 @@
         }
       }
     },
+    "/api/identity/audit-events": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "ListAuditEvents",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEntry"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/api/simulation": {
       "get": {
         "tags": [
@@ -1656,6 +1685,44 @@
           }
         }
       },
+      "AuditEntry": {
+        "required": [
+          "id",
+          "occurredAt",
+          "action",
+          "actorAccountId",
+          "actorName",
+          "subjectAccountId",
+          "subjectName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurredAt": {
+            "$ref": "#/components/schemas/Instant"
+          },
+          "action": {
+            "type": "string"
+          },
+          "actorAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorName": {
+            "type": "string"
+          },
+          "subjectAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subjectName": {
+            "type": "string"
+          }
+        }
+      },
       "AuthenticatorSetup": {
         "required": [
           "enabled",
@@ -1892,6 +1959,9 @@
             }
           }
         }
+      },
+      "Instant": {
+        "type": "object"
       },
       "InvitableRoles": {
         "required": [

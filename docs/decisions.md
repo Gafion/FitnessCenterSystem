@@ -2620,7 +2620,7 @@ Chosen in the build (FIT-111), open to the owner's review:
 - **Endpoints:** `GET /api/identity/staff-accounts` (Admin policy) lists every staff account with its name, email, roles and whether the authenticator is on, for the admin to pick from. The FIT-105 list (`/api/identity/staff`) stays as it was, because managers may call it and shouldn't see MFA state. `DELETE /api/identity/staff-accounts/{accountId}/authenticator` (Admin policy) resets. `POST /api/identity/authenticator/turn-off` is the member's control.
 - **Answers:** a self-reset is 403 `cannot-reset-own-authenticator`; a member or unknown id is 404; a staff member without the authenticator is 409 `authenticator-not-enabled`. A staff member turning theirs off is 403 `staff-must-keep-authenticator`; a wrong code is 400 `invalid-code` and counts towards lockout, as at login.
 - **How it is removed:** the recovery codes are replaced with none (`IUserTwoFactorRecoveryCodeStore.ReplaceCodesAsync`), MFA is turned off, and the key is replaced with a new random one that is shown only at the next setup (`ResetAuthenticatorKeyAsync`), so the old app's codes stop working. That changes the security stamp, so the account's other sessions end at their next cookie check; staff pages refuse at once, because the policy reads MFA from the database on every request (D-059).
-- **No audit table exists.** Who reset whose authenticator is written to the application log with both account ids, no names or emails. A real audit trail is future work.
+- ~~**No audit table exists.**~~ Superseded by D-072: resets and turn-offs are recorded in the audit trail. The application log line stays.
 - **Emails** are sent after the change is saved; a failed send is logged, not retried, as for the other notification emails (D-067, D-068). The Danish texts are developer translations (**UNVERIFIED**, listed in `frontend/src/i18n/locales/README.md`).
 - **Frontend** controls (the admin action and "Turn off" on the account page) come in a second PR.
 
@@ -2631,3 +2631,54 @@ Chosen in the build (FIT-111), open to the owner's review:
 - https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.identity.usermanager-1 — `VerifyTwoFactorTokenAsync`, `RedeemTwoFactorRecoveryCodeAsync`, `ResetAuthenticatorKeyAsync`, `SetTwoFactorEnabledAsync`
 - https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.identity.iusertwofactorrecoverycodestore-1 — `ReplaceCodesAsync`
 - D-013, D-059, D-062, D-063, D-065
+
+## D-072: An audit trail of every account change, sanitized
+- **Date:** 2026-11-26
+- **Status:** Accepted
+- **Decided by:** Owner, 2026-11-26 ("audit logs for every action that modifies users in any way, but keep them sanitized"). The table design and the list of actions were chosen by the orchestrator and are open to the owner's review.
+- **Relates to:** D-014, D-026, D-058, D-059, D-065, D-071; research SEC-08 and the data inventory row 15 in `docs/research/compliance-legal-security.md`
+
+### Problem statement
+D-071 found no audit mechanism: who reset whose authenticator went only to the application log. The owner wants a record of every change to a user account, saying who did it, to whom and what kind of change, without storing the changed values. The compliance research lists an append-only audit log of permission changes and other sensitive actions as a requirement (SEC-08, from GDPR Art. 5(2), 30 and 33).
+
+### Options considered
+1. **Application log only:** already there, but logs rotate, are unstructured and can't be shown to an admin.
+2. **A table in the Identity schema, written by the code that makes each change (chosen):** structured, queryable, saved in the same database as the change.
+3. **Database triggers on Identity's tables:** catch everything, but can't tell who made a change or why, and would record the changed values.
+
+### Decision
+- A new append-only table `identity.AuditEvents`: id, time, **actor account id**, **subject account id**, **action**, and an optional **non-personal detail**. The app never updates or deletes a row. Foreign keys to the accounts use Restrict, so an audited account can't be deleted along with its history.
+- **Sanitized:** never a password, code, key, email, name or changed value. The detail is only a role name (`Instructor`) or a method (`password`, `google`, `staff-invite`).
+- **Audited actions** (every account change in the Identity module today):
+
+| Action | Actor | Detail |
+|---|---|---|
+| `account-created` | the new account itself | `password`, `google` or `staff-invite` |
+| `email-confirmed` | the account | none |
+| `language-changed` | the account | none (the new language isn't logged) |
+| `external-login-linked` | the account | `google` |
+| `role-granted` | the admin or manager who sent the invite | the role |
+| `authenticator-enabled` | the account | none |
+| `authenticator-reset-by-admin` | the admin | none |
+| `authenticator-turned-off` | the member | none |
+
+- **Reading it:** `GET /api/identity/audit-events`, admins only, newest 100 first, with the actor's and subject's names joined in at read time (names are not stored in the trail).
+
+```mermaid
+flowchart LR
+  A[Someone changes an account] --> C[The code making the change]
+  C --> U[(identity.AspNetUsers)]
+  C --> E[(identity.AuditEvents<br/>actor, subject, action, detail, time)]
+  Admin -- GET /api/identity/audit-events --> E
+```
+
+### Consequences
+- **Password changes and resets** aren't audited yet because the app can't change or reset a password yet. When that is built, it must record `password-changed` (actor: the account) or `password-reset`.
+- **Not audited, by choice:** failed logins and lockout counters, recovery codes used at login, and the new authenticator key made when setup starts. These are sign-in events rather than changes a person chose to make. They can be added later.
+- **Members module changes** (membership, cancellation, payments) are not in this trail. They change member records, not the login account. Whether to audit them is open (see AU13 below).
+- **Retention is open:** the compliance research leaves the retention of audit logs TBD (data inventory row 15). Until it is decided, rows are kept indefinitely. UNVERIFIED how long Danish law requires or allows.
+- There's no screen for the trail yet; admins can read it through the API.
+
+### Sources
+- `docs/research/compliance-legal-security.md` SEC-08 and the data inventory row 15.
+

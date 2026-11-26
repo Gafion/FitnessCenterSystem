@@ -114,7 +114,7 @@ internal static class AccountEndpoints
     }
 
     private static async Task<Results<NoContent, ProblemHttpResult>> ConfirmEmailAsync(
-        ConfirmEmailRequest request, UserManager<Account> users)
+        ConfirmEmailRequest request, UserManager<Account> users, AuditTrail audit, CancellationToken cancellationToken)
     {
         var account = await users.FindByIdAsync(request.AccountId.ToString());
         var token = EmailConfirmation.DecodeCode(request.Code);
@@ -129,7 +129,13 @@ internal static class AccountEndpoints
         }
 
         var result = await users.ConfirmEmailAsync(account, token);
-        return result.Succeeded ? TypedResults.NoContent() : InvalidConfirmationLink();
+        if (!result.Succeeded)
+        {
+            return InvalidConfirmationLink();
+        }
+
+        await audit.RecordAsync(account.Id, account.Id, AuditActions.EmailConfirmed, detail: null, cancellationToken);
+        return TypedResults.NoContent();
     }
 
     /// <summary>
@@ -182,7 +188,8 @@ internal static class AccountEndpoints
 
     /// <summary>Changes the language of the account's emails (D-065).</summary>
     private static async Task<Results<NoContent, ValidationProblem, UnauthorizedHttpResult>> SetLanguageAsync(
-        SetLanguageRequest request, ClaimsPrincipal user, UserManager<Account> users)
+        SetLanguageRequest request, ClaimsPrincipal user, UserManager<Account> users, AuditTrail audit,
+        CancellationToken cancellationToken)
     {
         var account = await users.GetUserAsync(user);
         if (account is null)
@@ -206,6 +213,7 @@ internal static class AccountEndpoints
                 $"Saving the language failed: {string.Join(", ", updated.Errors.Select(e => e.Code))}");
         }
 
+        await audit.RecordAsync(account.Id, account.Id, AuditActions.LanguageChanged, detail: null, cancellationToken);
         return TypedResults.NoContent();
     }
 }
