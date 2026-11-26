@@ -103,6 +103,12 @@ test('cancelling asks first and says how many booked members get an email', asyn
       '0199a3c0-0000-7000-8000-0000000000c1',
     ),
   );
+  // The question closes once the class is cancelled.
+  await waitFor(() =>
+    expect(
+      within(item).queryByRole('button', { name: 'Yes, cancel the class' }),
+    ).not.toBeInTheDocument(),
+  );
 });
 
 test('keeping the class closes the question without cancelling', () => {

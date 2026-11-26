@@ -87,7 +87,9 @@ function ClassRow({
     setProblem(null);
     const result = await onCancel(entry.classId);
     setBusy(false);
-    if (result !== 'ok') {
+    if (result === 'ok') {
+      setMode('view');
+    } else {
       setProblem(result);
     }
   }
