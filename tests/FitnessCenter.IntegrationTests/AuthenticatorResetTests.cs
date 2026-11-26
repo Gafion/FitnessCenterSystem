@@ -415,7 +415,7 @@ public sealed class AuthenticatorResetTests
 
     private sealed record Me(bool TwoFactorEnabled, bool MustSetUpAuthenticator);
 
-    private sealed record AuditEntry(Guid Id, string Action, Guid ActorAccountId, Guid SubjectAccountId);
+    private sealed record AuditEntry(Guid Id, string Action, Guid? ActorAccountId, Guid SubjectAccountId);
 
     private sealed record StaffAccount(
         Guid Id, string DisplayName, string Email, IReadOnlyList<string> StaffRoles, bool AuthenticatorEnabled);

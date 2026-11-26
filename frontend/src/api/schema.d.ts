@@ -778,9 +778,10 @@ export interface components {
             id: string;
             occurredAt: components["schemas"]["Instant"];
             action: string;
+            detail: null | string;
             /** Format: uuid */
-            actorAccountId: string;
-            actorName: string;
+            actorAccountId: null | string;
+            actorName: null | string;
             /** Format: uuid */
             subjectAccountId: string;
             subjectName: string;

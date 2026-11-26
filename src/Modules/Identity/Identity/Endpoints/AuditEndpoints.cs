@@ -26,12 +26,12 @@ internal static class AuditEndpoints
     /// <param name="Id">The event's id.</param>
     /// <param name="OccurredAt">When it happened.</param>
     /// <param name="Action">What happened, e.g. <c>authenticator-reset-by-admin</c>.</param>
-    /// <param name="ActorAccountId">Who did it.</param>
-    /// <param name="ActorName">Their first and last name.</param>
+    /// <param name="ActorAccountId">Who did it. Null when the system did it.</param>
+    /// <param name="ActorName">Their first and last name. Null when the system did it.</param>
     /// <param name="SubjectAccountId">Whose account changed.</param>
     /// <param name="SubjectName">Their first and last name.</param>
     internal sealed record AuditEntry(
-        Guid Id, Instant OccurredAt, string Action, Guid ActorAccountId, string ActorName,
+        Guid Id, Instant OccurredAt, string Action, string? Detail, Guid? ActorAccountId, string? ActorName,
         Guid SubjectAccountId, string SubjectName);
 
     private static async Task<Ok<IReadOnlyList<AuditEntry>>> ListAsync(
@@ -39,12 +39,13 @@ internal static class AuditEndpoints
     {
         var entries = await (
                 from e in db.AuditEvents
-                join actor in db.Users on e.ActorAccountId equals actor.Id
                 join subject in db.Users on e.SubjectAccountId equals subject.Id
+                join actor in db.Users on e.ActorAccountId equals actor.Id into actors
+                from actor in actors.DefaultIfEmpty()
                 orderby e.OccurredAt descending, e.Id descending
                 select new AuditEntry(
-                    e.Id, e.OccurredAt, e.Action,
-                    actor.Id, actor.FirstName + " " + actor.LastName,
+                    e.Id, e.OccurredAt, e.Action, e.Detail,
+                    e.ActorAccountId, actor == null ? null : actor.FirstName + " " + actor.LastName,
                     subject.Id, subject.FirstName + " " + subject.LastName))
             .Take(PageSize)
             .ToListAsync(cancellationToken);

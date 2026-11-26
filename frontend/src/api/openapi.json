@@ -1690,6 +1690,7 @@
           "id",
           "occurredAt",
           "action",
+          "detail",
           "actorAccountId",
           "actorName",
           "subjectAccountId",
@@ -1707,12 +1708,24 @@
           "action": {
             "type": "string"
           },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "actorAccountId": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "uuid"
           },
           "actorName": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "subjectAccountId": {
             "type": "string",

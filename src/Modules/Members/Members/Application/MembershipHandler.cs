@@ -36,6 +36,7 @@ internal sealed class MembershipHandler(
     IAccountService accounts,
     IMemberBookings bookings,
     IClock clock,
+    IAuditLog audit,
     ILogger<MembershipHandler> logger)
 {
     public const string CancelledSubject = "Your membership is cancelled";
@@ -113,6 +114,14 @@ internal sealed class MembershipHandler(
 
         if (outcome == CancellationOutcome.Cancelled)
         {
+            await audit.RecordAsync(accountId, accountId, AuditActions.MembershipCancelled, null, cancellationToken);
+            if (cancelledBookings.Count > 0)
+            {
+                await audit.RecordAsync(
+                    accountId, accountId, AuditActions.BookingsCancelledWithMembership,
+                    cancelledBookings.Count.ToString(System.Globalization.CultureInfo.InvariantCulture), cancellationToken);
+            }
+
             var lastDay = member.CancellationEffectiveOn!.Value;
             await SendAfterCommitAsync(member.AccountId, recipient => CancelledEmail(recipient, lastDay, cancelledBookings));
         }
@@ -208,6 +217,7 @@ internal sealed class MembershipHandler(
         if (outcome == UndoCancellationOutcome.Undone)
         {
             await db.SaveChangesAsync(cancellationToken);
+            await audit.RecordAsync(accountId, accountId, AuditActions.MembershipCancellationUndone, null, cancellationToken);
             await SendAfterCommitAsync(member.AccountId, recipient => recipient.Language == Language.English
                 ? (UndoneSubject, $"""
                     Hi {recipient.FirstName},

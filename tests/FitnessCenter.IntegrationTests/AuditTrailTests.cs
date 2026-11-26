@@ -47,7 +47,7 @@ public sealed class AuditTrailTests
         var events = (await AuditAsync(Factory)).Where(e => e.SubjectAccountId == id).ToList();
 
         CollectionAssert.AreEquivalent(
-            new[] { "account-created", "email-confirmed", "language-changed", "authenticator-enabled" },
+            new[] { "account-created", "membership-started", "email-confirmed", "language-changed", "authenticator-enabled" },
             events.Select(e => e.Action).ToArray());
         Assert.IsTrue(events.All(e => e.ActorAccountId == id), "the member made every change themselves");
         Assert.AreEqual("password", events.Single(e => e.Action == "account-created").Detail);

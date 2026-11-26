@@ -2687,3 +2687,22 @@ flowchart LR
 - **Answers:** the retention half of AU13. Whether to audit Members-module changes is still open.
 - **Note:** the compliance research leaves the retention of audit logs TBD (data inventory row 15). Whether one year meets every Danish rule (for example the BEK 205 change logs that follow bookkeeping retention, which only matter once bookkeeping is built) is UNVERIFIED.
 
+### Amendment (owner, 2026-11-26): all actions, in every module
+- **Decision:** every action goes into the audit trail, not only login-account changes. This answers the rest of AU13.
+- Other modules record through the `IAuditLog` contract in `Identity.Contracts` (rule 1). They call it after their own change has committed, as they send emails (D-067), because the trail lives in Identity's tables. A failed audit write doesn't undo the action. UNVERIFIED whether that gap matters in practice; it would only happen when the database fails between two saves.
+- **The actor may be empty:** null means the system did it on its own (a scheduled job or the payment service).
+- **Added actions:**
+
+| Module | Action | Actor | Detail |
+|---|---|---|---|
+| Booking | `class-booked`, `booking-cancelled`, `waitlist-joined`, `waitlist-left`, `waitlist-offer-accepted`, `waitlist-offer-declined` | the member | class id |
+| Booking | `waitlist-offer-made` | none (the system, D-067) | class id |
+| Booking | `class-type-created`, `class-type-renamed`, `class-scheduled`, `class-changed`, `class-cancelled` (subject: the staff member) | the manager or admin | class type or class id |
+| Booking | `booking-moved-by-staff`, `booking-cancelled-by-staff`, `waitlist-removed-by-staff` (subject: the member) | the manager or admin | class id |
+| Members | `membership-started`, `membership-cancelled`, `membership-cancellation-undone` | the member | none |
+| Members | `bookings-cancelled-with-membership` | the member | how many |
+| Members | `payment-recorded` | none (the payment service, D-006) | none; the amount isn't logged |
+| Access | `checked-in`; `check-in-refused` | the member whose card was swiped | refused: `membership-ended` or `payment-missing` |
+
+- **Still not audited:** an offer running out on its own (the next offer to the next person is), payment reminder emails (they change nothing), and failed logins (see above).
+

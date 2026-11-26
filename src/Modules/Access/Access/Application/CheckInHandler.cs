@@ -1,5 +1,6 @@
 using FitnessCenter.Modules.Access.Domain;
 using FitnessCenter.Modules.Access.Infrastructure;
+using FitnessCenter.Modules.Identity.Contracts;
 using FitnessCenter.Modules.Members.Contracts;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
@@ -33,8 +34,14 @@ internal sealed record CheckInResult(CheckInOutcome Outcome, string? FirstName, 
 /// <summary>
 /// The check-in logic behind every card reader: the simulated one now, the real one later (D-003, D-021).
 /// </summary>
-internal sealed class CheckInHandler(AccessDbContext db, IMemberDirectory members, IClock clock)
+internal sealed class CheckInHandler(AccessDbContext db, IMemberDirectory members, IClock clock, IAuditLog audit)
 {
+    /// <summary>Audit trail actions (D-072). The actor is the member whose card was swiped.</summary>
+    public const string CheckedIn = "checked-in";
+
+    /// <summary>Detail: <c>membership-ended</c> or <c>payment-missing</c>.</summary>
+    public const string CheckInRefused = "check-in-refused";
+
     public async Task<CheckInResult> CheckInAsync(string? cardUid, CancellationToken cancellationToken)
     {
         var now = clock.GetCurrentInstant();
@@ -52,6 +59,7 @@ internal sealed class CheckInHandler(AccessDbContext db, IMemberDirectory member
         // first: once the membership has ended, a payment can't fix it. No name, as below.
         if (member.MembershipEnded)
         {
+            await audit.RecordAsync(member.AccountId, member.AccountId, CheckInRefused, "membership-ended", cancellationToken);
             return new CheckInResult(CheckInOutcome.MembershipEnded, null, now);
         }
 
@@ -60,11 +68,13 @@ internal sealed class CheckInHandler(AccessDbContext db, IMemberDirectory member
         // shouldn't say who is behind.
         if (member.Payment is EntrancePayment.Missing or EntrancePayment.NeverPaid)
         {
+            await audit.RecordAsync(member.AccountId, member.AccountId, CheckInRefused, "payment-missing", cancellationToken);
             return new CheckInResult(CheckInOutcome.PaymentMissing, null, now);
         }
 
         db.Attendances.Add(card.Swipe(now));
         await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(member.AccountId, member.AccountId, CheckedIn, null, cancellationToken);
         return new CheckInResult(CheckInOutcome.Welcome, member.FirstName, now);
     }
 
