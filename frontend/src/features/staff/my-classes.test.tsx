@@ -83,3 +83,24 @@ test('says when there are no upcoming classes', () => {
   expect(screen.getByText('You have no upcoming classes.')).toBeInTheDocument();
   expect(screen.queryByRole('list')).not.toBeInTheDocument();
 });
+
+test('the plural follows the capacity, not the number booked', () => {
+  render(
+    <MyClasses
+      classes={[
+        {
+          classId: '0199a3c0-0000-7000-8000-0000000000c4',
+          className: 'Boxing',
+          startsAt: '2026-11-24T17:00:00Z',
+          endsAt: '2026-11-24T17:45:00Z',
+          capacity: 5,
+          bookedNames: ['Kim P.'],
+        },
+      ]}
+    />,
+  );
+
+  expect(screen.getByRole('listitem', { name: 'Boxing' })).toHaveTextContent(
+    '1 of 5 spots booked',
+  );
+});
